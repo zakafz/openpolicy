@@ -51,13 +51,20 @@ export function Header() {
     >
       <nav className="flex h-14 w-full items-center justify-between px-4">
         <Link href="/">
-          <div className="rounded-md p-2 hover:bg-border">
+          <div className="flex gap-1 items-center">
+            <Image
+              src="/icon-openpolicy.svg"
+              alt="Logo"
+              width={32}
+              height={32}
+              className="h-7 w-fit"
+            />
             <Image
               src="/logo.svg"
               alt="Logo"
               width={32}
               height={32}
-              className="h-7 w-fit"
+              className="h-6 w-fit"
             />
           </div>
         </Link>

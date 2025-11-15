@@ -15,7 +15,7 @@ export default async function Page({
       <Header />
 
       <Section className="p-0! -mt-14">
-        <div className="w-full min-h-[calc(100vh-56px)] flex justify-center items-center">
+        <div className="w-full min-h-screen flex justify-center items-center">
           <Card>
             <CardHeader>
               <CardTitle className="text-2xl">
