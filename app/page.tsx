@@ -60,9 +60,9 @@ export default function Home() {
             The Better Way to Handle Your Policies and Documents
           </h1>
           <p className="text-lg text-center max-w-[550px] mx-auto text-muted-foreground">
-            Effortlessly host, manage, and update your privacy policies and
-            documents. All in one secure platform, ensuring your users always
-            see the latest version and your business stays compliant.
+            Effortlessly host, manage, and update your policies and documents.
+            All in one secure platform, ensuring your users always see the
+            latest version and your business stays compliant.
           </p>
           <div className="mx-auto flex gap-2 mt-5">
             <Button size="lg">Get Started</Button>

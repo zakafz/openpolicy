@@ -7,6 +7,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { useScroll } from "@/hooks/use-scroll";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
+import Link from "next/link";
 
 export function Header() {
   const [open, setOpen] = React.useState(false);
@@ -15,7 +16,7 @@ export function Header() {
   const links = [
     {
       label: "Features",
-      href: "#",
+      href: "/features",
     },
     {
       label: "About",
@@ -46,15 +47,17 @@ export function Header() {
       })}
     >
       <nav className="mx-auto flex h-14 w-full items-center justify-between px-4">
-        <div className="rounded-md p-2 hover:bg-border">
-          <Image
-            src="/logo.svg"
-            alt="Logo"
-            width={32}
-            height={32}
-            className="h-7 w-fit"
-          />
-        </div>
+        <Link href="/">
+          <div className="rounded-md p-2 hover:bg-border">
+            <Image
+              src="/logo.svg"
+              alt="Logo"
+              width={32}
+              height={32}
+              className="h-7 w-fit"
+            />
+          </div>
+        </Link>
         <div className="hidden items-center gap-2 md:flex">
           {links.map((link, i) => (
             <a
@@ -65,7 +68,9 @@ export function Header() {
               {link.label}
             </a>
           ))}
-          <Button>Dashboard</Button>
+          <Link href="/dashboard">
+            <Button>Dashboard</Button>
+          </Link>
         </div>
         <Button
           aria-controls="mobile-menu"
@@ -95,7 +100,9 @@ export function Header() {
           ))}
         </div>
         <div className="flex flex-col gap-2">
-          <Button className="w-full">Dashboard</Button>
+          <Link href="/dashboard">
+            <Button className="w-full">Dashboard</Button>
+          </Link>
         </div>
       </MobileMenu>
     </header>

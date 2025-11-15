@@ -99,7 +99,7 @@ export function Footer() {
               />
             </a>
             <p className="max-w-sm text-balance font-mono text-muted-foreground text-sm">
-              A comprehensive financial technology platform.
+              Host, manage, and update your policies and documents.
             </p>
             <div className="flex gap-2">
               {socialLinks.map((item, index) => (
