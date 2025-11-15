@@ -41,12 +41,15 @@ export function Header() {
 
   return (
     <header
-      className={cn("sticky top-0 z-50 w-full border-transparent border-b", {
-        "border-border bg-background/95 backdrop-blur-lg supports-[backdrop-filter]:bg-background/50":
-          scrolled,
-      })}
+      className={cn(
+        "sticky top-0 z-50 border-transparent border-b w-[calc(100vw-242px)] mx-auto",
+        {
+          "border-border bg-background/95 backdrop-blur-lg supports-[backdrop-filter]:bg-background/50t":
+            scrolled,
+        },
+      )}
     >
-      <nav className="mx-auto flex h-14 w-full items-center justify-between px-4">
+      <nav className="flex h-14 w-full items-center justify-between px-4">
         <Link href="/">
           <div className="rounded-md p-2 hover:bg-border">
             <Image

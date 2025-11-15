@@ -42,8 +42,9 @@ export default function Home() {
   ];
   return (
     <>
-      <Section className="p-0!">
-        <Header />
+      <Header />
+
+      <Section className="p-0! -mt-14">
         <div className="flex flex-col items-center justify-center max-w-[700px] mx-auto pt-20 pb-32">
           <Announcement className="mb-3 cursor-pointer">
             <AnnouncementTag>Latest update</AnnouncementTag>

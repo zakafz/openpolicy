@@ -1,14 +1,6 @@
-import {
-  FacebookIcon,
-  GithubIcon,
-  InstagramIcon,
-  LinkedinIcon,
-  TwitterIcon,
-  YoutubeIcon,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
+import { Separator } from "./ui/separator";
 
 export function Footer() {
   const company = [
@@ -57,38 +49,12 @@ export function Footer() {
     },
   ];
 
-  const socialLinks = [
-    {
-      icon: FacebookIcon,
-      link: "#",
-    },
-    {
-      icon: GithubIcon,
-      link: "#",
-    },
-    {
-      icon: InstagramIcon,
-      link: "#",
-    },
-    {
-      icon: LinkedinIcon,
-      link: "#",
-    },
-    {
-      icon: TwitterIcon,
-      link: "#",
-    },
-    {
-      icon: YoutubeIcon,
-      link: "#",
-    },
-  ];
   return (
     <footer className="relative flex h-fit">
-      <div className="w-36 border-r" />
+      <div className="w-30 min-w-30 border-r" />
       <div className={cn("mx-auto w-full h-fit pb-20 pt-5")}>
         <div className="grid max-w-5xl grid-cols-6 gap-6 p-4 h-full">
-          <div className="col-span-6 flex flex-col gap-4 pt-5 md:col-span-4">
+          <div className="col-span-6 flex flex-col h-full gap-4 pt-5 md:col-span-4">
             <a className="w-max" href="/">
               <Image
                 src="/logo.svg"
@@ -101,19 +67,7 @@ export function Footer() {
             <p className="max-w-sm text-balance font-mono text-muted-foreground text-sm">
               Host, manage, and update your policies and documents.
             </p>
-            <div className="flex gap-2">
-              {socialLinks.map((item, index) => (
-                <Button
-                  key={`social-${item.link}-${index}`}
-                  size="icon-sm"
-                  variant="outline"
-                >
-                  <a href={item.link} target="_blank">
-                    <item.icon className="size-3.5" />
-                  </a>
-                </Button>
-              ))}
-            </div>
+            <Separator orientation="vertical" className={"flex-1"} />
             <p className="font-light text-muted-foreground text-xs mt-auto">
               &copy; {new Date().getFullYear()} OpenPolicy, All rights reserved
             </p>
@@ -148,7 +102,7 @@ export function Footer() {
           </div>
         </div>
       </div>
-      <div className="w-36  border-l " />
+      <div className="w-30 min-w-30 border-l " />
     </footer>
   );
 }
