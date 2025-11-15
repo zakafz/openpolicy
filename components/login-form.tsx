@@ -9,26 +9,12 @@ import { Google } from "./ui/svgs/google";
 
 export function LoginForm({
   className,
-  next,
-  plan,
   ...props
-}: React.ComponentPropsWithoutRef<"div"> & { next?: string; plan?: string }) {
+}: React.ComponentPropsWithoutRef<"div">) {
   const [error, setError] = useState<string | null>(null);
   const [loadingProvider, setLoadingProvider] = useState<
     "github" | "google" | null
   >(null);
-
-  // determine redirect after OAuth exchange:
-  // - prefer explicit `next` if provided and is a relative path
-  // - otherwise, if `plan` is provided, send user to checkout for that plan
-  // - fallback to dashboard
-  const desiredNext =
-    typeof next === "string" && next && next.startsWith("/") ? next : undefined;
-  const nextPath =
-    desiredNext ??
-    (typeof plan === "string" && plan
-      ? `/checkout?products=${encodeURIComponent(plan)}`
-      : "/dashboard");
 
   const handleSocialLogin =
     (provider: "github" | "google") => async (e: React.FormEvent) => {
@@ -41,7 +27,7 @@ export function LoginForm({
         const { error } = await supabase.auth.signInWithOAuth({
           provider,
           options: {
-            redirectTo: `${window.location.origin}/auth/oauth?next=${encodeURIComponent(nextPath)}`,
+            redirectTo: `${window.location.origin}/auth/oauth?next=/dashboard`,
           },
         });
 

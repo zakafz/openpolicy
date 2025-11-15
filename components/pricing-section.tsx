@@ -168,32 +168,24 @@ export function PricingCard({
           className="w-full"
           variant={highlighted ? "default" : "outline"}
           onClick={async () => {
-            const supabase = createClient();
             try {
-              // Check if user is authenticated in the browser
-              // Using the browser auth method to determine current user/session
+              // Check client-side session using the browser supabase client.
+              const supabase = createClient();
               const { data, error } = await supabase.auth.getUser();
               const user = data?.user;
-              // If no user, send them to the login page and include the plan + desired next path
+
               if (error || !user) {
-                const next = encodeURIComponent(
-                  `/checkout?products=${plan.id}`,
-                );
-                router.push(
-                  `/auth/login?plan=${encodeURIComponent(plan.id)}&next=${next}`,
-                );
+                // If not logged in, go to login page (no query params)
+                router.push(`/auth/login`);
                 return;
               }
-            } catch {
-              // fallback: send to login with plan info
-              const next = encodeURIComponent(`/checkout?products=${plan.id}`);
-              router.push(
-                `/auth/login?plan=${encodeURIComponent(plan.id)}&next=${next}`,
-              );
-              return;
+
+              // If authenticated, go directly to checkout
+              router.push(`/checkout?products=${encodeURIComponent(plan.id)}`);
+            } catch (err) {
+              // On error, default to sending the user to the login page
+              router.push(`/auth/login`);
             }
-            // If authenticated, go straight to checkout
-            router.push(`/checkout?products=${plan.id}`);
           }}
         >
           {buttonText}
