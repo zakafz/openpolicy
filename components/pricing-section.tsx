@@ -169,21 +169,15 @@ export function PricingCard({
           variant={highlighted ? "default" : "outline"}
           onClick={async () => {
             try {
-              // Check client-side session using the browser supabase client.
               const supabase = createClient();
               const { data, error } = await supabase.auth.getUser();
               const user = data?.user;
-
               if (error || !user) {
-                // If not logged in, go to login page (no query params)
                 router.push(`/auth/login`);
                 return;
               }
-
-              // If authenticated, go directly to checkout
-              router.push(`/checkout?products=${encodeURIComponent(plan.id)}`);
+              router.push(`/checkout?products=${plan.id}}`);
             } catch (err) {
-              // On error, default to sending the user to the login page
               router.push(`/auth/login`);
             }
           }}
