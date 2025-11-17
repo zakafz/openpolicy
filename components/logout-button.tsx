@@ -8,7 +8,21 @@ export function LogoutButton({ children }: React.PropsWithChildren) {
 
   const logout = async () => {
     const supabase = createClient();
-    await supabase.auth.signOut();
+
+    try {
+      await supabase.auth.signOut();
+    } catch (err) {
+      console.error("Error signing out:", err);
+    }
+
+    try {
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("selectedWorkspace");
+      }
+    } catch (e) {
+      console.warn("Failed to remove selectedWorkspace from localStorage", e);
+    }
+
     router.push("/auth/login");
   };
 

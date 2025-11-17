@@ -1,10 +1,10 @@
 import Container from "@/components/dashboard-container";
-import OverviewShell from "./overview-shell";
+import GeneralShell from "./general-shell";
 
-export default function Dashboard() {
+export default function GeneralPage() {
   return (
     <Container>
-      <OverviewShell />
+      <GeneralShell />
     </Container>
   );
 }

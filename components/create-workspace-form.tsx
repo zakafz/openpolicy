@@ -1,16 +1,30 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Field,
   FieldDescription,
   FieldGroup,
   FieldLabel,
-} from "@/components/ui/field";
+} from "@/components/ui/field-shadcn";
 import { Input } from "@/components/ui/input";
 import Image from "next/image";
+import { ButtonGroup, ButtonGroupText } from "./ui/button-group";
+import { InputGroup, InputGroupInput, InputGroupAddon } from "./ui/input-group";
+import { Label } from "@/components/ui/label";
+import {
+  CircleCheckIcon,
+  CircleAlertIcon,
+  LoaderCircleIcon,
+} from "lucide-react";
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from "@/components/ui/tooltip";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { fetchWorkspacesForOwner } from "@/lib/workspace";
 import {
   Select,
   SelectItem,
@@ -25,6 +39,13 @@ export function CreateWorkspaceForm({ products }: { products: Product[] }) {
   const supabase = createClient();
   const router = useRouter();
   const [name, setName] = useState("");
+  const [slug, setSlug] = useState("");
+  const [slugValid, setSlugValid] = useState<boolean>(false);
+  const [slugAvailable, setSlugAvailable] = useState<boolean | null>(null);
+  const [checkingSlug, setCheckingSlug] = useState(false);
+  const slugCheckRef = useRef<number | null>(null);
+  const [slugErrorMessage, setSlugErrorMessage] = useState<string | null>(null);
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [planId, setPlanId] = useState<string | undefined>(() => {
@@ -33,6 +54,89 @@ export function CreateWorkspaceForm({ products }: { products: Product[] }) {
     );
     return (freePlan ?? products[0])?.id ?? undefined;
   });
+
+  // Validate slug format and check availability (debounced).
+  useEffect(() => {
+    // If empty, reset state
+    if (!slug || slug.length === 0) {
+      setSlugValid(false);
+      setSlugAvailable(null);
+      setSlugErrorMessage(null);
+      return;
+    }
+
+    // Slug rules: lowercase letters, numbers, hyphens, cannot start/end with hyphen,
+    // length reasonable (1-64; allow up to 64 with internal hyphens)
+    const re = /^[a-z0-9]([a-z0-9-]{0,62}[a-z0-9])?$/;
+    const isValid = re.test(slug);
+    setSlugValid(isValid);
+
+    if (!isValid) {
+      // mark unavailable if invalid (prevents showing green)
+      setSlugAvailable(false);
+      setSlugErrorMessage(
+        "Only lowercase letters, numbers and dashes allowed (start with a letter/number).",
+      );
+      return;
+    } else {
+      setSlugErrorMessage(null);
+    }
+
+    // Debounce availability check
+    if (slugCheckRef.current) {
+      clearTimeout(slugCheckRef.current);
+    }
+
+    slugCheckRef.current = window.setTimeout(async () => {
+      setCheckingSlug(true);
+      try {
+        // Check existing workspaces
+        const { data: wsData, error: wsErr } = await supabase
+          .from("workspaces")
+          .select("id")
+          .ilike("slug", slug)
+          .limit(1);
+
+        if (wsErr) {
+          console.error("Error checking workspaces slug:", wsErr);
+        }
+        const wsConflict = (wsData && (wsData as any).length > 0) ?? false;
+
+        // Check pending workspaces
+        const { data: pendingData, error: pendingErr } = await supabase
+          .from("pending_workspaces")
+          .select("id")
+          .ilike("slug", slug)
+          .limit(1);
+
+        if (pendingErr) {
+          console.error("Error checking pending_workspaces slug:", pendingErr);
+        }
+        const pendingConflict =
+          (pendingData && (pendingData as any).length > 0) ?? false;
+
+        const available = !wsConflict && !pendingConflict;
+        setSlugAvailable(available);
+        if (!available) {
+          setSlugErrorMessage("Slug already in use");
+        } else {
+          setSlugErrorMessage(null);
+        }
+      } catch (err: any) {
+        console.error("Error checking slug availability", err);
+        setSlugAvailable(null);
+        setSlugErrorMessage("Error checking slug availability");
+      } finally {
+        setCheckingSlug(false);
+      }
+    }, 500);
+
+    return () => {
+      if (slugCheckRef.current) {
+        clearTimeout(slugCheckRef.current);
+      }
+    };
+  }, [slug, supabase]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -67,19 +171,27 @@ export function CreateWorkspaceForm({ products }: { products: Product[] }) {
       const nameTrim = name.trim();
 
       try {
-        const { data: existingWs } = await supabase
-          .from("workspaces")
-          .select("id")
-          .eq("owner_id", owner_id)
-          .ilike("name", nameTrim)
-          .limit(1);
+        // Use centralized helper to fetch the owner's workspaces (keeps logic in one place).
+        // The helper may throw on error, so let the catch below handle logging.
+        const ownerWorkspaces = await fetchWorkspacesForOwner(
+          owner_id,
+          supabase,
+        );
 
-        if (existingWs && existingWs.length > 0) {
+        // Check case-insensitively whether a workspace with the same name already exists.
+        const existingWsFound = ownerWorkspaces.find(
+          (w: any) =>
+            typeof w?.name === "string" &&
+            String(w.name).toLowerCase() === nameTrim.toLowerCase(),
+        );
+
+        if (existingWsFound) {
           setError("You already have a workspace with this name.");
           setLoading(false);
           return;
         }
 
+        // Still check pending_workspaces as before (pending rows are separate)
         const { data: existingPending } = await supabase
           .from("pending_workspaces")
           .select("id")
@@ -134,11 +246,20 @@ export function CreateWorkspaceForm({ products }: { products: Product[] }) {
       if (isFreePlan) {
         // Create free workspace + subscription directly on the server and DO NOT create a pending_workspaces row.
         try {
+          // include slug in the request body so server can persist/validate
+          const normalizedSlugForFree = String(slug ?? "")
+            .toLowerCase()
+            .replace(/-+/g, "-")
+            .replace(/^-+|-+$/g, "");
           const resp = await fetch("/api/polar/create-free-workspace", {
             method: "POST",
             credentials: "include",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ productId: planId, name: name.trim() }),
+            body: JSON.stringify({
+              productId: planId,
+              name: name.trim(),
+              slug: normalizedSlugForFree || null,
+            }),
           });
 
           if (!resp.ok) {
@@ -200,6 +321,11 @@ export function CreateWorkspaceForm({ products }: { products: Product[] }) {
       }
 
       // Not a free plan: create pending_workspaces and proceed to checkout as before.
+      // Ensure we send a normalized slug (collapse consecutive dashes and trim edges)
+      const normalizedSlugForInsert = String(slug ?? "")
+        .toLowerCase()
+        .replace(/-+/g, "-")
+        .replace(/^-+|-+$/g, "");
       const { data: pending, error: pendingError } = await supabase
         .from("pending_workspaces")
         .insert({
@@ -210,12 +336,31 @@ export function CreateWorkspaceForm({ products }: { products: Product[] }) {
           customer_id: customerId ?? null,
           customer_email: customerEmail ?? null,
           customer_external_id: owner_id,
+          slug: normalizedSlugForInsert || null,
         })
         .select()
         .single();
+      // If DB returns a uniqueness constraint violation, surface that message to the user
+      if (pendingError) {
+        const msg =
+          pendingError?.message ??
+          (pendingError?.details ? String(pendingError.details) : null) ??
+          "Failed to create pending workspace.";
+        // If it's a unique violation on slug, give a clearer message
+        if (
+          String(msg).toLowerCase().includes("unique") &&
+          String(msg).toLowerCase().includes("slug")
+        ) {
+          setError("That slug is already taken. Try another.");
+        } else {
+          setError(msg);
+        }
+        setLoading(false);
+        return;
+      }
 
       if (pendingError) {
-        setError(pendingError.message || "Failed to create pending workspace.");
+        setError(pendingError || "Failed to create pending workspace.");
         setLoading(false);
         return;
       }
@@ -261,7 +406,7 @@ export function CreateWorkspaceForm({ products }: { products: Product[] }) {
           />
         </div>
         <div className="flex flex-col items-center space-y-1">
-          <h2 className="font-medium text-2xl">Create your workspace</h2>
+          <h2 className="font-medium text-2xl">Create a workspace</h2>
           <p className="text-muted-foreground text-sm max-w-[80%] text-center">
             A workspace is a place where you can collaborate with your team.
           </p>
@@ -280,6 +425,84 @@ export function CreateWorkspaceForm({ products }: { products: Product[] }) {
           />
           <FieldDescription className="">
             This is the name of your workspace.
+          </FieldDescription>
+        </Field>
+
+        <Field className="gap-2">
+          <FieldLabel htmlFor="slug">Workspace Slug</FieldLabel>
+          <ButtonGroup>
+            <ButtonGroupText asChild>
+              <Label htmlFor="slug">openpolicyhq.com/d/</Label>
+            </ButtonGroupText>
+            <InputGroup>
+              <InputGroupInput
+                id="slug"
+                placeholder="e.g., acme"
+                value={slug}
+                onChange={(e) => {
+                  const raw = String(e.target.value ?? "");
+                  // Convert to lowercase and replace whitespace with dashes immediately,
+                  // allow user to type dashes freely (do not trim on input).
+                  const lower = raw.toLowerCase();
+                  const withSpacesToDashes = lower.replace(/\s+/g, "-");
+                  // Remove characters except a-z, 0-9 and dash.
+                  const cleaned = withSpacesToDashes.replace(/[^a-z0-9-]/g, "");
+                  setSlug(cleaned);
+                }}
+                onBlur={() => {
+                  // On blur, collapse consecutive dashes but do NOT trim leading/trailing dashes,
+                  // so ending with a dash is allowed.
+                  const normalized = String(slug ?? "")
+                    .toLowerCase()
+                    .replace(/\s+/g, "-")
+                    .replace(/[^a-z0-9-]/g, "")
+                    .replace(/-+/g, "-");
+                  if (normalized !== slug) setSlug(normalized);
+                }}
+                aria-invalid={!slugValid && slug.length > 0}
+                aria-describedby="slug-desc"
+              />
+              <InputGroupAddon align="inline-end">
+                {checkingSlug ? (
+                  <LoaderCircleIcon className="animate-spin" />
+                ) : slugValid && slugAvailable ? (
+                  <CircleCheckIcon className="text-green-500" />
+                ) : !slugValid && slug.length > 0 ? (
+                  <CircleAlertIcon className="text-rose-500" />
+                ) : slugValid && slugAvailable === false ? (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="inline-flex">
+                        <CircleAlertIcon className="text-rose-500" />
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent>Slug already in use</TooltipContent>
+                  </Tooltip>
+                ) : (
+                  <CircleCheckIcon className="text-muted-foreground" />
+                )}
+              </InputGroupAddon>
+            </InputGroup>
+          </ButtonGroup>
+          <FieldDescription id="slug-desc">
+            This is your workspace's unique slug on OpenPolicy.
+            {slug && slug.length > 0 ? (
+              <>
+                {" "}
+                {!slugValid
+                  ? " Only lowercase letters, numbers and hyphens are allowed."
+                  : slugAvailable === false
+                    ? " That slug is already taken."
+                    : slugAvailable === true
+                      ? " That slug is available."
+                      : ""}
+              </>
+            ) : null}
+            {slugErrorMessage ? (
+              <div className="text-sm text-rose-500 mt-1" role="alert">
+                {slugErrorMessage}
+              </div>
+            ) : null}
           </FieldDescription>
         </Field>
 
@@ -395,7 +618,15 @@ export function CreateWorkspaceForm({ products }: { products: Product[] }) {
           <Link href={"/dashboard"}>
             <Button variant={"outline"}>Back</Button>
           </Link>
-          <Button type="submit" disabled={loading}>
+          <Button
+            type="submit"
+            disabled={
+              loading ||
+              !slugValid ||
+              slugAvailable === false ||
+              slugAvailable === null
+            }
+          >
             {loading ? "Creating..." : "Create Workspace"}
           </Button>
         </div>

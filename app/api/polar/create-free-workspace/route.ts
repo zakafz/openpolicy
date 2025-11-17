@@ -2,11 +2,19 @@ import { NextResponse } from "next/server";
 import { api as polar } from "@/lib/polar";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
+import {
+  fetchWorkspacesForOwner,
+  fetchWorkspaceByIdServer,
+} from "@/lib/workspace";
 
 export async function POST(req: Request) {
   try {
     const body = await req.json().catch(() => ({}));
-    const { productId, name } = body as { productId?: string; name?: string };
+    const { productId, name, slug } = body as {
+      productId?: string;
+      name?: string;
+      slug?: string | null;
+    };
 
     if (!productId || !name) {
       return NextResponse.json(
@@ -116,12 +124,14 @@ export async function POST(req: Request) {
     // Before creating a subscription, enforce workspace limits (existing + pending)
     const MAX_WORKSPACES = Number(process.env.MAX_WORKSPACES ?? 3);
     try {
-      const { count: wsCount, error: wsErr } = await svc
-        .from("workspaces")
-        .select("id", { count: "exact" })
-        .eq("owner_id", owner_id);
-
-      if (wsErr) {
+      let wsCount = 0;
+      try {
+        // Use centralized helper to fetch the owner's workspaces so logic is consistent
+        // across the codebase. We pass the service client so the helper uses the
+        // privileged client in this server context.
+        const ownerWorkspaces = await fetchWorkspacesForOwner(owner_id, svc);
+        wsCount = Array.isArray(ownerWorkspaces) ? ownerWorkspaces.length : 0;
+      } catch (wsErr) {
         console.error("Error checking existing workspaces:", wsErr);
         return NextResponse.json(
           { error: "Failed to check workspace limits" },
@@ -162,6 +172,80 @@ export async function POST(req: Request) {
       );
     }
 
+    // Normalize and validate slug server-side (if provided).
+    // We perform uniqueness checks before creating the subscription so we fail fast.
+    let normalizedSlug: string | null = null;
+    try {
+      const rawSlug = typeof slug === "string" ? String(slug) : "";
+      const candidate = rawSlug.trim().length
+        ? rawSlug
+            .toLowerCase()
+            .replace(/-+/g, "-")
+            .replace(/^\-+|\-+$/g, "")
+        : "";
+      normalizedSlug = candidate || null;
+
+      if (normalizedSlug) {
+        // Validate format: must start with alphanumeric, then alnum or dash, max ~64 chars.
+        const slugRe = /^[a-z0-9][a-z0-9-]{0,63}$/;
+        if (!slugRe.test(normalizedSlug)) {
+          return NextResponse.json(
+            { error: "Invalid slug format" },
+            { status: 400 },
+          );
+        }
+
+        // Check uniqueness in workspaces
+        const { data: existingWs, error: wsErr } = await svc
+          .from("workspaces")
+          .select("id")
+          .ilike("slug", normalizedSlug)
+          .limit(1);
+
+        if (wsErr) {
+          console.error("Error checking workspace slug uniqueness:", wsErr);
+          return NextResponse.json(
+            { error: "Failed to validate slug" },
+            { status: 500 },
+          );
+        }
+
+        // Check uniqueness in pending_workspaces
+        const { data: existingPending, error: pendErr } = await svc
+          .from("pending_workspaces")
+          .select("id")
+          .ilike("slug", normalizedSlug)
+          .limit(1);
+
+        if (pendErr) {
+          console.error(
+            "Error checking pending_workspaces slug uniqueness:",
+            pendErr,
+          );
+          return NextResponse.json(
+            { error: "Failed to validate slug" },
+            { status: 500 },
+          );
+        }
+
+        if (
+          (existingWs && (existingWs as any).length > 0) ||
+          (existingPending && (existingPending as any).length > 0)
+        ) {
+          return NextResponse.json(
+            { error: "Slug already in use" },
+            { status: 400 },
+          );
+        }
+      }
+    } catch (err) {
+      console.error("Error validating slug before subscription:", err);
+      return NextResponse.json(
+        { error: "Failed to validate slug" },
+        { status: 500 },
+      );
+    }
+
     // Create subscription for free product. Include workspace info for traceability.
     let subscription: any = null;
     try {
@@ -198,7 +282,14 @@ export async function POST(req: Request) {
       // Insert workspace using service client (privileged), including the selected logo
       const { data: workspace, error: createErr } = await svc
         .from("workspaces")
-        .insert({ name: name.trim(), owner_id, plan: productId, logo })
+        .insert({
+          name: name.trim(),
+          owner_id,
+          plan: productId,
+          logo,
+          // persist normalized slug if provided, otherwise null
+          slug: normalizedSlug || null,
+        })
         .select()
         .single();
 
@@ -211,16 +302,41 @@ export async function POST(req: Request) {
         );
       }
 
-      // Best-effort: attach polar ids to workspace metadata
+      // Best-effort: attach polar ids to workspace metadata. Use the server helper
+      // to fetch/verify the created workspace before attempting the update so
+      // callers have a consistent place to centralize workspace reads.
       try {
         const meta = {
           polar_subscription_id: subscription?.id ?? null,
           polar_customer_id: customerId,
         };
-        await svc
-          .from("workspaces")
-          .update({ metadata: meta })
-          .eq("id", workspace.id as string);
+
+        // Verify the workspace exists via the server helper (uses service client)
+        // and then update the metadata. If the helper fails or doesn't return a row,
+        // we still attempt the update as a fallback.
+        try {
+          const latest = await fetchWorkspaceByIdServer(workspace.id as string);
+          if (latest) {
+            await svc
+              .from("workspaces")
+              .update({ metadata: meta })
+              .eq("id", workspace.id as string);
+          } else {
+            // Fallback: attempt update anyway
+            await svc
+              .from("workspaces")
+              .update({ metadata: meta })
+              .eq("id", workspace.id as string);
+          }
+        } catch (fetchErr) {
+          // If helper fails for any reason, attempt the update directly and log
+          // the helper error for diagnostics.
+          console.warn("fetchWorkspaceByIdServer failed:", fetchErr);
+          await svc
+            .from("workspaces")
+            .update({ metadata: meta })
+            .eq("id", workspace.id as string);
+        }
       } catch (metaErr) {
         console.warn(
           "Failed to update workspace metadata with polar info:",

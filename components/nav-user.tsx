@@ -1,5 +1,6 @@
 "use client";
 
+import * as React from "react";
 import {
   ArrowUpRight,
   BadgeCheck,
@@ -34,8 +35,81 @@ import { UsersRow } from "@/types/supabase";
 import { LogoutButton } from "./logout-button";
 import Link from "next/link";
 
+/**
+ * NavUser now keeps local UI state and listens for a global update event.
+ * When an external component (for example the account settings page) dispatches:
+ *
+ * window.dispatchEvent(new CustomEvent('user:updated', { detail: { full_name, avatar_url, email, ... } }))
+ *
+ * this component will merge the updated fields into its local state and re-render.
+ */
+
 export function NavUser({ user }: { user: UsersRow }) {
   const { isMobile } = useSidebar();
+
+  // Keep a local copy of the user so we can update the UI in real time.
+  const [localUser, setLocalUser] = React.useState<UsersRow | null>(
+    user ?? null,
+  );
+
+  // Update localUser whenever the prop changes (important for initial render or prop updates)
+  React.useEffect(() => {
+    setLocalUser(user ?? null);
+  }, [user]);
+
+  // Listen for global 'user:updated' events and merge partial updates into localUser
+  React.useEffect(() => {
+    const handler = (ev: Event) => {
+      try {
+        const custom = ev as CustomEvent<Record<string, any> | null>;
+        const detail = custom?.detail;
+        if (!detail) return;
+
+        setLocalUser((prev) => {
+          if (!prev) {
+            // If there was no previous user object, create a minimal one from detail
+            const newUser: UsersRow = {
+              id: detail.id ?? "",
+              auth_id: detail.auth_id ?? "",
+              full_name: detail.full_name ?? null,
+              first_name: detail.first_name ?? null,
+              last_name: detail.last_name ?? null,
+              avatar_url: detail.avatar_url ?? null,
+              email: detail.email ?? null,
+              provider: detail.provider ?? null,
+              provider_user_id: detail.provider_user_id ?? null,
+              raw_user: detail.raw_user ?? null,
+              metadata: detail.metadata ?? null,
+              created_at: detail.created_at ?? null,
+              updated_at: detail.updated_at ?? null,
+            };
+            return newUser;
+          }
+          // Merge partial fields
+          return {
+            ...prev,
+            full_name: detail.full_name ?? prev.full_name,
+            avatar_url: detail.avatar_url ?? prev.avatar_url,
+            email: detail.email ?? prev.email,
+            raw_user: detail.raw_user ?? prev.raw_user,
+            metadata: detail.metadata ?? prev.metadata,
+            updated_at: detail.updated_at ?? prev.updated_at,
+          };
+        });
+      } catch {
+        // ignore malformed events
+      }
+    };
+
+    window.addEventListener("user:updated", handler as EventListener);
+    return () => {
+      window.removeEventListener("user:updated", handler as EventListener);
+    };
+  }, []);
+
+  const displayName = localUser?.full_name ?? "Unknown";
+  const displayEmail = localUser?.email ?? "";
+  const displayAvatar = localUser?.avatar_url ?? "";
 
   return (
     <SidebarMenu>
@@ -48,16 +122,16 @@ export function NavUser({ user }: { user: UsersRow }) {
             >
               <Avatar className="h-8 w-8 rounded-lg border">
                 <AvatarImage
-                  src={user.avatar_url || ""}
-                  alt={user.full_name || "Unknown"}
+                  src={displayAvatar || ""}
+                  alt={displayName || "Unknown"}
                 />
                 <AvatarFallback className="rounded-lg uppercase">
-                  {user.full_name?.charAt(0) || "NA"}
+                  {displayName?.charAt(0) || "NA"}
                 </AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-medium">{user.full_name}</span>
-                <span className="truncate text-xs">{user.email}</span>
+                <span className="truncate font-medium">{displayName}</span>
+                <span className="truncate text-xs">{displayEmail}</span>
               </div>
               <MoreVertical className="ml-auto size-4" />
             </SidebarMenuButton>
@@ -72,16 +146,16 @@ export function NavUser({ user }: { user: UsersRow }) {
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar className="h-8 w-8 rounded-lg border">
                   <AvatarImage
-                    src={user.avatar_url || ""}
-                    alt={user.full_name || "Unknown"}
+                    src={displayAvatar || ""}
+                    alt={displayName || "Unknown"}
                   />
                   <AvatarFallback className="rounded-lg uppercase">
-                    {user.full_name?.charAt(0) || "NA"}
+                    {displayName?.charAt(0) || "NA"}
                   </AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">{user.full_name}</span>
-                  <span className="truncate text-xs">{user.email}</span>
+                  <span className="truncate font-medium">{displayName}</span>
+                  <span className="truncate text-xs">{displayEmail}</span>
                 </div>
               </div>
             </DropdownMenuLabel>
@@ -95,14 +169,18 @@ export function NavUser({ user }: { user: UsersRow }) {
 
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
+              <Link href={'/dashboard/settings/account'}>
               <DropdownMenuItem>
                 <User />
                 Account
               </DropdownMenuItem>
-              <DropdownMenuItem>
-                <CreditCard />
-                Billing
-              </DropdownMenuItem>
+              </Link>
+              <Link href={"/portal"}>
+                <DropdownMenuItem>
+                  <CreditCard />
+                  Billing
+                </DropdownMenuItem>
+              </Link>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <Link href={"/"}>

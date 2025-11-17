@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { ChevronsUpDown, Plus } from "lucide-react";
+import { Check, ChevronsUpDown, Plus } from "lucide-react";
 
 import {
   DropdownMenu,
@@ -21,6 +21,7 @@ import {
 import { WorkspaceRow } from "@/types/supabase";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Product } from "@polar-sh/sdk/models/components/product.js";
+import { useWorkspace } from "@/context/workspace";
 
 export function WorkspaceSwitcher({
   workspaces,
@@ -30,62 +31,59 @@ export function WorkspaceSwitcher({
   products: Product[];
 }) {
   const { isMobile } = useSidebar();
-  const [workspace, setWorkspace] = React.useState<WorkspaceRow | null>(() => {
-    try {
-      if (typeof window !== "undefined") {
-        const storedId = localStorage.getItem("selectedWorkspace");
-        if (storedId && workspaces && workspaces.length > 0) {
-          const found = workspaces.find((w) => w.id === storedId);
-          if (found) return found;
-        }
-      }
-    } catch (e) {
-      // ignore localStorage errors
-    }
-    return workspaces && workspaces.length > 0 ? workspaces[0] : null;
-  });
+  const { selectedWorkspaceId, setSelectedWorkspaceId, setSelectedWorkspace } =
+    useWorkspace();
+  const [workspace, setWorkspace] = React.useState<WorkspaceRow | null>(null);
 
   React.useEffect(() => {
     // Keep selected workspace in sync when the prop changes (e.g. first load / updates)
-    if (workspaces && workspaces.length > 0) {
-      setWorkspace((prev) => {
-        // Try to restore a stored selection first if present.
-        try {
-          if (typeof window !== "undefined") {
-            const storedId = localStorage.getItem("selectedWorkspace");
-            if (storedId) {
-              const foundStored = workspaces.find((w) => w.id === storedId);
-              if (foundStored) return foundStored;
-            }
-          }
-        } catch (e) {
-          // ignore localStorage errors
-        }
-
-        // If current selected is missing or no longer in the list, pick the first.
-        if (!prev) return workspaces[0];
-        const found = workspaces.find((w) => w.id === prev.id);
-        if (!found) return workspaces[0];
-        return prev;
-      });
-    } else {
+    if (!workspaces || workspaces.length === 0) {
       setWorkspace(null);
+      return;
+    }
+
+    // Prefer the workspace selected in the global provider if available
+    if (selectedWorkspaceId) {
+      const found = workspaces.find((w) => w.id === selectedWorkspaceId);
+      if (found) {
+        // Only update local display state here. The provider already holds the
+        // canonical selection; calling provider setters from this effect can
+        // trigger the workspace-changed event and cause refetch loops.
+        setWorkspace(found);
+        return;
+      }
+    }
+
+    // Otherwise default to the first workspace and persist that selection to the provider
+    const first = workspaces[0];
+    setWorkspace(first);
+    if (!selectedWorkspaceId && first) {
+      try {
+        // Only set the provider selection once. Prefer writing the id so the
+        // provider persists to localStorage and dispatches a single workspace-changed event.
+        // Avoid calling the provider setter that may also attempt to write the workspace
+        // object here, which can cause redundant events in some flows.
+        if (setSelectedWorkspaceId) {
+          setSelectedWorkspaceId(first.id);
+        } else if (setSelectedWorkspace) {
+          // Fallback if only the full setter is available.
+          setSelectedWorkspace(first);
+        }
+      } catch (e) {
+        // ignore
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [workspaces]);
+  }, [
+    workspaces,
+    selectedWorkspaceId,
+    setSelectedWorkspaceId,
+    setSelectedWorkspace,
+  ]);
 
-  // Persist selected workspace id to localStorage so selection survives refreshes / navigation
-  React.useEffect(() => {
-    try {
-      if (workspace && typeof window !== "undefined") {
-        localStorage.setItem("selectedWorkspace", workspace.id);
-      } else if (typeof window !== "undefined") {
-        localStorage.removeItem("selectedWorkspace");
-      }
-    } catch (e) {
-      // ignore localStorage write errors
-    }
-  }, [workspace]);
+  // Selection persistence is handled by WorkspaceProvider (and the provider writes localStorage).
+  // No local persistence required here — this effect intentionally left as a no-op.
+  React.useEffect(() => {}, [workspace]);
 
   if (!workspace) {
     return null;
@@ -136,12 +134,29 @@ export function WorkspaceSwitcher({
             sideOffset={4}
           >
             <DropdownMenuLabel className="text-muted-foreground text-xs">
-              Workspace
+              Workspaces
             </DropdownMenuLabel>
             {workspaces.map((item: WorkspaceRow, index: number) => (
               <DropdownMenuItem
                 key={item.id ?? item.name ?? index}
-                onClick={() => setWorkspace(item)}
+                onClick={() => {
+                  // Update local display state immediately so the UI feels responsive.
+                  setWorkspace(item);
+                  try {
+                    // Only update the provider when the selection actually changed.
+                    if (selectedWorkspaceId !== item.id) {
+                      // Prefer writing the id to persist selection and avoid double-dispatch.
+                      if (setSelectedWorkspaceId) {
+                        setSelectedWorkspaceId(item.id);
+                      } else if (setSelectedWorkspace) {
+                        // Fallback: set full workspace object if id-only setter isn't available.
+                        setSelectedWorkspace(item);
+                      }
+                    }
+                  } catch (e) {
+                    // ignore provider errors
+                  }
+                }}
                 className="gap-2 p-2"
               >
                 <div className="flex size-6 items-center justify-center rounded-md border">
@@ -171,6 +186,11 @@ export function WorkspaceSwitcher({
                       ?.name || "Unknown"}
                   </span>
                 </div>
+                {workspace?.id === item.id && (
+                  <div className="p-1 bg-accent rounded-lg flex justify-center items-center">
+                    <Check className="size-4 text-primary" />
+                  </div>
+                )}
               </DropdownMenuItem>
             ))}
             <DropdownMenuSeparator />

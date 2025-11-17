@@ -17,5 +17,10 @@ export interface WorkspaceRow {
   id: string;
   name: string | null;
   logo: string | null;
+  owner_id: string;
+  created_at: string | null;
+  updated_at: string | null;
   plan: string | null;
+  slug: string | null;
+  metadata: Record<string, any> | null;
 }

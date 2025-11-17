@@ -16,15 +16,26 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { createClient } from "@/lib/supabase/client";
+import { fetchWorkspacesForOwner } from "@/lib/workspace";
 import type { UsersRow } from "@/types/supabase";
 import { usePathname } from "next/navigation";
 import { Product } from "@polar-sh/sdk/models/components/product.js";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
-export default function LayoutShell({ children, products }: { children: React.ReactNode; products: Product[] }) {
+export default function LayoutShell({
+  children,
+  products,
+}: {
+  children: React.ReactNode;
+  products: Product[];
+}) {
   const [profile, setProfile] = useState<UsersRow | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const [checkingWorkspaces, setCheckingWorkspaces] = useState(true);
+  const [ownerWorkspaces, setOwnerWorkspaces] = useState<any[] | null>(null);
+  const [firstWorkspaceId, setFirstWorkspaceId] = useState<string | null>(null);
 
   const pathname = usePathname();
   const router = useRouter();
@@ -33,8 +44,19 @@ export default function LayoutShell({ children, products }: { children: React.Re
     switch (pathname) {
       case "/dashboard":
         return "Overview";
-      case "/dashboard/documents/active":
-        return "Active Documents";
+      case "/dashboard/documents/published":
+        return "Published Documents";
+      case "/dashboard/documents/draft":
+        return "Draft Documents";
+      case "/dashboard/documents/archived":
+        return "Archived Documents";
+      case "/dashboard/documents/new":
+        return "Create a New Document";
+      case "/dashboard/settings/general":
+        return "General Settings";
+      case "/dashboard/settings/account":
+        return "Account Settings";
+
       default: {
         const segments = path.split("/").filter(Boolean);
         if (segments.length === 0) return "Page";
@@ -69,23 +91,35 @@ export default function LayoutShell({ children, products }: { children: React.Re
 
         setProfile(profileData as UsersRow | null);
 
-        // Now check workspaces owned by this user
-        const { data: wData, error: wError } = await supabase
-          .from("workspaces")
-          .select("id")
-          .eq("owner_id", user.id)
-          .limit(1);
+        // Now check workspaces owned by this user using the centralized helper
+        try {
+          const ownerWorkspaces = await fetchWorkspacesForOwner(
+            user.id,
+            supabase,
+          );
+          // store workspaces in local state for use elsewhere (e.g. links)
+          setOwnerWorkspaces(ownerWorkspaces ?? []);
+          const hasWorkspace =
+            Array.isArray(ownerWorkspaces) && ownerWorkspaces.length > 0;
 
-        if (wError) throw wError;
-
-        const hasWorkspace = Array.isArray(wData) && wData.length > 0;
-
-        if (!hasWorkspace) {
-          // If the current path is already /create, do nothing to avoid redirect loop
-          if (pathname !== "/create") {
-            router.push("/create");
+          if (hasWorkspace) {
+            // store first workspace id for convenience so UI can pre-fill workspaceId when creating documents
+            try {
+              const firstId = ownerWorkspaces[0]?.id ?? null;
+              if (firstId) setFirstWorkspaceId(firstId);
+            } catch {
+              // ignore unexpected shapes
+            }
+          } else {
+            // If the current path is already /create, do nothing to avoid redirect loop
+            if (pathname !== "/create") {
+              router.push("/create");
+            }
+            // No need to render the app sidebar etc.
           }
-          // No need to render the app sidebar etc.
+        } catch (wError: any) {
+          // Preserve previous behavior of surfacing DB errors
+          throw wError;
         }
       } catch (err: any) {
         setError(err);
@@ -100,10 +134,6 @@ export default function LayoutShell({ children, products }: { children: React.Re
   }, []);
 
   if (error) throw error;
-
-  if (loading || checkingWorkspaces) {
-    return null;
-  }
 
   return (
     <SidebarProvider>
@@ -121,8 +151,22 @@ export default function LayoutShell({ children, products }: { children: React.Re
               </BreadcrumbList>
             </Breadcrumb>
           </div>
+          {pathname === "/dashboard/documents/new" ? null : (
+            <Link
+              href={
+                firstWorkspaceId
+                  ? `/dashboard/documents/new?workspaceId=${firstWorkspaceId}`
+                  : "/dashboard/documents/new"
+              }
+              className="ml-auto mr-4"
+            >
+              <Button size={"sm"}>Create Document</Button>
+            </Link>
+          )}
         </header>
-        <div className="flex flex-1 flex-col gap-4 p-4 pt-0">{children}</div>
+        <div className="flex flex-1 flex-col gap-4 px-4 overflow-scroll h-full">
+          {children}
+        </div>
       </SidebarInset>
     </SidebarProvider>
   );

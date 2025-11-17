@@ -1,14 +1,11 @@
 "use client";
 
 import {
-  AudioWaveform,
   ChevronsUpDown,
   Cog,
-  Command,
   Cookie,
   Cuboid,
   Folder,
-  GalleryVerticalEnd,
   Handshake,
   Shield,
 } from "lucide-react";
@@ -25,10 +22,11 @@ import {
 } from "@/components/ui/sidebar";
 import { WorkspaceSwitcher } from "./workspace-switcher";
 import { createClient } from "@/lib/supabase/client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { WorkspaceRow } from "@/types/supabase";
 import { Skeleton } from "./ui/skeleton";
 import { Product } from "@polar-sh/sdk/models/components/product.js";
+import { Button } from "./ui/button";
 
 // This is sample data.
 const data = {
@@ -40,35 +38,35 @@ const data = {
     },
     {
       title: "Documents",
-      url: "/dashboard/documents/active",
+      url: "/dashboard/documents?state=active/",
       icon: Folder,
       items: [
         {
-          title: "Active",
-          url: "/dashboard/documents/active",
-        },
-        {
-          title: "Archived",
-          url: "/dashboard/documents/archived",
+          title: "Published",
+          url: "/dashboard/documents/published/",
         },
         {
           title: "Draft",
-          url: "/dashboard/documents/draft",
+          url: "/dashboard/documents/draft/",
+        },
+        {
+          title: "Archived",
+          url: "/dashboard/documents/archived/",
         },
       ],
     },
     {
       title: "Settings",
-      url: "/settings/general",
+      url: "/dashboard/settings/general/",
       icon: Cog,
       items: [
         {
           title: "General",
-          url: "/settings/general",
+          url: "/dashboard/settings/general/",
         },
         {
           title: "Account",
-          url: "/settings/account",
+          url: "/dashboard/settings/account/",
         },
         {
           title: "Billing",
@@ -97,20 +95,37 @@ const data = {
 };
 
 export function AppSidebar(props: { user: any; products: Product[] }) {
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
   const [workspaces, setWorkspaces] = useState<Array<any>>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  // track mounted state to avoid setting state after unmount
+  const isMountedRef = useRef<boolean>(true);
 
   useEffect(() => {
+    // Track mount state to avoid updating after unmount
     let isMounted = true;
+    // A timeout id used to cancel a stuck request (fallback)
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
 
-    const fetchWorkspaces = async () => {
-      setLoading(true);
+    const fetchWorkspaces = async (showLoader = false) => {
+      if (!isMounted) return;
+      if (showLoader) setLoading(true);
       setError(null);
 
+      // Start a safety timeout: if the fetch hangs, stop the loader and surface a message
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+        timeoutId = null;
+      }
+      timeoutId = setTimeout(() => {
+        if (!isMounted) return;
+        console.warn("[AppSidebar] fetchWorkspaces timed out");
+        setLoading(false);
+        setError("Request timed out. Please try again.");
+      }, 10000); // 10s fallback
+
       try {
-        // Fetch workspaces owned by the current user
         const { data, error: fetchError } = await supabase
           .from<string, WorkspaceRow>("workspaces")
           .select("id, name, logo, plan")
@@ -127,26 +142,101 @@ export function AppSidebar(props: { user: any; products: Product[] }) {
 
         if (!isMounted) return;
         setWorkspaces(mapped);
+        setError(null);
       } catch (err: any) {
         if (!isMounted) return;
-        setError(err.message ?? String(err));
+        console.error("[AppSidebar] fetchWorkspaces error", err);
+        setError(err?.message ?? String(err));
+        setWorkspaces([]);
       } finally {
         if (!isMounted) return;
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+          timeoutId = null;
+        }
         setLoading(false);
       }
     };
 
-    fetchWorkspaces();
+    // initial fetch and show loader
+    fetchWorkspaces(true);
+
+    // Re-fetch when other parts of the app signal the workspace changed.
+    // A small debounce prevents rapid refetch loops.
+    let lastHandled = 0;
+    const onWorkspaceChanged = (_ev?: Event) => {
+      if (!isMounted) return;
+      const now = Date.now();
+      if (now - lastHandled < 500) {
+        // ignore events within 500ms
+        return;
+      }
+      lastHandled = now;
+      // Subsequent refetch should not show the big loader to avoid UI flicker
+      fetchWorkspaces(false).catch((e) => {
+        console.warn("[AppSidebar] workspace-changed handler fetch failed", e);
+      });
+    };
+
+    if (typeof window !== "undefined") {
+      window.addEventListener(
+        "workspace-changed",
+        onWorkspaceChanged as EventListener,
+      );
+    }
 
     return () => {
       isMounted = false;
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+        timeoutId = null;
+      }
+      if (typeof window !== "undefined") {
+        try {
+          window.removeEventListener(
+            "workspace-changed",
+            onWorkspaceChanged as EventListener,
+          );
+        } catch {
+          // ignore
+        }
+      }
     };
+    // intentionally only run on mount/unmount
   }, [supabase]);
 
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader>
-        {loading ? (
+        {error ? (
+          <div className="flex items-center gap-3 p-3">
+            <div className="flex-1">
+              <div className="text-sm font-medium text-destructive">
+                Could not load workspaces
+              </div>
+              <div className="text-xs text-muted-foreground mt-1">{error}</div>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  // Retry by dispatching the same event the sidebar listens to
+                  try {
+                    window.dispatchEvent(
+                      new CustomEvent("workspace-changed", { detail: {} }),
+                    );
+                  } catch {
+                    // fallback: reload page
+                    window.location.reload();
+                  }
+                }}
+              >
+                Retry
+              </Button>
+            </div>
+          </div>
+        ) : loading ? (
           <Skeleton className="w-full h-12 flex justify-between items-center p-2">
             <Skeleton className="h-full aspect-square bg-ring" />
             <div className="flex flex-col w-full ml-2 gap-1">
@@ -156,7 +246,10 @@ export function AppSidebar(props: { user: any; products: Product[] }) {
             <ChevronsUpDown className="ml-auto size-5.5" />
           </Skeleton>
         ) : (
-          <WorkspaceSwitcher workspaces={workspaces} products={props.products} />
+          <WorkspaceSwitcher
+            workspaces={workspaces}
+            products={props.products}
+          />
         )}
       </SidebarHeader>
       <SidebarContent>
