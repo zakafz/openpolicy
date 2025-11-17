@@ -64,26 +64,27 @@ export function NavMain({
           return (
             <Collapsible
               key={item.title}
-              asChild
               // defaultOpen is provided by the precomputed value from the caller (item.defaultOpen)
               defaultOpen={true}
               className="group/collapsible"
             >
               <SidebarMenuItem>
-                <CollapsibleTrigger asChild>
-                  <SidebarMenuButton
-                    tooltip={item.title}
-                    className={
-                      item.items?.some((sub) => pathname + "/" === sub.url)
-                        ? "bg-sidebar-accent"
-                        : ""
-                    }
-                  >
-                    {item.icon && <item.icon />}
-                    <span>{item.title}</span>
-                    <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
-                  </SidebarMenuButton>
-                </CollapsibleTrigger>
+                <CollapsibleTrigger
+                  render={
+                    <SidebarMenuButton
+                      tooltip={item.title}
+                      className={
+                        item.items?.some((sub) => pathname + "/" === sub.url)
+                          ? "bg-sidebar-accent"
+                          : ""
+                      }
+                    >
+                      {item.icon && <item.icon />}
+                      <span>{item.title}</span>
+                      <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                    </SidebarMenuButton>
+                  }
+                ></CollapsibleTrigger>
                 <CollapsibleContent>
                   <SidebarMenuSub>
                     {item.items?.map((subItem) => (

@@ -38,6 +38,7 @@ export default function LayoutShell({
   const [firstWorkspaceId, setFirstWorkspaceId] = useState<string | null>(null);
 
   const pathname = usePathname();
+  const isDocumentDetail = pathname?.startsWith("/dashboard/d/") ?? false;
   const router = useRouter();
 
   function getBreadcrumbTitle(path: string) {
@@ -151,7 +152,8 @@ export default function LayoutShell({
               </BreadcrumbList>
             </Breadcrumb>
           </div>
-          {pathname === "/dashboard/documents/new" ? null : (
+          {pathname ===
+          "/dashboard/documents/new" ? null : isDocumentDetail ? null : (
             <Link
               href={
                 firstWorkspaceId

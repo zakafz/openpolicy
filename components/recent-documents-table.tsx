@@ -153,7 +153,7 @@ export default function RecentDocumentsTable({
                   <TableRow key={d.id}>
                     <TableCell className="font-medium">
                       <Link
-                        href={`/dashboard/documents/${d.id ?? d.slug}`}
+                        href={`/dashboard/d/${d.slug}`}
                         className="flex items-center gap-2"
                       >
                         <Icon

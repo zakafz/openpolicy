@@ -30,6 +30,7 @@ import {
   Truck,
 } from "lucide-react";
 import { TextShimmer } from "@/components/motion-primitives/text-shimmer";
+import { timeAgo } from "@/lib/utils";
 
 /**
  * Map document `type` values to lucide-react icons.
@@ -111,7 +112,7 @@ export default function DocumentsShell(props: {
         let q = supabase
           .from("documents")
           .select(
-            "id,title,slug,status,version,created_at,updated_at,published",
+            "id,title,slug,type,status,version,created_at,updated_at,published",
           )
           .order("created_at", { ascending: false });
 
@@ -146,35 +147,6 @@ export default function DocumentsShell(props: {
 
   const title =
     props.type.charAt(0).toUpperCase() + props.type.slice(1) + " Documents";
-
-  // Helper: absolute/relative formatting
-  function fmtAbsolute(date?: string | null) {
-    if (!date) return "";
-    try {
-      return new Date(date).toLocaleString();
-    } catch {
-      return String(date);
-    }
-  }
-
-  // Simple human-friendly relative time (e.g. "12 minutes ago", "3 hours ago")
-  function timeAgo(date?: string | null) {
-    if (!date) return "";
-    const then = new Date(date).getTime();
-    const now = Date.now();
-    const diffSec = Math.max(0, Math.floor((now - then) / 1000));
-    if (diffSec < 60) return `${diffSec} seconds ago`;
-    if (diffSec < 3600) {
-      const m = Math.floor(diffSec / 60);
-      return `${m} minute${m === 1 ? "" : "s"} ago`;
-    }
-    if (diffSec < 86400) {
-      const h = Math.floor(diffSec / 3600);
-      return `${h} hour${h === 1 ? "" : "s"} ago`;
-    }
-    const d = Math.floor(diffSec / 86400);
-    return `${d} day${d === 1 ? "" : "s"} ago`;
-  }
 
   // Href for creating a new document (preserve workspace if known)
   const createHref = workspaceId
@@ -228,7 +200,7 @@ export default function DocumentsShell(props: {
                   <TableRow key={d.id}>
                     <TableCell className="font-medium">
                       <Link
-                        href={`/dashboard/documents/${d.id ?? d.slug}`}
+                        href={`/dashboard/d/${d.slug}`}
                         className="flex items-center gap-2"
                       >
                         {(() => {
@@ -246,12 +218,16 @@ export default function DocumentsShell(props: {
                       </Link>
                     </TableCell>
 
-                    <TableCell>
-                      {typeLabelMap[String(d.type)] ??
-                        String(d.type ?? "other")}
-                    </TableCell>
-
                     <TableCell>{d.slug ?? "—"}</TableCell>
+
+                    <TableCell>
+                      {(() => {
+                        const label =
+                          typeLabelMap[String(d.type)] ??
+                          String(d.type ?? "other");
+                        return label;
+                      })()}
+                    </TableCell>
 
                     <TableCell>
                       <Badge variant="outline" className="capitalize">
@@ -277,7 +253,7 @@ export default function DocumentsShell(props: {
 
                     <TableCell
                       className="text-right"
-                      title={fmtAbsolute(d.created_at)}
+                      title={new Date(d.created_at).toLocaleString()}
                     >
                       {timeAgo(d.created_at)}
                     </TableCell>

@@ -1,0 +1,301 @@
+"use client";
+
+import React, { useEffect, useState } from "react";
+import Link from "next/link";
+import { createClient } from "@/lib/supabase/client";
+import { usePathname } from "next/navigation";
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
+import { ChevronDownIcon, Notebook, RouteIcon } from "lucide-react";
+import { TextShimmer } from "@/components/motion-primitives/text-shimmer";
+import { Button } from "@/components/ui/button";
+import {
+  Collapsible,
+  CollapsiblePanel,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import {
+  Frame,
+  FrameFooter,
+  FrameHeader,
+  FramePanel,
+} from "@/components/ui/frame";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { cn, fmtAbsolute, timeAgo } from "@/lib/utils";
+import PageTitle from "@/components/dashboard-page-title";
+
+export default function DocumentShell() {
+  const pathname = usePathname();
+  const slug = pathname
+    ? pathname.replace(/^\/dashboard\/d\//, "").split("/")[0] || null
+    : null;
+  const [workspaceId, setWorkspaceId] = useState<string | null>(null);
+  const [doc, setDoc] = useState<any | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Try to read selected workspace from localStorage (if not already set)
+  useEffect(() => {
+    if (workspaceId) return;
+
+    try {
+      const raw =
+        typeof window !== "undefined"
+          ? window.localStorage.getItem("selectedWorkspace")
+          : null;
+      if (!raw) return;
+      try {
+        const parsed = JSON.parse(raw);
+        if (typeof parsed === "string") setWorkspaceId(parsed);
+        else if (parsed && typeof parsed.id === "string")
+          setWorkspaceId(parsed.id);
+        else if (parsed && typeof parsed.workspaceId === "string")
+          setWorkspaceId(parsed.workspaceId);
+        else if (parsed && typeof parsed.selectedWorkspace === "string")
+          setWorkspaceId(parsed.selectedWorkspace);
+      } catch {
+        // not JSON, treat as plain string
+        setWorkspaceId(raw);
+      }
+    } catch {
+      // ignore localStorage errors
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Load the document for the given slug (optionally scoped to workspace)
+  useEffect(() => {
+    if (!slug) return;
+
+    let cancelled = false;
+
+    async function load() {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const supabase = createClient();
+
+        // Debug: what we're about to query
+        console.debug("DocumentShell: loading document", { slug, workspaceId });
+
+        // build the query, apply filters before coercing to a single result
+        let q: any = supabase
+          .from("documents")
+          .select(
+            "id,title,slug,content,type,status,version,workspace_id,owner_id,created_at,updated_at,published",
+          )
+          .eq("slug", slug);
+
+        if (workspaceId) {
+          // apply workspace scoping if a workspace is selected
+          q = q.eq("workspace_id", workspaceId);
+          console.debug(
+            "DocumentShell: applying workspace filter",
+            workspaceId,
+          );
+        }
+
+        // use maybeSingle() so we don't get an error when 0 rows are returned
+        const { data, error: fetchErr } = await q.maybeSingle();
+        if (cancelled) return;
+
+        if (fetchErr) {
+          console.error("Failed to load document:", fetchErr);
+          setError(fetchErr.message ?? "Failed to load document");
+          setDoc(null);
+        } else if (!data && workspaceId) {
+          // No document found with the workspace filter applied.
+          // Try a fallback: fetch the document by slug without workspace scoping
+          // so we can detect if the document exists in a different workspace.
+          try {
+            console.debug(
+              "DocumentShell: no document found with workspace scope, trying fallback without workspace",
+            );
+            const { data: fallbackData, error: fallbackErr } = await supabase
+              .from("documents")
+              .select(
+                "id,title,slug,content,type,status,version,workspace_id,owner_id,created_at,updated_at,published",
+              )
+              .eq("slug", slug)
+              .maybeSingle();
+
+            if (cancelled) return;
+
+            if (fallbackErr) {
+              console.error("Fallback fetch error:", fallbackErr);
+              setError(fallbackErr.message ?? "Failed to load document");
+              setDoc(null);
+            } else if (fallbackData) {
+              console.debug(
+                "DocumentShell: found document in different workspace",
+                fallbackData.workspace_id,
+              );
+              // Provide the document to the UI but surface an informational error
+              // so the user is aware it isn't in the currently selected workspace.
+              setDoc(fallbackData);
+              setError(
+                `Document exists but is in a different workspace (workspace_id=${fallbackData.workspace_id}).`,
+              );
+            } else {
+              // Not found at all
+              setDoc(null);
+              setError("Document not found");
+            }
+          } catch (e: any) {
+            if (cancelled) return;
+            console.error("Unexpected error during fallback fetch:", e);
+            setError(e?.message ?? "Unexpected error loading document");
+            setDoc(null);
+          }
+        } else {
+          // Found document (or no workspace scoping was requested)
+          setDoc(data ?? null);
+        }
+      } catch (e: any) {
+        if (cancelled) return;
+        console.error("Unexpected error loading document:", e);
+        setError(e?.message ?? "Unexpected error loading document");
+        setDoc(null);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+
+    load();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [workspaceId, slug]);
+
+  if (!slug) {
+    return (
+      <div className="w-full justify-center flex items-center h-full">
+        <Empty>
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <Notebook />
+            </EmptyMedia>
+            <EmptyTitle>No Document Found</EmptyTitle>
+            <EmptyDescription>
+              No document matching that slug was found. Please check the URL or
+              create a new document.
+            </EmptyDescription>
+          </EmptyHeader>
+        </Empty>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="w-full justify-center flex items-center h-full">
+        <TextShimmer className="font-mono text-sm" duration={1}>
+          Loading document...
+        </TextShimmer>
+      </div>
+    );
+  }
+
+  if (!doc) {
+    const message = String(error ?? "Document not found");
+    return (
+      <div className="w-full justify-center flex items-center h-full">
+        <Empty>
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <Notebook />
+            </EmptyMedia>
+            <EmptyTitle>Document not found</EmptyTitle>
+            <EmptyDescription>Details: {message}</EmptyDescription>
+          </EmptyHeader>
+          <EmptyContent>
+            <Link href="/dashboard/documents">
+              <Button>Back to documents</Button>
+            </Link>
+          </EmptyContent>
+        </Empty>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <PageTitle
+        title={doc.title.charAt(0).toUpperCase() + doc.title.slice(1)}
+      />
+      <Frame className="w-full">
+        <Collapsible>
+          <FrameHeader className="flex-row items-center justify-between px-2 py-2">
+            <div className="items-center flex gap-2">
+              <CollapsibleTrigger
+                className="data-panel-open:[&_svg]:rotate-180 capitalize"
+                render={<Button variant="ghost" />}
+              >
+                <ChevronDownIcon className="size-4" />
+                {doc.title}
+              </CollapsibleTrigger>
+              <Badge variant={"outline"}>
+                Slug: <span className="font-semibold">{doc.slug ?? "—"}</span>{" "}
+                <Separator orientation="vertical" />
+                Status:{" "}
+                <span
+                  className={cn(
+                    "font-semibold",
+                    doc.status === "draft"
+                      ? "text-orange-400"
+                      : doc.status === "archived"
+                        ? "text-muted-foreground"
+                        : "text-blue-500",
+                  )}
+                >
+                  {String(doc.status ?? "draft")}
+                </span>{" "}
+                <Separator orientation="vertical" />
+                Version:{" "}
+                <span className="font-semibold">
+                  {String(doc.version ?? "1")}
+                </span>
+              </Badge>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button aria-label="Edit" variant="ghost" size={"sm"}>
+                Edit
+              </Button>
+              <Button aria-label="Publish" className="mr-2" size={"sm"}>
+                Publish
+              </Button>
+            </div>
+          </FrameHeader>
+          <CollapsiblePanel>
+            <FramePanel>
+              {doc.content ? (
+                <pre className="whitespace-pre-wrap">{doc.content}</pre>
+              ) : (
+                <div className="text-sm text-muted-foreground">No content.</div>
+              )}
+            </FramePanel>
+          </CollapsiblePanel>
+        </Collapsible>
+        <FrameFooter className="flex flex-row justify-between">
+          <div className="text-xs font-mono text-muted-foreground">
+            Last updated:{" "}
+            <Badge variant={"secondary"}>{timeAgo(doc.updated_at)}</Badge>
+          </div>
+          <div className="text-xs font-mono text-muted-foreground">
+            Created:{" "}
+            <Badge variant={"secondary"}>{fmtAbsolute(doc.created_at)}</Badge>
+          </div>
+        </FrameFooter>
+      </Frame>
+    </>
+  );
+}
