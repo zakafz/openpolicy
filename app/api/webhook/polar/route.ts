@@ -2,6 +2,39 @@ import { Webhooks } from "@polar-sh/nextjs";
 import { createServiceClient } from "@/lib/supabase/service";
 import { fetchWorkspacesForOwner } from "@/lib/workspace";
 
+// Helper: fetch a remote image and upload to Supabase Storage (server-side)
+// This uses the service-role Supabase client (svc) passed in to perform the upload.
+// Bucket is expected to be configured (public in your case).
+async function uploadRemoteImageToBucket(
+  supabaseServiceClient: any,
+  remoteUrl: string,
+  bucketName: string,
+  destPath: string,
+) {
+  // fetch remote image
+  const res = await fetch(remoteUrl);
+  if (!res.ok) throw new Error(`Failed to fetch remote image: ${res.status}`);
+  const arrayBuffer = await res.arrayBuffer();
+  // Buffer is available in Node.js runtime for Next.js server functions
+  const buffer = Buffer.from(arrayBuffer);
+  const contentType =
+    res.headers.get("content-type") || "application/octet-stream";
+
+  // upload to storage (upsert true to overwrite)
+  const { error: uploadError } = await supabaseServiceClient.storage
+    .from(bucketName)
+    .upload(destPath, buffer, { contentType, upsert: true });
+
+  if (uploadError) throw uploadError;
+
+  // get public URL (bucket is public)
+  const { publicURL } = supabaseServiceClient.storage
+    .from(bucketName)
+    .getPublicUrl(destPath);
+
+  return { publicURL, path: destPath };
+}
+
 // Finalize a pending workspace by correlating webhook payload to pending_workspaces.
 async function finalizePendingWorkspace({
   svc,
@@ -236,6 +269,7 @@ async function finalizePendingWorkspace({
           name: pending.name,
           owner_id: pending.owner_id,
           plan: pending.plan,
+          // store the chosen remote URL initially; we'll attempt to upload it to storage below
           logo: chosenLogo,
           slug: pending.slug ?? pending.metadata?.slug ?? null,
         })
@@ -269,7 +303,34 @@ async function finalizePendingWorkspace({
       return;
     }
 
-    // Successfully created workspace; delete pending row
+    // Successfully created workspace; attempt to upload chosen remote logo into storage and update DB
+    try {
+      const bucketName = "workspace-logos";
+      const ext = String(chosenLogo).split(".").pop()?.split("?")[0] ?? "jpg";
+      const destPath = `logos/${workspace.id}/logo-${Date.now()}.${ext}`;
+
+      try {
+        const { publicURL, path } = await uploadRemoteImageToBucket(
+          svc,
+          chosenLogo,
+          bucketName,
+          destPath,
+        );
+
+        // Update workspace record with public URL and storage path
+        await svc
+          .from("workspaces")
+          .update({ logo: publicURL, logo_path: path })
+          .eq("id", workspace.id);
+      } catch (logoErr) {
+        // If upload fails, keep workspace created with the original chosenLogo URL.
+        console.warn("Uploading remote logo to storage failed:", logoErr);
+      }
+    } catch (e) {
+      console.warn("Logo storage step failed:", e);
+    }
+
+    // Delete pending row now that workspace is created
     console.log("workspace created, deleting pending", {
       pendingId: pending.id,
       workspaceId: workspace.id,

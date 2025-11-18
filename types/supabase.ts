@@ -17,10 +17,14 @@ export interface WorkspaceRow {
   id: string;
   name: string | null;
   logo: string | null;
+  logo_path: string | null;
   owner_id: string;
   created_at: string | null;
   updated_at: string | null;
   plan: string | null;
   slug: string | null;
   metadata: Record<string, any> | null;
+  support_email: string | null;
+  disable_icon: boolean;
+  return_url: string | null;
 }

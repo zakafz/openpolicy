@@ -539,11 +539,11 @@ export function Editor({
               </Toolbar>
             )}
           </FrameHeader>
-          <FramePanel className="flex-1 p-0! overflow-scroll pt-10!">
+          <FramePanel className="flex-1 p-0 overflow-scroll">
             <EditorContent
               editor={editor}
               role="presentation"
-              className="simple-editor-content"
+              className="simple-editor-content-edit py-20!"
             />
           </FramePanel>
         </Frame>

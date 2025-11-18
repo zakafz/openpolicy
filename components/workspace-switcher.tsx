@@ -101,7 +101,7 @@ export function WorkspaceSwitcher({
             >
               <div className="border text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
                 {workspace.logo ? (
-                  <Avatar className="h-8 w-8 rounded-lg">
+                  <Avatar className="h-8 w-8 min-w-8 min-h-8 rounded-lg">
                     <AvatarImage
                       src={
                         workspace.logo ||
@@ -168,7 +168,7 @@ export function WorkspaceSwitcher({
                 }}
                 className="gap-2 p-2"
               >
-                <div className="flex size-6 items-center justify-center rounded-md border">
+                <div className="flex items-center justify-center rounded-md border">
                   {item.logo ? (
                     <Avatar className="size-8 min-h-8 min-w-8 rounded-lg">
                       <AvatarImage

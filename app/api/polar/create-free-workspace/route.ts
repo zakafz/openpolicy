@@ -270,23 +270,25 @@ export async function POST(req: Request) {
 
     // Create the workspace directly in DB (no pending_workspaces)
     try {
-      // Choose a random logo from a small curated list
+      // Choose a random logo from a small curated list (we will upload this into the storage bucket)
       const logos = [
         "https://unblast.com/wp-content/uploads/2018/08/Gradient-Mesh-27.jpg",
         "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRbSkfgIzrobEXcqjh4iQEKOx9XN3dwebM24ZH6HtGH_cwiiGKrdT86DPAMqVINbAUjPnw&usqp=CAU",
         "https://static.vecteezy.com/system/resources/thumbnails/020/414/382/small/colorful-gradient-soft-background-video.jpg",
         "https://cdn.pixabay.com/video/2022/09/18/131766-751014982_tiny.jpg",
       ];
-      const logo = logos[Math.floor(Math.random() * logos.length)];
+      const chosenLogo = logos[Math.floor(Math.random() * logos.length)];
 
-      // Insert workspace using service client (privileged), including the selected logo
+      // Insert workspace using service client (privileged). We temporarily store the chosen remote URL
+      // in the `logo` column and then attempt to upload that remote image into the storage bucket
+      // and update the workspace with the storage path + public URL.
       const { data: workspace, error: createErr } = await svc
         .from("workspaces")
         .insert({
           name: name.trim(),
           owner_id,
           plan: productId,
-          logo,
+          logo: chosenLogo,
           // persist normalized slug if provided, otherwise null
           slug: normalizedSlug || null,
         })

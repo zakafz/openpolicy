@@ -13,7 +13,13 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
-import { ChevronDownIcon, Notebook, RouteIcon } from "lucide-react";
+import {
+  ChevronDownIcon,
+  Edit,
+  Edit2,
+  Notebook,
+  RouteIcon,
+} from "lucide-react";
 import { TextShimmer } from "@/components/motion-primitives/text-shimmer";
 import { Button } from "@/components/ui/button";
 import {
@@ -31,6 +37,18 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { cn, fmtAbsolute, timeAgo } from "@/lib/utils";
 import PageTitle from "@/components/dashboard-page-title";
+import {
+  Dialog,
+  DialogClose,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogPopup,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
 
 export default function DocumentShell() {
   const pathname = usePathname();
@@ -375,23 +393,65 @@ export default function DocumentShell() {
                 <ChevronDownIcon className="size-4" />
                 {doc.title}
               </CollapsibleTrigger>
-              <Badge variant={"outline"}>
-                Slug: <span className="font-semibold">{doc.slug ?? "—"}</span>{" "}
-                <Separator orientation="vertical" />
-                Status:{" "}
+              <Dialog>
+                <DialogTrigger
+                  render={
+                    <button>
+                      <Badge
+                        variant={"secondary"}
+                        className="hover:opacity-80 cursor-pointer"
+                      >
+                        Slug:{" "}
+                        <span className="font-semibold">{doc.slug ?? "—"}</span>
+                        <Edit2 className="ml-0.5" />
+                      </Badge>
+                    </button>
+                  }
+                />
+                <DialogPopup>
+                  <DialogHeader>
+                    <DialogTitle>Edit "{doc.title}" slug</DialogTitle>
+                    <DialogDescription>
+                      Edit the slug for this document. This will change the URL
+                      of the document.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <Field className="gap-2">
+                    <FieldLabel htmlFor="slug">Slug (URL)</FieldLabel>
+                    <Input
+                      id="slug"
+                      placeholder="e.g. privacy-policy"
+                      value={slug}
+                      autoComplete="off"
+                    />
+                    <FieldDescription>
+                      The slug will be used in the document URL. Lowercase
+                      letters, numbers and dashes only.
+                    </FieldDescription>
+                  </Field>
+                  <DialogFooter>
+                    <DialogClose render={<Button variant={"outline"} />}>
+                      Cancel
+                    </DialogClose>
+                    <Button disabled>Update</Button>
+                  </DialogFooter>
+                </DialogPopup>
+              </Dialog>
+
+              <Badge variant="secondary" className="capitalize">
                 <span
-                  className={cn(
-                    "font-semibold",
-                    doc.status === "draft"
-                      ? "text-orange-400"
+                  className={`size-1.5 rounded-full ${
+                    doc.status === "published"
+                      ? "bg-emerald-500"
                       : doc.status === "archived"
-                        ? "text-muted-foreground"
-                        : "text-blue-500",
-                  )}
-                >
-                  {String(doc.status ?? "draft")}
-                </span>{" "}
-                <Separator orientation="vertical" />
+                        ? "bg-muted-foreground/60"
+                        : "bg-amber-500"
+                  }`}
+                  aria-hidden="true"
+                />
+                {doc.status}
+              </Badge>
+              <Badge variant={"secondary"}>
                 Version:{" "}
                 <span className="font-semibold">
                   {String(doc.version ?? "1")}
@@ -416,7 +476,7 @@ export default function DocumentShell() {
             </div>
           </FrameHeader>
           <CollapsiblePanel>
-            <FramePanel>
+            <FramePanel className="py-10!">
               {doc.content ? (
                 <TiptapEditor
                   docId={doc.id ?? null}
@@ -427,7 +487,7 @@ export default function DocumentShell() {
                   readOnly={true}
                 />
               ) : (
-                <div className="text-sm text-muted-foreground">No content.</div>
+                <div className="text-sm text-muted-foreground">No content yet.</div>
               )}
             </FramePanel>
           </CollapsiblePanel>

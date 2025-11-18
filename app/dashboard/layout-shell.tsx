@@ -46,10 +46,12 @@ export default function LayoutShell({
     switch (pathname) {
       case "/dashboard":
         return "Overview";
+      case "/dashboard/documents/all":
+        return "All Documents";
       case "/dashboard/documents/published":
         return "Published Documents";
       case "/dashboard/documents/draft":
-        return "Draft Documents";
+        return "Drafts";
       case "/dashboard/documents/archived":
         return "Archived Documents";
       case "/dashboard/documents/new":
