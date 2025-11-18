@@ -163,7 +163,7 @@ export default function RecentDocumentsTable({
                 </EmptyMedia>
                 <EmptyTitle>No Recent documents</EmptyTitle>
                 <EmptyDescription>
-                  No document recently edited was found.
+                  No recently edited documents found.
                 </EmptyDescription>
               </EmptyHeader>
             </Empty>{" "}

@@ -42,6 +42,10 @@ const data = {
       icon: Folder,
       items: [
         {
+          title: "All",
+          url: "/dashboard/documents/all/",
+        },
+        {
           title: "Published",
           url: "/dashboard/documents/published/",
         },
@@ -254,7 +258,7 @@ export function AppSidebar(props: { user: any; products: Product[] }) {
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
-        <NavDocuments documents={data.documents} />
+        <NavDocuments />
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={props.user} />

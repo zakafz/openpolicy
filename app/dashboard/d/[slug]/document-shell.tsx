@@ -43,6 +43,9 @@ export default function DocumentShell() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
+  // when true, access to view/edit this document is blocked because the
+  // user's selected workspace doesn't match the document's workspace.
+  const [blocked, setBlocked] = useState<boolean>(false);
 
   // Try to read selected workspace from localStorage (if not already set)
   useEffect(() => {
@@ -177,12 +180,12 @@ export default function DocumentShell() {
               setError(fallbackErr.message ?? "Failed to load document");
               setDoc(null);
             } else if (fallbackData) {
-              // Allow opening the document even if it belongs to another workspace.
-              // Instead of blocking the user, surface a non-blocking informational
-              // message so they know the document is from a different workspace.
-              setDoc(fallbackData);
-              setInfo(
-                `This document belongs to a different workspace (workspace_id=${fallbackData.workspace_id}). You can view it, but it is not part of your selected workspace.`,
+              // The document exists but belongs to a different workspace.
+              // Block access when the selected workspace does not match.
+              setDoc(null);
+              setBlocked(true);
+              setError(
+                "Forbidden: this document belongs to a different workspace.",
               );
             } else {
               // Not found at all
@@ -197,7 +200,48 @@ export default function DocumentShell() {
           }
         } else {
           // Found document (or no workspace scoping was requested)
-          setDoc(data ?? null);
+          // If a selected workspace exists and it doesn't match the document's
+          // workspace, block access. Read the currently-selected workspace from
+          // localStorage (the same format used elsewhere in the app).
+          try {
+            const raw =
+              typeof window !== "undefined"
+                ? window.localStorage.getItem("selectedWorkspace")
+                : null;
+            let selectedWorkspaceId: string | null = null;
+            if (raw) {
+              try {
+                const parsed = JSON.parse(raw);
+                if (typeof parsed === "string") selectedWorkspaceId = parsed;
+                else if (parsed && typeof parsed.id === "string")
+                  selectedWorkspaceId = parsed.id;
+                else if (parsed && typeof parsed.workspaceId === "string")
+                  selectedWorkspaceId = parsed.workspaceId;
+                else if (parsed && typeof parsed.selectedWorkspace === "string")
+                  selectedWorkspaceId = parsed.selectedWorkspace;
+              } catch {
+                selectedWorkspaceId = raw;
+              }
+            }
+            if (
+              selectedWorkspaceId &&
+              data?.workspace_id &&
+              String(selectedWorkspaceId) !== String(data.workspace_id)
+            ) {
+              setDoc(null);
+              setBlocked(true);
+              setError(
+                "Forbidden: this document belongs to a different workspace.",
+              );
+            } else {
+              setDoc(data ?? null);
+              setBlocked(false);
+            }
+          } catch (e) {
+            // If anything goes wrong reading localStorage, allow viewing by default.
+            setDoc(data ?? null);
+            setBlocked(false);
+          }
         }
       } catch (e: any) {
         if (cancelled) return;
@@ -240,6 +284,34 @@ export default function DocumentShell() {
         <TextShimmer className="font-mono text-sm" duration={1}>
           Loading document...
         </TextShimmer>
+      </div>
+    );
+  }
+
+  // If we determined the user is not allowed to access this document because
+  // their selected workspace does not match the document's workspace, show a
+  // clear informational page and prevent viewing/editing.
+  if (blocked) {
+    return (
+      <div className="w-full justify-center flex items-center h-full">
+        <Empty>
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <Notebook />
+            </EmptyMedia>
+            <EmptyTitle>Access Denied</EmptyTitle>
+            <EmptyDescription>
+              This document belongs to a different workspace and cannot be
+              viewed from your currently selected workspace. Switch to the
+              document's workspace to view or edit it.
+            </EmptyDescription>
+          </EmptyHeader>
+          <EmptyContent>
+            <Link href="/dashboard">
+              <Button>Back to dashboard</Button>
+            </Link>
+          </EmptyContent>
+        </Empty>
       </div>
     );
   }
@@ -327,11 +399,17 @@ export default function DocumentShell() {
               </Badge>
             </div>
             <div className="flex items-center gap-2">
-              <Link href={`/dashboard/edit/${doc.slug}`}>
-                <Button aria-label="Edit" variant="ghost" size={"sm"}>
+              {blocked ? (
+                <Button aria-label="Edit" variant="ghost" size={"sm"} disabled>
                   Edit
                 </Button>
-              </Link>
+              ) : (
+                <Link href={`/dashboard/edit/${doc.slug}`}>
+                  <Button aria-label="Edit" variant="ghost" size={"sm"}>
+                    Edit
+                  </Button>
+                </Link>
+              )}
               <Button aria-label="Publish" className="mr-2" size={"sm"}>
                 Publish
               </Button>

@@ -53,7 +53,7 @@ const typeLabelMap: Record<string, string> = {
 };
 
 export default function DocumentsShell(props: {
-  type: "published" | "draft" | "archived";
+  type: "published" | "draft" | "archived" | "all";
 }) {
   const searchParams = useSearchParams();
   const initialWorkspaceId = searchParams?.get("workspaceId") ?? null;
@@ -106,14 +106,25 @@ export default function DocumentsShell(props: {
     async function load() {
       try {
         const supabase = createClient();
-        const { data, error: fetchErr } = await supabase
+        // Build query and conditionally filter by status. For the 'all' view we
+        // do not apply a status filter and we order by updated_at desc so the
+        // most recently edited documents appear first.
+        let q = supabase
           .from("documents")
           .select(
             "id,title,slug,type,status,version,created_at,updated_at,published",
           )
-          .eq("workspace_id", workspaceId)
-          .eq("status", props.type)
-          .order("created_at", { ascending: false });
+          .eq("workspace_id", workspaceId);
+
+        if (props.type !== "all") {
+          q = q.eq("status", props.type);
+        }
+
+        q = q.order(props.type === "all" ? "updated_at" : "created_at", {
+          ascending: false,
+        });
+
+        const { data, error: fetchErr } = await q;
 
         if (cancelled) return;
 
@@ -139,7 +150,9 @@ export default function DocumentsShell(props: {
   }, [workspaceId, props.type]);
 
   const title =
-    props.type.charAt(0).toUpperCase() + props.type.slice(1) + " Documents";
+    props.type === "all"
+      ? "All Documents"
+      : props.type.charAt(0).toUpperCase() + props.type.slice(1) + " Documents";
 
   // Href for creating a new document
   const createHref = workspaceId
@@ -165,9 +178,12 @@ export default function DocumentsShell(props: {
             </div>
           ) : !documents || documents.length === 0 ? (
             <div className="p-10 text-center">
-              <h3 className="text-lg font-medium">No {props.type} documents</h3>
+              <h3 className="text-lg font-medium">
+                No {props.type !== "all" ? props.type : ""} documents
+              </h3>
               <p className="text-sm text-muted-foreground mt-2">
-                You don't have any {props.type} documents yet.
+                You don't have any {props.type !== "all" ? props.type : ""}{" "}
+                documents yet.
               </p>
               <div className="mt-4 flex justify-center">
                 <Link href={createHref}>
