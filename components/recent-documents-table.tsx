@@ -14,7 +14,9 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
+import { useWorkspace } from "@/context/workspace";
 import {
+  Clock,
   Cookie,
   GlobeIcon,
   Handshake,
@@ -24,6 +26,13 @@ import {
   TicketX,
   Truck,
 } from "lucide-react";
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "./ui/empty";
 
 /**
  * Map document `type` values to lucide-react icons and human labels.
@@ -71,12 +80,29 @@ export default function RecentDocumentsTable({
 }: {
   workspaceId?: string;
 }) {
+  // Scope the recent documents to the provided workspaceId prop, or fall back
+  // to the currently-selected workspace from context to ensure the recent
+  // lists only show documents belonging to the active workspace.
+  const { selectedWorkspaceId } = useWorkspace();
+  const effectiveWorkspaceId = workspaceId ?? selectedWorkspaceId;
+
   const [docs, setDocs] = useState<any[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
+
+    // If there's no effective workspace to scope to, don't fetch unscoped data.
+    if (!effectiveWorkspaceId) {
+      setDocs([]);
+      setLoading(false);
+      setError(
+        "No workspace selected. Choose a workspace to view recent documents.",
+      );
+      return;
+    }
+
     async function load() {
       setLoading(true);
       setError(null);
@@ -88,7 +114,8 @@ export default function RecentDocumentsTable({
           .order("updated_at", { ascending: false })
           .limit(5);
 
-        if (workspaceId) q = q.eq("workspace_id", workspaceId);
+        // Always scope recent documents to the effective workspace id
+        q = q.eq("workspace_id", effectiveWorkspaceId);
 
         const { data, error: fetchErr } = await q;
         if (fetchErr) {
@@ -114,7 +141,7 @@ export default function RecentDocumentsTable({
     return () => {
       cancelled = true;
     };
-  }, [workspaceId]);
+  }, [effectiveWorkspaceId]);
 
   return (
     <Frame className="w-full">
@@ -129,7 +156,17 @@ export default function RecentDocumentsTable({
           </div>
         ) : !docs || docs.length === 0 ? (
           <div className="p-6 text-center text-sm text-muted-foreground">
-            No recent documents
+            <Empty>
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <Clock />
+                </EmptyMedia>
+                <EmptyTitle>No Recent documents</EmptyTitle>
+                <EmptyDescription>
+                  No document recently edited was found.
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>{" "}
           </div>
         ) : (
           <Table>

@@ -17,8 +17,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-
-// Icons for document types
 import {
   Cookie,
   GlobeIcon,
@@ -32,10 +30,6 @@ import {
 import { TextShimmer } from "@/components/motion-primitives/text-shimmer";
 import { timeAgo } from "@/lib/utils";
 
-/**
- * Map document `type` values to lucide-react icons.
- * If a type isn't known, the `LayersIcon` will be used as the fallback.
- */
 const typeIconMap: Record<string, React.ComponentType<any>> = {
   privacy: Shield,
   terms: Handshake,
@@ -71,11 +65,9 @@ export default function DocumentsShell(props: {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  // On mount: if workspaceId wasn't provided in the url, attempt to read the
-  // user's selected workspace from localStorage (supports plain id or JSON).
+  // On mount: if workspaceId wasn't provided in the url, attempt to read from localStorage
   useEffect(() => {
     if (workspaceId) return;
-
     try {
       const raw =
         typeof window !== "undefined"
@@ -92,63 +84,64 @@ export default function DocumentsShell(props: {
         else if (parsed && typeof parsed.selectedWorkspace === "string")
           setWorkspaceId(parsed.selectedWorkspace);
       } catch {
-        // not JSON, treat as plain string
         setWorkspaceId(raw);
       }
-    } catch {
-      // ignore localStorage errors
-    }
+    } catch {}
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Load documents for the workspace and requested type
+  // Load documents ONLY when workspaceId is present
   useEffect(() => {
-    async function load() {
-      setLoading(true);
-      setError(null);
+    // Don't run query if workspaceId isn't loaded yet
+    if (!workspaceId) {
+      setDocuments(null); // clear out old docs if switching workspace
+      setLoading(false);
+      return;
+    }
 
+    let cancelled = false; // in-flight fetch protection
+    setLoading(true);
+    setError(null);
+
+    async function load() {
       try {
         const supabase = createClient();
-        let q = supabase
+        const { data, error: fetchErr } = await supabase
           .from("documents")
           .select(
             "id,title,slug,type,status,version,created_at,updated_at,published",
           )
+          .eq("workspace_id", workspaceId)
+          .eq("status", props.type)
           .order("created_at", { ascending: false });
 
-        if (workspaceId) {
-          q = q.eq("workspace_id", workspaceId);
-        }
+        if (cancelled) return;
 
-        // Filter by status if provided (published/draft/archived)
-        if (props.type) {
-          q = q.eq("status", props.type);
-        }
-
-        const { data, error: fetchErr } = await q;
         if (fetchErr) {
-          console.error("Failed to load documents:", fetchErr);
           setError("Failed to load documents");
           setDocuments([]);
         } else {
-          setDocuments((data as any[]) ?? []);
+          setDocuments(data ?? []);
         }
-      } catch (e: any) {
-        console.error("Unexpected error loading documents:", e);
+      } catch (e) {
         setError("Unexpected error loading documents");
         setDocuments([]);
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     }
 
     load();
+
+    return () => {
+      cancelled = true;
+    };
   }, [workspaceId, props.type]);
 
   const title =
     props.type.charAt(0).toUpperCase() + props.type.slice(1) + " Documents";
 
-  // Href for creating a new document (preserve workspace if known)
+  // Href for creating a new document
   const createHref = workspaceId
     ? `/dashboard/documents/new?workspaceId=${workspaceId}`
     : `/dashboard/documents/new`;
@@ -217,9 +210,7 @@ export default function DocumentsShell(props: {
                         <span className="underline">{d.title}</span>
                       </Link>
                     </TableCell>
-
                     <TableCell>{d.slug ?? "—"}</TableCell>
-
                     <TableCell>
                       {(() => {
                         const label =
@@ -228,7 +219,6 @@ export default function DocumentsShell(props: {
                         return label;
                       })()}
                     </TableCell>
-
                     <TableCell>
                       <Badge variant="outline" className="capitalize">
                         <span
@@ -244,13 +234,10 @@ export default function DocumentsShell(props: {
                         {d.status}
                       </Badge>
                     </TableCell>
-
                     <TableCell>{d.version ?? "1"}</TableCell>
-
                     <TableCell>
                       <Badge variant="secondary">{timeAgo(d.updated_at)}</Badge>
                     </TableCell>
-
                     <TableCell
                       className="text-right"
                       title={new Date(d.created_at).toLocaleString()}

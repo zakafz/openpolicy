@@ -26,6 +26,7 @@ import {
   TicketX,
   Truck,
 } from "lucide-react";
+import { useWorkspace } from "@/context/workspace";
 
 /**
  * Map document `type` values to icons and human-readable labels.
@@ -95,11 +96,28 @@ function extractType(row: any) {
 }
 
 export default function DocumentsTable({ type, workspaceId }: Props) {
+  // If the caller didn't pass a workspaceId prop, use the selected workspace
+  // from the global provider. This ensures the table always shows documents
+  // scoped to the current workspace.
+  const { selectedWorkspaceId } = useWorkspace();
+  const effectiveWorkspaceId = workspaceId ?? selectedWorkspaceId;
+
   const [documents, setDocuments] = useState<any[] | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    // If we don't have a workspace to scope to, show a helpful message rather
+    // than fetching unscoped documents.
+    if (!effectiveWorkspaceId) {
+      setDocuments([]);
+      setLoading(false);
+      setError(
+        "No workspace selected. Choose a workspace to view its documents.",
+      );
+      return;
+    }
+
     async function load() {
       setLoading(true);
       setError(null);
@@ -113,7 +131,8 @@ export default function DocumentsTable({ type, workspaceId }: Props) {
           )
           .order("created_at", { ascending: false });
 
-        if (workspaceId) q = q.eq("workspace_id", workspaceId);
+        // Always scope to the effective workspace id (prop or selected workspace)
+        q = q.eq("workspace_id", effectiveWorkspaceId);
         if (type) q = q.eq("status", type);
 
         const { data, error: fetchErr } = await q;
@@ -122,8 +141,6 @@ export default function DocumentsTable({ type, workspaceId }: Props) {
           setError("Failed to load documents");
           setDocuments([]);
         } else {
-          // Log fetched rows for debugging when type is unexpectedly missing.
-          console.debug("Fetched documents rows:", data);
           // Normalize type for each row and store on a non-conflicting field to avoid
           // repeatedly normalizing during render.
           const rows = (data as any[] | null) ?? [];
@@ -143,7 +160,7 @@ export default function DocumentsTable({ type, workspaceId }: Props) {
     }
 
     load();
-  }, [workspaceId, type]);
+  }, [effectiveWorkspaceId, type]);
 
   function fmt(date?: string | null) {
     if (!date) return "";
@@ -154,8 +171,8 @@ export default function DocumentsTable({ type, workspaceId }: Props) {
     }
   }
 
-  const createHref = workspaceId
-    ? `/dashboard/documents/new?workspaceId=${workspaceId}`
+  const createHref = effectiveWorkspaceId
+    ? `/dashboard/documents/new?workspaceId=${effectiveWorkspaceId}`
     : `/dashboard/documents/new`;
 
   return (

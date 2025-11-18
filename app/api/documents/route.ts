@@ -13,6 +13,7 @@ type Body = {
   published?: boolean;
   version?: number;
   status?: string;
+  id?: string;
 };
 
 function normalizeSlug(raw: string) {
@@ -255,6 +256,144 @@ export async function POST(req: Request) {
       {
         error: "Server error",
         message: "Unexpected server error processing request",
+        detail: String(err),
+      },
+      { status: 500 },
+    );
+  }
+}
+
+/**
+ * PUT /api/documents or PUT /api/documents/:id
+ *
+ * Expects JSON body:
+ *  - id?: string (optional if provided in URL)
+ *  - content: string (the document content to persist; usually Tiptap JSON string)
+ *
+ * Security:
+ *  - Requires an authenticated user.
+ *  - User must be the document owner OR the owner of the workspace the document belongs to.
+ *
+ * Notes:
+ *  - If the request targets /api/documents/:id in the future, this handler will attempt
+ *    to extract the id from the request URL as a fallback. With the current app-router
+ *    structure, dynamic routes are usually placed in a subdirectory; still, we support
+ *    body.id to be flexible.
+ */
+export async function PUT(req: Request) {
+  try {
+    const body = (await req.json().catch(() => ({}))) as Body;
+
+    // Try to determine document id from body or URL path
+    let docId: string | undefined = undefined;
+    if (body && typeof body.id === "string" && body.id.trim().length > 0) {
+      docId = body.id;
+    } else {
+      try {
+        const url = new URL(req.url);
+        const parts = url.pathname.split("/").filter(Boolean);
+        // find last segment after 'documents'
+        const idx = parts.lastIndexOf("documents");
+        if (idx >= 0 && parts.length > idx + 1) {
+          docId = parts[idx + 1];
+        }
+      } catch {
+        // ignore URL parse errors
+      }
+    }
+
+    if (!docId) {
+      return NextResponse.json(
+        { error: "Missing document id. Provide `id` in body." },
+        { status: 400 },
+      );
+    }
+
+    const content =
+      typeof body.content !== "undefined" && body.content !== null
+        ? body.content
+        : "";
+
+    // Ensure authenticated user
+    const sessionSupabase = await createClient();
+    const {
+      data: { user },
+      error: authErr,
+    } = await sessionSupabase.auth.getUser();
+    if (authErr || !user) {
+      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    }
+
+    const svc = createServiceClient();
+
+    // Fetch the existing document so we can authorize the update
+    const { data: existing, error: fetchErr } = await svc
+      .from("documents")
+      .select("id, owner_id, workspace_id")
+      .eq("id", docId)
+      .maybeSingle();
+
+    if (fetchErr) {
+      console.error("Failed to fetch document for update:", fetchErr);
+      return NextResponse.json(
+        { error: "Failed to fetch document" },
+        { status: 500 },
+      );
+    }
+
+    if (!existing) {
+      return NextResponse.json(
+        { error: "Document not found" },
+        { status: 404 },
+      );
+    }
+
+    // Authorization: allow update if the user is the document owner or the workspace owner
+    if (String(existing.owner_id) !== String(user.id)) {
+      // verify workspace owner as a fallback
+      try {
+        const workspace = await fetchWorkspaceByIdServer(existing.workspace_id);
+        if (!workspace || String(workspace.owner_id) !== String(user.id)) {
+          return NextResponse.json(
+            { error: "Forbidden: not document or workspace owner" },
+            { status: 403 },
+          );
+        }
+      } catch (e) {
+        console.error("Failed to validate workspace ownership:", e);
+        return NextResponse.json(
+          { error: "Failed to validate permissions" },
+          { status: 500 },
+        );
+      }
+    }
+
+    // Perform the update
+    const { data: updated, error: updateErr } = await svc
+      .from("documents")
+      .update({ content })
+      .eq("id", docId)
+      .select()
+      .single();
+
+    if (updateErr) {
+      console.error("Failed to update document content:", updateErr);
+      return NextResponse.json(
+        {
+          error: "Failed to update document",
+          detail: updateErr?.message ?? String(updateErr),
+        },
+        { status: 500 },
+      );
+    }
+
+    return NextResponse.json({ ok: true, document: updated }, { status: 200 });
+  } catch (err) {
+    console.error("Server error in /api/documents PUT:", err);
+    return NextResponse.json(
+      {
+        error: "Server error",
+        message: "Unexpected server error processing PUT request",
         detail: String(err),
       },
       { status: 500 },

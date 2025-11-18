@@ -23,16 +23,8 @@ import {
   TicketX,
   Truck,
 } from "lucide-react";
-
-type DocumentType =
-  | "privacy"
-  | "terms"
-  | "cookie"
-  | "refund"
-  | "shipping"
-  | "intellectual-property"
-  | "data-protection"
-  | "other";
+import { contentTemplates } from "@/components/document-templates";
+import { DocumentType } from "@/types/documents";
 
 const documentTypes: {
   value: DocumentType;
@@ -116,6 +108,26 @@ export default function NewDocumentShell({
   );
   const [version] = useState<number>(1);
 
+  
+
+  function getTemplateForType(t: DocumentType, titleText: string) {
+    const base = contentTemplates[t] ?? contentTemplates.other;
+    const copy = JSON.parse(JSON.stringify(base));
+    try {
+      if (copy && Array.isArray(copy.content) && copy.content.length > 0) {
+        const first = copy.content[0];
+        if (first && first.type === "heading") {
+          first.content = [
+            { type: "text", text: titleText || "Document name" },
+          ];
+        }
+      }
+    } catch {
+      // fallback: do nothing
+    }
+    return copy;
+  }
+
   const [error, setError] = useState<string | null>(null);
   const [successUrl, setSuccessUrl] = useState<string | null>(null);
 
@@ -180,6 +192,8 @@ export default function NewDocumentShell({
       workspace_id: workspaceId,
       parent_id: parentId || null,
       status,
+      // Set initial content using the template for the selected type. Persist as a JSON string
+      content: JSON.stringify(getTemplateForType(type, title.trim())),
     };
 
     startTransition(async () => {
@@ -199,7 +213,7 @@ export default function NewDocumentShell({
           const docSlug = data?.slug ?? slug;
           setSuccessUrl(`/dashboard/documents/${docId ?? docSlug}`);
           // navigate to the new document or documents list
-          router.push(`/dashboard/documents/${docId ?? docSlug}`);
+          router.push(`/dashboard/d/${docId ?? docSlug}`);
         } else if (res.status === 409) {
           // Conflict, slug taken
           const body = await res.json().catch(() => null);
@@ -332,7 +346,7 @@ export default function NewDocumentShell({
               onValueChange={(val) => setStatus(val as any)}
             >
               <SelectTrigger className="bg-card">
-                <SelectValue className={'capitalize'}>{status}</SelectValue>
+                <SelectValue className={"capitalize"}>{status}</SelectValue>
               </SelectTrigger>
               <SelectPopup>
                 <SelectItem value="draft" className={"capitalize"}>

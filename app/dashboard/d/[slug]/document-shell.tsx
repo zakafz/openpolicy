@@ -1,9 +1,10 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { Editor as TiptapEditor } from "@/components/tiptap/editor/editor";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   Empty,
   EmptyContent,
@@ -36,10 +37,12 @@ export default function DocumentShell() {
   const slug = pathname
     ? pathname.replace(/^\/dashboard\/d\//, "").split("/")[0] || null
     : null;
+  const router = useRouter();
   const [workspaceId, setWorkspaceId] = useState<string | null>(null);
   const [doc, setDoc] = useState<any | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [info, setInfo] = useState<string | null>(null);
 
   // Try to read selected workspace from localStorage (if not already set)
   useEffect(() => {
@@ -69,6 +72,50 @@ export default function DocumentShell() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // If the selected workspace changes elsewhere (for example via the workspace
+  // switcher which persists selection to localStorage), redirect to the main
+  // dashboard so the user lands on the workspace homepage rather than staying
+  // on a document that belonged to the previous selection.
+  useEffect(() => {
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === "selectedWorkspace") {
+        try {
+          router.push("/dashboard");
+        } catch {
+          // ignore router failures
+        }
+      }
+    };
+
+    const handleWorkspaceChanged = (e: Event) => {
+      try {
+        // Custom event dispatched by WorkspaceProvider — navigate to dashboard
+        router.push("/dashboard");
+      } catch {
+        // ignore router failures
+      }
+    };
+
+    if (typeof window !== "undefined") {
+      window.addEventListener("storage", handleStorage);
+      // listen for programmatic workspace changes dispatched as a CustomEvent
+      // from the WorkspaceProvider
+      window.addEventListener(
+        "workspace-changed",
+        handleWorkspaceChanged as EventListener,
+      );
+    }
+    return () => {
+      if (typeof window !== "undefined") {
+        window.removeEventListener("storage", handleStorage);
+        window.removeEventListener(
+          "workspace-changed",
+          handleWorkspaceChanged as EventListener,
+        );
+      }
+    };
+  }, [router]);
 
   // Load the document for the given slug (optionally scoped to workspace)
   useEffect(() => {
@@ -113,12 +160,8 @@ export default function DocumentShell() {
           setDoc(null);
         } else if (!data && workspaceId) {
           // No document found with the workspace filter applied.
-          // Try a fallback: fetch the document by slug without workspace scoping
-          // so we can detect if the document exists in a different workspace.
+          // Try a fallback: fetch the document by slug without workspace scoping.
           try {
-            console.debug(
-              "DocumentShell: no document found with workspace scope, trying fallback without workspace",
-            );
             const { data: fallbackData, error: fallbackErr } = await supabase
               .from("documents")
               .select(
@@ -134,15 +177,12 @@ export default function DocumentShell() {
               setError(fallbackErr.message ?? "Failed to load document");
               setDoc(null);
             } else if (fallbackData) {
-              console.debug(
-                "DocumentShell: found document in different workspace",
-                fallbackData.workspace_id,
-              );
-              // Provide the document to the UI but surface an informational error
-              // so the user is aware it isn't in the currently selected workspace.
+              // Allow opening the document even if it belongs to another workspace.
+              // Instead of blocking the user, surface a non-blocking informational
+              // message so they know the document is from a different workspace.
               setDoc(fallbackData);
-              setError(
-                `Document exists but is in a different workspace (workspace_id=${fallbackData.workspace_id}).`,
+              setInfo(
+                `This document belongs to a different workspace (workspace_id=${fallbackData.workspace_id}). You can view it, but it is not part of your selected workspace.`,
               );
             } else {
               // Not found at all
@@ -175,7 +215,6 @@ export default function DocumentShell() {
       cancelled = true;
     };
   }, [workspaceId, slug]);
-
   if (!slug) {
     return (
       <div className="w-full justify-center flex items-center h-full">
@@ -227,13 +266,34 @@ export default function DocumentShell() {
     );
   }
 
+  // Prepare initial content for the shared Editor: try to parse stored JSON,
+  // otherwise pass the raw string. This value will be provided as
+  // `initialContent` to the imported `TiptapEditor` component used below.
+  let parsedInitialContent: any = null;
+  if (doc && doc.content) {
+    if (typeof doc.content === "string") {
+      try {
+        parsedInitialContent = JSON.parse(doc.content);
+      } catch {
+        parsedInitialContent = doc.content;
+      }
+    } else {
+      parsedInitialContent = doc.content;
+    }
+  }
+
   return (
     <>
       <PageTitle
         title={doc.title.charAt(0).toUpperCase() + doc.title.slice(1)}
       />
+      {info ? (
+        <div className="p-3 mb-4 rounded border-l-4 border-amber-400 bg-amber-50 text-amber-800 text-sm">
+          {info}
+        </div>
+      ) : null}
       <Frame className="w-full">
-        <Collapsible>
+        <Collapsible defaultOpen>
           <FrameHeader className="flex-row items-center justify-between px-2 py-2">
             <div className="items-center flex gap-2">
               <CollapsibleTrigger
@@ -267,9 +327,11 @@ export default function DocumentShell() {
               </Badge>
             </div>
             <div className="flex items-center gap-2">
-              <Button aria-label="Edit" variant="ghost" size={"sm"}>
-                Edit
-              </Button>
+              <Link href={`/dashboard/edit/${doc.slug}`}>
+                <Button aria-label="Edit" variant="ghost" size={"sm"}>
+                  Edit
+                </Button>
+              </Link>
               <Button aria-label="Publish" className="mr-2" size={"sm"}>
                 Publish
               </Button>
@@ -278,7 +340,14 @@ export default function DocumentShell() {
           <CollapsiblePanel>
             <FramePanel>
               {doc.content ? (
-                <pre className="whitespace-pre-wrap">{doc.content}</pre>
+                <TiptapEditor
+                  docId={doc.id ?? null}
+                  initialContent={parsedInitialContent}
+                  initialIsJson={typeof parsedInitialContent !== "string"}
+                  docTitle={doc.title ?? undefined}
+                  documentSlug={doc.slug ?? null}
+                  readOnly={true}
+                />
               ) : (
                 <div className="text-sm text-muted-foreground">No content.</div>
               )}

@@ -39,6 +39,7 @@ export default function LayoutShell({
 
   const pathname = usePathname();
   const isDocumentDetail = pathname?.startsWith("/dashboard/d/") ?? false;
+  const isDocumentEdit = pathname?.startsWith("/dashboard/edit/") ?? false;
   const router = useRouter();
 
   function getBreadcrumbTitle(path: string) {
@@ -140,32 +141,34 @@ export default function LayoutShell({
     <SidebarProvider>
       <AppSidebar user={profile} products={products} />
       <SidebarInset className="bg-card">
-        <header className="flex h-14 shrink-0 border-b items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
-          <div className="flex items-center  gap-2 px-4">
-            <SidebarTrigger className="-ml-1" />
-            <Breadcrumb>
-              <BreadcrumbList>
-                <BreadcrumbSeparator className="hidden md:block" />
-                <BreadcrumbItem>
-                  <BreadcrumbPage>{breadcrumbTitle}</BreadcrumbPage>
-                </BreadcrumbItem>
-              </BreadcrumbList>
-            </Breadcrumb>
-          </div>
-          {pathname ===
-          "/dashboard/documents/new" ? null : isDocumentDetail ? null : (
-            <Link
-              href={
-                firstWorkspaceId
-                  ? `/dashboard/documents/new?workspaceId=${firstWorkspaceId}`
-                  : "/dashboard/documents/new"
-              }
-              className="ml-auto mr-4"
-            >
-              <Button size={"sm"}>Create Document</Button>
-            </Link>
-          )}
-        </header>
+        {!isDocumentEdit && (
+          <header className="flex h-14 shrink-0 border-b items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
+            <div className="flex items-center  gap-2 px-4">
+              <SidebarTrigger className="-ml-1" />
+              <Breadcrumb>
+                <BreadcrumbList>
+                  <BreadcrumbSeparator className="hidden md:block" />
+                  <BreadcrumbItem>
+                    <BreadcrumbPage>{breadcrumbTitle}</BreadcrumbPage>
+                  </BreadcrumbItem>
+                </BreadcrumbList>
+              </Breadcrumb>
+            </div>
+            {pathname ===
+            "/dashboard/documents/new" ? null : isDocumentDetail ? null : (
+              <Link
+                href={
+                  firstWorkspaceId
+                    ? `/dashboard/documents/new?workspaceId=${firstWorkspaceId}`
+                    : "/dashboard/documents/new"
+                }
+                className="ml-auto mr-4"
+              >
+                <Button size={"sm"}>Create Document</Button>
+              </Link>
+            )}
+          </header>
+        )}
         <div className="flex flex-1 flex-col gap-4 px-4 overflow-scroll h-full">
           {children}
         </div>

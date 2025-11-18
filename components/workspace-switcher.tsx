@@ -22,6 +22,7 @@ import { WorkspaceRow } from "@/types/supabase";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Product } from "@polar-sh/sdk/models/components/product.js";
 import { useWorkspace } from "@/context/workspace";
+import { useRouter } from "next/navigation";
 
 export function WorkspaceSwitcher({
   workspaces,
@@ -34,6 +35,7 @@ export function WorkspaceSwitcher({
   const { selectedWorkspaceId, setSelectedWorkspaceId, setSelectedWorkspace } =
     useWorkspace();
   const [workspace, setWorkspace] = React.useState<WorkspaceRow | null>(null);
+  const router = useRouter();
 
   React.useEffect(() => {
     // Keep selected workspace in sync when the prop changes (e.g. first load / updates)
@@ -151,6 +153,13 @@ export function WorkspaceSwitcher({
                       } else if (setSelectedWorkspace) {
                         // Fallback: set full workspace object if id-only setter isn't available.
                         setSelectedWorkspace(item);
+                      }
+                      // Navigate to the dashboard after switching workspaces so the user
+                      // lands on the workspace homepage.
+                      try {
+                        router.push("/dashboard");
+                      } catch {
+                        // ignore router failures
                       }
                     }
                   } catch (e) {
