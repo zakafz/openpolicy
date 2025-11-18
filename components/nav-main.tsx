@@ -21,6 +21,7 @@ import { usePathname } from "next/navigation";
 
 export function NavMain({
   items,
+  counts,
 }: {
   items: {
     title: string;
@@ -32,6 +33,8 @@ export function NavMain({
       url: string;
     }[];
   }[];
+  // optional mapping of submenu title (lowercased) -> count to display on the right
+  counts?: Record<string, number | string>;
 }) {
   const pathname = usePathname();
   return (
@@ -97,8 +100,21 @@ export function NavMain({
                               : ""
                           }
                         >
-                          <a href={subItem.url}>
-                            <span>{subItem.title}</span>
+                          <a
+                            href={subItem.url}
+                            className="flex items-center w-full gap-2"
+                          >
+                            <span className="truncate">{subItem.title}</span>
+                            {/* Count at the far right of the menu button */}
+                            <span className="ml-auto font-mono text-xs text-muted-foreground">
+                              {(() => {
+                                if (!counts) return null;
+                                const key = String(
+                                  subItem.title || "",
+                                ).toLowerCase();
+                                return counts[key] ?? null;
+                              })()}
+                            </span>
                           </a>
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>

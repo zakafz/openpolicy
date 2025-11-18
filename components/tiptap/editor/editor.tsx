@@ -374,19 +374,65 @@ export function Editor({
     try {
       // The server expects `content` to be a string; stringify the Tiptap JSON so
       // it can be stored in the `documents.content` text column and parsed later.
-      await fetch(`/api/documents`, {
+      const res = await fetch(`/api/documents`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ id: docId, content: JSON.stringify(payload) }),
       });
-      setLastSavedAt(Date.now());
-      // Mark document as clean after successful save
-      setIsDirty(false);
+
+      // Try to parse the response body as JSON (server returns updated document)
+      let body: any = null;
+      try {
+        body = await res.json().catch(() => null);
+      } catch {
+        body = null;
+      }
+
+      if (!res.ok) {
+        // Surface server-side error to console for now.
+        console.error(
+          "Failed to save document content (server):",
+          res.status,
+          body,
+        );
+      } else {
+        // If server returned the updated document, prefer its updated_at to set lastSavedAt.
+        const updatedDoc = body?.document ?? body;
+        if (updatedDoc && updatedDoc.updated_at) {
+          const parsed = Date.parse(String(updatedDoc.updated_at));
+          if (!Number.isNaN(parsed)) {
+            setLastSavedAt(parsed);
+          } else {
+            setLastSavedAt(Date.now());
+          }
+        } else {
+          // Fallback: set last saved to now
+          setLastSavedAt(Date.now());
+        }
+
+        // Mark document as clean after successful save
+        setIsDirty(false);
+
+        // Dispatch a custom event so other parts of the app (sidebar, recent lists, etc.)
+        // can react to the fact that the document was saved and potentially refresh.
+        try {
+          window.dispatchEvent(
+            new CustomEvent("document-saved", {
+              detail: {
+                id: docId,
+                updated_at: updatedDoc?.updated_at ?? new Date().toISOString(),
+              },
+            }),
+          );
+        } catch (e) {
+          // ignore event dispatch errors
+        }
+      }
     } catch (err) {
       // For now, log the error. Server-side should return meaningful responses.
-      console.error("Failed to save document content:", err);
+      console.error("Failed to save document content (network):", err);
     } finally {
       setIsSaving(false);
     }

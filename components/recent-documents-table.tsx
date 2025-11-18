@@ -33,6 +33,7 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "./ui/empty";
+import { fmtAbsolute } from "@/lib/utils";
 
 /**
  * Map document `type` values to lucide-react icons and human labels.
@@ -216,7 +217,7 @@ export default function RecentDocumentsTable({
                         {d.status}
                       </Badge>
                     </TableCell>
-                    <TableCell className="flex justify-end">
+                    <TableCell className="flex justify-end" title={fmtAbsolute(d.updated_at)}>
                       <Badge variant="secondary">{timeAgo(d.updated_at)}</Badge>
                     </TableCell>
                   </TableRow>

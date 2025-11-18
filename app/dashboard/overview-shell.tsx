@@ -13,36 +13,120 @@ import PageTitle from "@/components/dashboard-page-title";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import RecentDocumentsTable from "@/components/recent-documents-table";
+// Supabase client for fetching real stats
+import { createClient } from "@/lib/supabase/client";
 
 export default function OverviewShell(): React.ReactElement {
   const { selectedWorkspaceId } = useWorkspace();
   const { workspace, loading, error, reload } = useWorkspaceLoader();
-  const data = [
-    {
-      name: "Profit",
-      value: "$287,654.00",
-      change: "+8.32%",
-      changeType: "positive",
-    },
-    {
-      name: "Late payments",
-      value: "$9,435.00",
-      change: "-12.64%",
-      changeType: "negative",
-    },
-    {
-      name: "Pending orders",
-      value: "$173,229.00",
-      change: "+2.87%",
-      changeType: "positive",
-    },
-    {
-      name: "Operating costs",
-      value: "$52,891.00",
-      change: "-5.73%",
-      changeType: "negative",
-    },
-  ];
+  // Live stats fetched for the selected workspace
+  const [stats, setStats] = React.useState({
+    all: 0,
+    published: 0,
+    drafts: 0,
+    archived: 0,
+  });
+  const [statsLoading, setStatsLoading] = React.useState(false);
+
+  React.useEffect(() => {
+    let cancelled = false;
+    async function loadStats() {
+      if (!selectedWorkspaceId) {
+        setStats({ all: 0, published: 0, drafts: 0, archived: 0 });
+        return;
+      }
+      setStatsLoading(true);
+      try {
+        const supabase = createClient();
+
+        // total count
+        const totalRes = await supabase
+          .from("documents")
+          .select("id", { count: "exact", head: true })
+          .eq("workspace_id", selectedWorkspaceId);
+
+        // published
+        const publishedRes = await supabase
+          .from("documents")
+          .select("id", { count: "exact", head: true })
+          .eq("workspace_id", selectedWorkspaceId)
+          .eq("status", "published");
+
+        // drafts
+        const draftRes = await supabase
+          .from("documents")
+          .select("id", { count: "exact", head: true })
+          .eq("workspace_id", selectedWorkspaceId)
+          .eq("status", "draft");
+
+        // archived
+        const archivedRes = await supabase
+          .from("documents")
+          .select("id", { count: "exact", head: true })
+          .eq("workspace_id", selectedWorkspaceId)
+          .eq("status", "archived");
+
+        const allCount = totalRes.count ?? 0;
+        const publishedCount = publishedRes.count ?? 0;
+        const draftsCount = draftRes.count ?? 0;
+        const archivedCount = archivedRes.count ?? 0;
+
+        if (!cancelled) {
+          setStats({
+            all: Number(allCount),
+            published: Number(publishedCount),
+            drafts: Number(draftsCount),
+            archived: Number(archivedCount),
+          });
+        }
+      } catch (e) {
+        console.error("Failed to load workspace stats", e);
+        if (!cancelled) {
+          setStats({ all: 0, published: 0, drafts: 0, archived: 0 });
+        }
+      } finally {
+        if (!cancelled) setStatsLoading(false);
+      }
+    }
+
+    loadStats();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedWorkspaceId]);
+
+  const data = React.useMemo(() => {
+    // While loading, show an ellipsis for all stats
+    if (statsLoading) {
+      return [
+        { name: "All Documents", value: "…" },
+        { name: "Published Docs", value: "…" },
+        { name: "Drafts", value: "…" },
+        { name: "Archived Docs", value: "…" },
+      ];
+    }
+
+    // For Published/Drafts/Archived show "none" when count is 0.
+    // For All Documents show the numeric value (including 0).
+    return [
+      { name: "All Documents", value: String(stats.all ?? 0) },
+      {
+        name: "Published Docs",
+        value:
+          Number(stats.published ?? 0) === 0 ? "none" : String(stats.published),
+      },
+      {
+        name: "Drafts",
+        value: Number(stats.drafts ?? 0) === 0 ? "none" : String(stats.drafts),
+      },
+      {
+        name: "Archived Docs",
+        value:
+          Number(stats.archived ?? 0) === 0 ? "none" : String(stats.archived),
+      },
+    ];
+  }, [stats, statsLoading]);
   if (!selectedWorkspaceId) {
     return <NoSelectedWorkspace />;
   }
@@ -77,16 +161,7 @@ export default function OverviewShell(): React.ReactElement {
               <div className="text-sm font-medium text-muted-foreground">
                 {stat.name}
               </div>
-              <div
-                className={cn(
-                  "text-xs font-medium",
-                  stat.changeType === "positive"
-                    ? "text-green-800 dark:text-green-400"
-                    : "text-red-800 dark:text-red-400",
-                )}
-              >
-                {stat.change}
-              </div>
+
               <div className="w-full flex-none text-3xl font-medium tracking-tight text-foreground">
                 {stat.value}
               </div>

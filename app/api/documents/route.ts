@@ -368,10 +368,16 @@ export async function PUT(req: Request) {
       }
     }
 
-    // Perform the update
+    // Perform the update (persist content and updated_at)
+    const updatePayload: Record<string, any> = {
+      content,
+      // set updated_at to now so the "last edited" column reflects the save time
+      updated_at: new Date().toISOString(),
+    };
+
     const { data: updated, error: updateErr } = await svc
       .from("documents")
-      .update({ content })
+      .update(updatePayload)
       .eq("id", docId)
       .select()
       .single();

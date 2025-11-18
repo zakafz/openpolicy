@@ -23,6 +23,7 @@ import {
 import { WorkspaceSwitcher } from "./workspace-switcher";
 import { createClient } from "@/lib/supabase/client";
 import { useEffect, useState, useMemo, useRef } from "react";
+import { useWorkspace } from "@/context/workspace";
 import { WorkspaceRow } from "@/types/supabase";
 import { Skeleton } from "./ui/skeleton";
 import { Product } from "@polar-sh/sdk/models/components/product.js";
@@ -65,8 +66,8 @@ const data = {
       icon: Cog,
       items: [
         {
-          title: "General",
-          url: "/dashboard/settings/general/",
+          title: "Workspace",
+          url: "/dashboard/settings/workspace/",
         },
         {
           title: "Account",
@@ -100,11 +101,85 @@ const data = {
 
 export function AppSidebar(props: { user: any; products: Product[] }) {
   const supabase = useMemo(() => createClient(), []);
+  const { selectedWorkspaceId } = useWorkspace();
   const [workspaces, setWorkspaces] = useState<Array<any>>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   // track mounted state to avoid setting state after unmount
   const isMountedRef = useRef<boolean>(true);
+
+  // document counts for sidebar (scoped to selected workspace)
+  const [docCounts, setDocCounts] = useState({
+    all: 0,
+    published: 0,
+    draft: 0,
+    archived: 0,
+  });
+  const [countsLoading, setCountsLoading] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadCounts() {
+      if (!selectedWorkspaceId) {
+        setDocCounts({ all: 0, published: 0, draft: 0, archived: 0 });
+        return;
+      }
+      setCountsLoading(true);
+      try {
+        const sb = createClient();
+        const total = await sb
+          .from("documents")
+          .select("id", { count: "exact", head: true })
+          .eq("workspace_id", selectedWorkspaceId);
+        const published = await sb
+          .from("documents")
+          .select("id", { count: "exact", head: true })
+          .eq("workspace_id", selectedWorkspaceId)
+          .eq("status", "published");
+        const draft = await sb
+          .from("documents")
+          .select("id", { count: "exact", head: true })
+          .eq("workspace_id", selectedWorkspaceId)
+          .eq("status", "draft");
+        const archived = await sb
+          .from("documents")
+          .select("id", { count: "exact", head: true })
+          .eq("workspace_id", selectedWorkspaceId)
+          .eq("status", "archived");
+
+        if (cancelled) return;
+
+        setDocCounts({
+          all: Number(total.count ?? 0),
+          published: Number(published.count ?? 0),
+          draft: Number(draft.count ?? 0),
+          archived: Number(archived.count ?? 0),
+        });
+      } catch (e) {
+        console.error("Failed to load sidebar document counts", e);
+        if (!cancelled)
+          setDocCounts({ all: 0, published: 0, draft: 0, archived: 0 });
+      } finally {
+        if (!cancelled) setCountsLoading(false);
+      }
+    }
+
+    loadCounts();
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedWorkspaceId]);
+
+  // memoized counts map for passing to NavMain
+  const navCounts = useMemo(
+    () => ({
+      all: docCounts.all,
+      published: docCounts.published,
+      draft: docCounts.draft,
+      archived: docCounts.archived,
+    }),
+    [docCounts],
+  );
 
   useEffect(() => {
     // Track mount state to avoid updating after unmount
@@ -257,7 +332,7 @@ export function AppSidebar(props: { user: any; products: Product[] }) {
         )}
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
+        <NavMain items={data.navMain} counts={navCounts} />
         <NavDocuments />
       </SidebarContent>
       <SidebarFooter>

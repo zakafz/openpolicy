@@ -35,7 +35,7 @@ import {
   AlertDialogClose,
 } from "@/components/ui/alert-dialog";
 
-export default function GeneralShell() {
+export default function WorkspaceShell() {
   const { selectedWorkspaceId } = useWorkspace();
   const { workspace, loading, error, reload } = useWorkspaceLoader();
   const router = useRouter();
@@ -208,15 +208,25 @@ export default function GeneralShell() {
   return (
     <>
       <PageTitle
-        title="General Settings"
+        title="Workspace Settings"
         description="Manage your workspace settings."
       />
       {/*Workspace name*/}
       <form onSubmit={handleSave}>
         <Frame>
-          <FrameHeader>
-            <FrameTitle>Workspace</FrameTitle>
-            <FrameDescription>Manage workspace settings.</FrameDescription>
+          <FrameHeader className="flex justify-between flex-row items-center">
+            <div>
+              <FrameTitle>Workspace</FrameTitle>
+              <FrameDescription>Manage workspace settings.</FrameDescription>
+            </div>
+            <Button
+              type="submit"
+              size={"sm"}
+              className="w-fit ml-auto"
+              disabled={!isDirty || saving || fetching}
+            >
+              {saving ? "Saving..." : "Save"}
+            </Button>
           </FrameHeader>
           <FramePanel>
             <Field>
@@ -244,16 +254,6 @@ export default function GeneralShell() {
               {/*<FieldError>Please enter a valid name.</FieldError>*/}
             </Field>
           </FramePanel>
-          <FrameFooter>
-            <Button
-              type="submit"
-              size={"sm"}
-              className="w-fit ml-auto"
-              disabled={!isDirty || saving || fetching}
-            >
-              {saving ? "Saving..." : "Save"}
-            </Button>
-          </FrameFooter>
         </Frame>
       </form>
       {/*Workspace delete*/}

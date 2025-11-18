@@ -307,9 +307,19 @@ export default function AccountShell() {
 
       <form onSubmit={handleSave}>
         <Frame>
-          <FrameHeader>
-            <FrameTitle>Account</FrameTitle>
-            <FrameDescription>Manage account settings.</FrameDescription>
+          <FrameHeader className="flex justify-between flex-row items-center">
+            <div>
+              <FrameTitle>Account</FrameTitle>
+              <FrameDescription>Manage account settings.</FrameDescription>
+            </div>
+            <Button
+              type="submit"
+              size={"sm"}
+              className="w-fit ml-auto h-fit"
+              disabled={fetching || saving || !isDirty}
+            >
+              {saving ? "Saving..." : "Save"}
+            </Button>
           </FrameHeader>
           <FramePanel>
             <Field>
@@ -357,16 +367,6 @@ export default function AccountShell() {
               <div className="text-sm text-destructive mt-3">{errorMsg}</div>
             )}
           </FramePanel>
-          <FrameFooter>
-            <Button
-              type="submit"
-              size={"sm"}
-              className="w-fit ml-auto"
-              disabled={fetching || saving || !isDirty}
-            >
-              {saving ? "Saving..." : "Save"}
-            </Button>
-          </FrameFooter>
         </Frame>
       </form>
 
