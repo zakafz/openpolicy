@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 import RecentDocumentsTable from "@/components/recent-documents-table";
 // Supabase client for fetching real stats
 import { createClient } from "@/lib/supabase/client";
+import { fetchWorkspaceDocumentCounts } from "@/lib/documents";
 
 export default function OverviewShell(): React.ReactElement {
   const { selectedWorkspaceId } = useWorkspace();
@@ -37,46 +38,17 @@ export default function OverviewShell(): React.ReactElement {
       }
       setStatsLoading(true);
       try {
-        const supabase = createClient();
-
-        // total count
-        const totalRes = await supabase
-          .from("documents")
-          .select("id", { count: "exact", head: true })
-          .eq("workspace_id", selectedWorkspaceId);
-
-        // published
-        const publishedRes = await supabase
-          .from("documents")
-          .select("id", { count: "exact", head: true })
-          .eq("workspace_id", selectedWorkspaceId)
-          .eq("status", "published");
-
-        // drafts
-        const draftRes = await supabase
-          .from("documents")
-          .select("id", { count: "exact", head: true })
-          .eq("workspace_id", selectedWorkspaceId)
-          .eq("status", "draft");
-
-        // archived
-        const archivedRes = await supabase
-          .from("documents")
-          .select("id", { count: "exact", head: true })
-          .eq("workspace_id", selectedWorkspaceId)
-          .eq("status", "archived");
-
-        const allCount = totalRes.count ?? 0;
-        const publishedCount = publishedRes.count ?? 0;
-        const draftsCount = draftRes.count ?? 0;
-        const archivedCount = archivedRes.count ?? 0;
+        const counts = await fetchWorkspaceDocumentCounts(
+          selectedWorkspaceId,
+          createClient(),
+        );
 
         if (!cancelled) {
           setStats({
-            all: Number(allCount),
-            published: Number(publishedCount),
-            drafts: Number(draftsCount),
-            archived: Number(archivedCount),
+            all: Number(counts.all ?? 0),
+            published: Number(counts.published ?? 0),
+            drafts: Number(counts.drafts ?? 0),
+            archived: Number(counts.archived ?? 0),
           });
         }
       } catch (e) {

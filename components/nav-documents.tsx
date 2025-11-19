@@ -36,6 +36,7 @@ import {
 } from "@/components/ui/sidebar";
 
 import { createClient } from "@/lib/supabase/client";
+import { fetchDocumentsForWorkspace } from "@/lib/documents";
 import { useWorkspace } from "@/context/workspace";
 
 export function NavDocuments() {
@@ -82,28 +83,21 @@ export function NavDocuments() {
       setLoading(true);
       setError(null);
       try {
-        const supabase = createClient();
-        const q = supabase
-          .from("documents")
-          .select("id,title,slug,type,updated_at")
-          .eq("workspace_id", selectedWorkspaceId)
-          .order("updated_at", { ascending: false })
-          .limit(3);
-
-        const { data, error: fetchErr } = await q;
-        if (fetchErr) {
-          console.error("Failed to load recent documents:", fetchErr);
-          if (!cancelled) {
-            setError("Failed to load recent documents");
-            setDocs([]);
-          }
-        } else {
-          if (!cancelled) setDocs((data as any[]) ?? []);
-        }
-      } catch (e) {
-        console.error("Unexpected error loading recent documents:", e);
+        // Use centralized helper to fetch recent documents for the selected workspace.
+        // Request the top 3 most-recent documents; the helper keeps query logic consistent.
+        const docs = await fetchDocumentsForWorkspace(
+          selectedWorkspaceId,
+          "all",
+          createClient(),
+          3,
+        );
         if (!cancelled) {
-          setError("Unexpected error loading recent documents");
+          setDocs(docs ?? []);
+        }
+      } catch (fetchErr) {
+        console.error("Failed to load recent documents:", fetchErr);
+        if (!cancelled) {
+          setError("Failed to load recent documents");
           setDocs([]);
         }
       } finally {

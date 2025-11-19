@@ -4,6 +4,8 @@ import React, { useEffect, useState } from "react";
 import { Editor as TiptapEditor } from "@/components/tiptap/editor/editor";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import { fetchDocumentBySlug } from "@/lib/documents";
+import { readSelectedWorkspaceId } from "@/lib/workspace";
 import { usePathname, useRouter } from "next/navigation";
 import {
   Empty,
@@ -14,11 +16,24 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty";
 import {
+  AlertDialog,
+  AlertDialogClose,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogPopup,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import {
+  Archive,
   ChevronDownIcon,
   Edit,
   Edit2,
+  MoreVertical,
   Notebook,
   RouteIcon,
+  Trash,
 } from "lucide-react";
 import { TextShimmer } from "@/components/motion-primitives/text-shimmer";
 import { Button } from "@/components/ui/button";
@@ -61,8 +76,6 @@ export default function DocumentShell() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
-  // when true, access to view/edit this document is blocked because the
-  // user's selected workspace doesn't match the document's workspace.
   const [blocked, setBlocked] = useState<boolean>(false);
 
   // Try to read selected workspace from localStorage (if not already set)
@@ -70,24 +83,9 @@ export default function DocumentShell() {
     if (workspaceId) return;
 
     try {
-      const raw =
-        typeof window !== "undefined"
-          ? window.localStorage.getItem("selectedWorkspace")
-          : null;
-      if (!raw) return;
-      try {
-        const parsed = JSON.parse(raw);
-        if (typeof parsed === "string") setWorkspaceId(parsed);
-        else if (parsed && typeof parsed.id === "string")
-          setWorkspaceId(parsed.id);
-        else if (parsed && typeof parsed.workspaceId === "string")
-          setWorkspaceId(parsed.workspaceId);
-        else if (parsed && typeof parsed.selectedWorkspace === "string")
-          setWorkspaceId(parsed.selectedWorkspace);
-      } catch {
-        // not JSON, treat as plain string
-        setWorkspaceId(raw);
-      }
+      // Use centralized helper for parsing the persisted selected workspace.
+      const id = readSelectedWorkspaceId();
+      if (id) setWorkspaceId(id);
     } catch {
       // ignore localStorage errors
     }
@@ -151,28 +149,18 @@ export default function DocumentShell() {
       try {
         const supabase = createClient();
 
-        // Debug: what we're about to query
-        console.debug("DocumentShell: loading document", { slug, workspaceId });
+        // debug logging removed
 
-        // build the query, apply filters before coercing to a single result
-        let q: any = supabase
-          .from("documents")
-          .select(
-            "id,title,slug,content,type,status,version,workspace_id,owner_id,created_at,updated_at,published",
-          )
-          .eq("slug", slug);
-
-        if (workspaceId) {
-          // apply workspace scoping if a workspace is selected
-          q = q.eq("workspace_id", workspaceId);
-          console.debug(
-            "DocumentShell: applying workspace filter",
-            workspaceId,
-          );
+        // Use centralized helper to fetch the document by slug (scoped to workspace when provided).
+        // Wrap in try/catch to mirror previous pattern where `fetchErr` was available.
+        let data: any = null;
+        let fetchErr: any = null;
+        try {
+          data = await fetchDocumentBySlug(slug, workspaceId, supabase);
+        } catch (e: any) {
+          // Preserve previous behavior: downstream logic expects `fetchErr` when queries fail.
+          fetchErr = e;
         }
-
-        // use maybeSingle() so we don't get an error when 0 rows are returned
-        const { data, error: fetchErr } = await q.maybeSingle();
         if (cancelled) return;
 
         if (fetchErr) {
@@ -183,13 +171,19 @@ export default function DocumentShell() {
           // No document found with the workspace filter applied.
           // Try a fallback: fetch the document by slug without workspace scoping.
           try {
-            const { data: fallbackData, error: fallbackErr } = await supabase
-              .from("documents")
-              .select(
-                "id,title,slug,content,type,status,version,workspace_id,owner_id,created_at,updated_at,published",
-              )
-              .eq("slug", slug)
-              .maybeSingle();
+            // Fallback: try fetching without workspace scoping to check if the document
+            // exists in a different workspace and should therefore be blocked.
+            let fallbackData: any = null;
+            let fallbackErr: any = null;
+            try {
+              fallbackData = await fetchDocumentBySlug(
+                slug,
+                undefined,
+                supabase,
+              );
+            } catch (e: any) {
+              fallbackErr = e;
+            }
 
             if (cancelled) return;
 
@@ -219,28 +213,9 @@ export default function DocumentShell() {
         } else {
           // Found document (or no workspace scoping was requested)
           // If a selected workspace exists and it doesn't match the document's
-          // workspace, block access. Read the currently-selected workspace from
-          // localStorage (the same format used elsewhere in the app).
+          // workspace, block access. Use centralized helper to read the selected workspace.
           try {
-            const raw =
-              typeof window !== "undefined"
-                ? window.localStorage.getItem("selectedWorkspace")
-                : null;
-            let selectedWorkspaceId: string | null = null;
-            if (raw) {
-              try {
-                const parsed = JSON.parse(raw);
-                if (typeof parsed === "string") selectedWorkspaceId = parsed;
-                else if (parsed && typeof parsed.id === "string")
-                  selectedWorkspaceId = parsed.id;
-                else if (parsed && typeof parsed.workspaceId === "string")
-                  selectedWorkspaceId = parsed.workspaceId;
-                else if (parsed && typeof parsed.selectedWorkspace === "string")
-                  selectedWorkspaceId = parsed.selectedWorkspace;
-              } catch {
-                selectedWorkspaceId = raw;
-              }
-            }
+            const selectedWorkspaceId = readSelectedWorkspaceId();
             if (
               selectedWorkspaceId &&
               data?.workspace_id &&
@@ -393,50 +368,10 @@ export default function DocumentShell() {
                 <ChevronDownIcon className="size-4" />
                 {doc.title}
               </CollapsibleTrigger>
-              <Dialog>
-                <DialogTrigger
-                  render={
-                    <button>
-                      <Badge
-                        variant={"secondary"}
-                        className="hover:opacity-80 cursor-pointer"
-                      >
-                        Slug:{" "}
-                        <span className="font-semibold">{doc.slug ?? "—"}</span>
-                        <Edit2 className="ml-0.5" />
-                      </Badge>
-                    </button>
-                  }
-                />
-                <DialogPopup>
-                  <DialogHeader>
-                    <DialogTitle>Edit "{doc.title}" slug</DialogTitle>
-                    <DialogDescription>
-                      Edit the slug for this document. This will change the URL
-                      of the document.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <Field className="gap-2">
-                    <FieldLabel htmlFor="slug">Slug (URL)</FieldLabel>
-                    <Input
-                      id="slug"
-                      placeholder="e.g. privacy-policy"
-                      value={slug}
-                      autoComplete="off"
-                    />
-                    <FieldDescription>
-                      The slug will be used in the document URL. Lowercase
-                      letters, numbers and dashes only.
-                    </FieldDescription>
-                  </Field>
-                  <DialogFooter>
-                    <DialogClose render={<Button variant={"outline"} />}>
-                      Cancel
-                    </DialogClose>
-                    <Button disabled>Update</Button>
-                  </DialogFooter>
-                </DialogPopup>
-              </Dialog>
+
+              <Badge variant={"secondary"}>
+                Slug: <span className="font-semibold">{doc.slug ?? "—"}</span>
+              </Badge>
 
               <Badge variant="secondary" className="capitalize">
                 <span
@@ -459,6 +394,118 @@ export default function DocumentShell() {
               </Badge>
             </div>
             <div className="flex items-center gap-2">
+              <AlertDialog>
+                <AlertDialogTrigger
+                  render={<Button size={"sm"} variant="destructive-outline" />}
+                >
+                  {doc.status === "archived" ? <Trash /> : <Archive />}
+                </AlertDialogTrigger>
+                <AlertDialogPopup>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>
+                      {doc.status === "archived" ? "Delete" : "Archive"} "
+                      {doc.title}"
+                    </AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This will{" "}
+                      {doc.status === "archived" ? "delete" : "archive"} "
+                      {doc.title}"{" "}
+                      {doc.status === "archived"
+                        ? "and delete it permanently from this workspace"
+                        : "and remove it from your drafts"}
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogClose render={<Button variant="ghost" />}>
+                      Cancel
+                    </AlertDialogClose>
+                    {doc.status === "archived" ? (
+                      <AlertDialogClose
+                        render={
+                          <Button
+                            variant="destructive-outline"
+                            onClick={async () => {
+                              setLoading(true);
+                              try {
+                                const res = await fetch("/api/documents", {
+                                  method: "DELETE",
+                                  headers: {
+                                    "Content-Type": "application/json",
+                                  },
+                                  body: JSON.stringify({ id: doc.id }),
+                                });
+                                const payload = await res.json();
+                                if (res.ok && payload?.ok) {
+                                  // navigate back to documents list after deletion
+                                  try {
+                                    router.push("/dashboard/documents/all");
+                                  } catch {
+                                    // fallback: clear local doc state
+                                    setDoc(null);
+                                  }
+                                } else {
+                                  setInfo(
+                                    payload?.error ??
+                                      "Failed to delete document",
+                                  );
+                                }
+                              } catch (e: any) {
+                                setInfo(String(e?.message ?? e));
+                              } finally {
+                                setLoading(false);
+                              }
+                            }}
+                          />
+                        }
+                      >
+                        Delete
+                      </AlertDialogClose>
+                    ) : (
+                      <AlertDialogClose
+                        render={
+                          <Button
+                            variant="destructive-outline"
+                            onClick={async () => {
+                              setLoading(true);
+                              try {
+                                const res = await fetch("/api/documents", {
+                                  method: "PUT",
+                                  headers: {
+                                    "Content-Type": "application/json",
+                                  },
+                                  body: JSON.stringify({
+                                    id: doc.id,
+                                    status: "archived",
+                                    published: false,
+                                  }),
+                                });
+                                const payload = await res.json();
+                                if (res.ok && payload?.document) {
+                                  setDoc(payload.document);
+                                  setInfo("Document archived");
+                                } else {
+                                  setInfo(
+                                    payload?.error ??
+                                      "Failed to archive document",
+                                  );
+                                }
+                              } catch (e: any) {
+                                setInfo(String(e?.message ?? e));
+                              } finally {
+                                setLoading(false);
+                              }
+                            }}
+                          />
+                        }
+                      >
+                        Archive
+                      </AlertDialogClose>
+                    )}
+                  </AlertDialogFooter>
+                </AlertDialogPopup>
+              </AlertDialog>
+
+              <Separator orientation="vertical" className={"h-5 ml-2"} />
               {blocked ? (
                 <Button aria-label="Edit" variant="ghost" size={"sm"} disabled>
                   Edit
@@ -470,9 +517,110 @@ export default function DocumentShell() {
                   </Button>
                 </Link>
               )}
-              <Button aria-label="Publish" className="mr-2" size={"sm"}>
-                Publish
-              </Button>
+              {doc.status === "draft" ? (
+                <Button
+                  aria-label="Publish"
+                  className="mr-2"
+                  size={"sm"}
+                  onClick={async () => {
+                    setLoading(true);
+                    try {
+                      const res = await fetch("/api/documents", {
+                        method: "PUT",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          id: doc.id,
+                          status: "published",
+                          published: true,
+                        }),
+                      });
+                      const payload = await res.json();
+                      if (res.ok && payload?.document) {
+                        setDoc(payload.document);
+                        setInfo("Document published");
+                      } else {
+                        setInfo(payload?.error ?? "Failed to publish document");
+                      }
+                    } catch (e: any) {
+                      setInfo(String(e?.message ?? e));
+                    } finally {
+                      setLoading(false);
+                    }
+                  }}
+                >
+                  Publish
+                </Button>
+              ) : doc.status === "archived" ? (
+                <Button
+                  aria-label="Restore"
+                  className="mr-2"
+                  size={"sm"}
+                  onClick={async () => {
+                    setLoading(true);
+                    try {
+                      const res = await fetch("/api/documents", {
+                        method: "PUT",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          id: doc.id,
+                          // restoring archived -> put back into draft (no published)
+                          status: "draft",
+                          published: false,
+                        }),
+                      });
+                      const payload = await res.json();
+                      if (res.ok && payload?.document) {
+                        setDoc(payload.document);
+                        setInfo("Document restored to draft");
+                      } else {
+                        setInfo(payload?.error ?? "Failed to restore document");
+                      }
+                    } catch (e: any) {
+                      setInfo(String(e?.message ?? e));
+                    } finally {
+                      setLoading(false);
+                    }
+                  }}
+                >
+                  Restore
+                </Button>
+              ) : (
+                <Button
+                  aria-label="Unpublish"
+                  className="mr-2"
+                  size={"sm"}
+                  onClick={async () => {
+                    setLoading(true);
+                    try {
+                      const res = await fetch("/api/documents", {
+                        method: "PUT",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          id: doc.id,
+                          // unpublish -> leave as draft/unpublished
+                          status: "draft",
+                          published: false,
+                        }),
+                      });
+                      const payload = await res.json();
+                      if (res.ok && payload?.document) {
+                        setDoc(payload.document);
+                        setInfo("Document unpublished");
+                      } else {
+                        setInfo(
+                          payload?.error ?? "Failed to unpublish document",
+                        );
+                      }
+                    } catch (e: any) {
+                      setInfo(String(e?.message ?? e));
+                    } finally {
+                      setLoading(false);
+                    }
+                  }}
+                >
+                  Unpublish
+                </Button>
+              )}
             </div>
           </FrameHeader>
           <CollapsiblePanel>
@@ -487,7 +635,9 @@ export default function DocumentShell() {
                   readOnly={true}
                 />
               ) : (
-                <div className="text-sm text-muted-foreground">No content yet.</div>
+                <div className="text-sm text-muted-foreground">
+                  No content yet.
+                </div>
               )}
             </FramePanel>
           </CollapsiblePanel>

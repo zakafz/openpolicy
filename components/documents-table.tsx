@@ -2,6 +2,8 @@
 
 import React, { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { fetchDocumentsForWorkspace } from "@/lib/documents";
+import { readSelectedWorkspaceId } from "@/lib/workspace";
 import { Frame, FramePanel } from "@/components/ui/frame";
 import {
   Table,
@@ -123,19 +125,21 @@ export default function DocumentsTable({ type, workspaceId }: Props) {
       setError(null);
 
       try {
-        const supabase = createClient();
-        let q = supabase
-          .from("documents")
-          .select(
-            "id,title,slug,type,status,version,created_at,updated_at,published",
-          )
-          .order("created_at", { ascending: false });
+        // Prefer the effective workspace id but fall back to the persisted value.
+        const workspaceIdToUse =
+          effectiveWorkspaceId ?? readSelectedWorkspaceId();
 
-        // Always scope to the effective workspace id (prop or selected workspace)
-        q = q.eq("workspace_id", effectiveWorkspaceId);
-        if (type) q = q.eq("status", type);
+        // Use centralized helper to fetch documents for the workspace. This
+        // keeps query behavior consistent across the app.
+        const docs = await fetchDocumentsForWorkspace(
+          workspaceIdToUse,
+          type ?? null,
+          createClient(),
+        );
 
-        const { data, error: fetchErr } = await q;
+        // normalize to the same variable names used downstream
+        const data = docs ?? [];
+        const fetchErr = null;
         if (fetchErr) {
           console.error("Failed to load documents:", fetchErr);
           setError("Failed to load documents");

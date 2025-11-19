@@ -1,6 +1,16 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
+import {
+  createDocument,
+  fetchDocumentBySlug,
+  fetchDocumentById,
+  makeUniqueSlug,
+  updateDocument,
+  deleteDocumentPermanently,
+  normalizeSlug,
+  isValidSlug,
+} from "@/lib/documents";
 import { fetchWorkspaceByIdServer } from "@/lib/workspace";
 
 type Body = {
@@ -16,60 +26,11 @@ type Body = {
   id?: string;
 };
 
-function normalizeSlug(raw: string) {
-  return raw
-    .toLowerCase()
-    .trim()
-    .replace(/\s+/g, "-")
-    .replace(/[^a-z0-9-]/g, "")
-    .replace(/-+/g, "-")
-    .replace(/^-+|-+$/g, "");
-}
-
-function isValidSlug(s: string) {
-  // start with alnum, then alnum or dash, max 64 chars
-  return /^[a-z0-9][a-z0-9-]{0,63}$/.test(s);
-}
-
-// Try to produce a unique slug by appending a counter when needed.
-async function makeUniqueSlug(
-  svc: ReturnType<typeof createServiceClient>,
-  base: string,
-): Promise<string> {
-  let candidate = base;
-  let attempt = 0;
-  while (attempt < 20) {
-    // case-insensitive check
-    const { data, error } = await svc
-      .from("documents")
-      .select("id")
-      .ilike("slug", candidate)
-      .limit(1);
-
-    if (error) {
-      // if the check fails for any reason, give up and return the base candidate
-      console.warn(
-        "Slug uniqueness check failed, proceeding with candidate:",
-        error,
-      );
-      return candidate;
-    }
-
-    if (!data || (Array.isArray(data) && data.length === 0)) {
-      return candidate;
-    }
-
-    attempt += 1;
-    candidate = `${base}-${attempt}`;
-  }
-
-  return `${base}-${Date.now()}`;
-}
+// (normalizeSlug/isValidSlug import merged above)
 
 export async function POST(req: Request) {
   try {
     const body = (await req.json().catch(() => ({}))) as Body;
-    console.debug("POST /api/documents - received body:", body);
     let {
       title,
       slug: rawSlug,
@@ -84,7 +45,6 @@ export async function POST(req: Request) {
 
     // Basic validation (content is optional)
     if (!title || !title.trim()) {
-      console.debug("POST /api/documents - validation failed: missing title");
       return NextResponse.json(
         {
           error: "Missing required field",
@@ -131,10 +91,6 @@ export async function POST(req: Request) {
     if (typeof rawSlug === "string" && rawSlug.trim().length > 0) {
       const normalized = normalizeSlug(rawSlug);
       if (!isValidSlug(normalized)) {
-        console.debug("POST /api/documents - invalid slug format:", {
-          rawSlug,
-          normalized,
-        });
         return NextResponse.json(
           {
             error: "Invalid slug format",
@@ -145,12 +101,15 @@ export async function POST(req: Request) {
         );
       }
 
-      // Check uniqueness across documents
-      const { data: existing, error: checkErr } = await svc
-        .from("documents")
-        .select("id")
-        .ilike("slug", normalized)
-        .limit(1);
+      // Check uniqueness across documents using centralized helper.
+      // Use fetchDocumentBySlug which scopes to workspace when provided.
+      let existing: any = null;
+      let checkErr: any = null;
+      try {
+        existing = await fetchDocumentBySlug(normalized, workspace_id, svc);
+      } catch (e: any) {
+        checkErr = e;
+      }
 
       if (checkErr) {
         console.error("Error checking documents slug uniqueness:", checkErr);
@@ -160,15 +119,13 @@ export async function POST(req: Request) {
         );
       }
 
-      if (existing && Array.isArray(existing) && existing.length > 0) {
-        console.debug(
-          "POST /api/documents - slug conflict (existing document found):",
-          { normalized },
-        );
+      // fetchDocumentBySlug returns a single row or null
+      if (existing) {
         return NextResponse.json(
           {
             error: "Slug already in use",
-            message: "The provided slug is already taken by another document",
+            message:
+              "The provided slug is already taken by another document in this workspace",
           },
           { status: 409 },
         );
@@ -183,7 +140,7 @@ export async function POST(req: Request) {
         finalSlug = `doc-${Date.now()}`;
       } else {
         const candidate = base.substring(0, 64);
-        const unique = await makeUniqueSlug(svc, candidate);
+        const unique = await makeUniqueSlug(svc, candidate, workspace_id);
         finalSlug = unique;
       }
     }
@@ -205,44 +162,228 @@ export async function POST(req: Request) {
       owner_id: user.id,
     };
 
-    const { data: created, error: insertErr } = await svc
-      .from("documents")
-      .insert(insertPayload)
-      .select()
-      .single();
+    // Use centralized helper to create a document using the service client.
+    // This preserves behavior while consolidating creation logic in lib/documents.
+    let created;
+    let insertErr: any = null;
+
+    // Debug: log the insertion context to help isolate workspace mismatch issues.
+    // This will show what workspace_id we expect, what payload is sent, and the authenticated user id.
+    // debug logs removed
+
+    try {
+      created = await createDocument(
+        {
+          title: insertPayload.title,
+          slug: insertPayload.slug,
+          content: insertPayload.content,
+          type: insertPayload.type,
+          version: insertPayload.version,
+          published: insertPayload.published,
+          workspace_id: insertPayload.workspace_id,
+          parent_id: insertPayload.parent_id,
+          status: insertPayload.status,
+          owner_id: insertPayload.owner_id,
+        },
+        svc,
+      );
+
+      // Debug: log the created row returned from createDocument
+      // debug logs removed
+    } catch (e) {
+      // Capture the Supabase error for downstream inspection/handling (preserve previous behavior).
+      insertErr = e;
+      // debug logs removed
+    }
 
     if (insertErr) {
-      // handle unique constraint race (slug) — return 409 so caller can retry
+      // handle unique constraint race (slug) — try to detect whether the conflict
+      // originates from a document in another workspace (global unique constraint),
+      // and advise a DB migration; otherwise attempt a workspace-scoped retry.
       const msg = insertErr?.message ?? String(insertErr);
       if (
         String(msg).toLowerCase().includes("duplicate") ||
         String(msg).toLowerCase().includes("unique")
       ) {
-        console.debug(
-          "POST /api/documents - slug unique constraint race detected:",
-          { msg, insertPayload },
-        );
+        // Try to inspect the conflicting row (best-effort). If the conflicting row
+        // belongs to a different workspace, this likely indicates a global unique
+        // constraint on `slug` is present in the DB (e.g. `slug UNIQUE`) and you'll
+        // need the composite (workspace_id, lower(slug)) migration to allow per-workspace slugs.
+        try {
+          // Inspect the conflicting row using centralized helper (best-effort).
+          let conflictRow: any = null;
+          let conflictErr: any = null;
+          try {
+            conflictRow = await fetchDocumentBySlug(
+              String(finalSlug),
+              undefined,
+              svc,
+            );
+          } catch (e: any) {
+            conflictErr = e;
+          }
+
+          if (!conflictErr && conflictRow) {
+            // If conflicting row exists in a different workspace, return explanatory error
+            if (
+              workspace_id &&
+              String(conflictRow.workspace_id) !== String(workspace_id)
+            ) {
+              console.warn(
+                "POST /api/documents - conflict appears to come from another workspace",
+                { conflictRow, workspace_id },
+              );
+              return NextResponse.json(
+                {
+                  error: "Slug conflict with document in another workspace",
+                  message:
+                    "The database has a unique constraint on `slug` globally which prevents creating the same slug in different workspaces. Apply the migration to add a composite unique index on (workspace_id, lower(slug)) so slugs are unique per workspace, then retry. If you need help, run the migration file in /db/migrations.",
+                  conflicting_workspace_id: conflictRow.workspace_id ?? null,
+                },
+                { status: 409 },
+              );
+            }
+          }
+        } catch (e) {
+          // ignore errors from conflict inspection and fall back to retry logic below
+        }
+
+        // If we reach here, either the conflict came from the same workspace or we couldn't
+        // determine the source. Attempt a single workspace-scoped retry if we have workspace_id.
+        try {
+          if (workspace_id) {
+            const baseCandidate =
+              typeof finalSlug === "string" && finalSlug.trim().length > 0
+                ? finalSlug
+                : normalizeSlug(title) || `doc-${Date.now()}`;
+            const candidate = baseCandidate.substring(0, 64);
+
+            // attempting workspace-scoped retry for slug
+
+            const unique = await makeUniqueSlug(svc, candidate, workspace_id);
+            if (unique && unique !== finalSlug) {
+              insertPayload.slug = unique;
+
+              // Attempt retry using centralized createDocument helper
+              let retryCreated: any = null;
+              let retryErr: any = null;
+              try {
+                retryCreated = await createDocument(
+                  {
+                    title: insertPayload.title,
+                    slug: insertPayload.slug,
+                    content: insertPayload.content,
+                    type: insertPayload.type,
+                    version: insertPayload.version,
+                    published: insertPayload.published,
+                    workspace_id: insertPayload.workspace_id,
+                    parent_id: insertPayload.parent_id,
+                    status: insertPayload.status,
+                    owner_id: insertPayload.owner_id,
+                  },
+                  svc,
+                );
+              } catch (e: any) {
+                retryErr = e;
+              }
+
+              if (!retryErr && retryCreated) {
+                // Successful retry — return the created document
+                return NextResponse.json(
+                  { ok: true, document: retryCreated },
+                  { status: 201 },
+                );
+              }
+            } else {
+            }
+          }
+        } catch (e) {
+          console.error(
+            "POST /api/documents - workspace-scoped retry failed:",
+            e,
+          );
+          // continue to return conflict below
+        }
+
+        // Generic conflict fallback
         return NextResponse.json(
           {
             error: "Slug already in use",
             message:
-              "A document with this slug already exists (race condition)",
+              "A document with this slug already exists (race condition or constraint).",
           },
           { status: 409 },
         );
+      } else {
+        console.error("Error inserting document:", insertErr);
+        // Return a clearer error payload for easier client debugging (include message)
+        return NextResponse.json(
+          {
+            error: "Failed to create document",
+            message: "Database insertion failed when creating document",
+            detail: insertErr?.message ?? String(insertErr),
+          },
+          { status: 500 },
+        );
       }
+    }
 
-      console.error("Error inserting document:", insertErr);
-      console.debug(
-        "POST /api/documents - failed insert payload:",
-        insertPayload,
+    // Verify the created row belongs to the resolved workspace_id. This is a
+    // defensive check: if the created row's `workspace_id` does not match the
+    // workspace we validated earlier, remove the row and return an error so the
+    // caller can retry. This guards against races or unexpected DB-level defaults.
+    try {
+      const createdWorkspaceId = created?.workspace_id ?? null;
+      if (!created || String(createdWorkspaceId) !== String(workspace_id)) {
+        console.warn(
+          "POST /api/documents - created document workspace mismatch, attempting cleanup",
+          { expected: workspace_id, got: createdWorkspaceId, created },
+        );
+        // Attempt best-effort deletion of the orphaned/incorrectly-scoped row.
+        try {
+          if (created && created.id) {
+            await deleteDocumentPermanently(String(created.id), svc);
+          }
+        } catch (delErr) {
+          // Log deletion failure but continue to return an error; do not attempt
+          // further retries here to avoid unexpected side effects.
+          console.error(
+            "POST /api/documents - failed to delete mismatched created document",
+            delErr,
+          );
+        }
+
+        return NextResponse.json(
+          {
+            error: "Workspace mismatch",
+            message:
+              "Document was created but does not belong to the expected workspace. The created document was removed. Please retry the request.",
+            created: created ?? null,
+          },
+          { status: 500 },
+        );
+      }
+    } catch (verifyErr) {
+      // If verification throws for any reason, try to clean up and return an error.
+      console.error(
+        "POST /api/documents - verification check failed",
+        verifyErr,
       );
-      // Return a clearer error payload for easier client debugging (include message)
+      try {
+        if (created && created.id) {
+          await deleteDocumentPermanently(String(created.id), svc);
+        }
+      } catch (delErr) {
+        console.error(
+          "POST /api/documents - cleanup after verification failure also failed",
+          delErr,
+        );
+      }
       return NextResponse.json(
         {
-          error: "Failed to create document",
-          message: "Database insertion failed when creating document",
-          detail: insertErr?.message ?? String(insertErr),
+          error: "Verification failure",
+          message:
+            "Document was created but there was an unexpected error verifying its workspace. The created document was removed. Please retry.",
         },
         { status: 500 },
       );
@@ -251,7 +392,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true, document: created }, { status: 201 });
   } catch (err) {
     console.error("Server error in /api/documents:", err);
-    console.debug("POST /api/documents - full error", err);
     return NextResponse.json(
       {
         error: "Server error",
@@ -263,23 +403,7 @@ export async function POST(req: Request) {
   }
 }
 
-/**
- * PUT /api/documents or PUT /api/documents/:id
- *
- * Expects JSON body:
- *  - id?: string (optional if provided in URL)
- *  - content: string (the document content to persist; usually Tiptap JSON string)
- *
- * Security:
- *  - Requires an authenticated user.
- *  - User must be the document owner OR the owner of the workspace the document belongs to.
- *
- * Notes:
- *  - If the request targets /api/documents/:id in the future, this handler will attempt
- *    to extract the id from the request URL as a fallback. With the current app-router
- *    structure, dynamic routes are usually placed in a subdirectory; still, we support
- *    body.id to be flexible.
- */
+// PUT /api/documents — update a document (requires authentication and proper ownership)
 export async function PUT(req: Request) {
   try {
     const body = (await req.json().catch(() => ({}))) as Body;
@@ -309,10 +433,7 @@ export async function PUT(req: Request) {
       );
     }
 
-    const content =
-      typeof body.content !== "undefined" && body.content !== null
-        ? body.content
-        : "";
+    // content is optional; only add to updatePayload if provided in the request body
 
     // Ensure authenticated user
     const sessionSupabase = await createClient();
@@ -327,11 +448,14 @@ export async function PUT(req: Request) {
     const svc = createServiceClient();
 
     // Fetch the existing document so we can authorize the update
-    const { data: existing, error: fetchErr } = await svc
-      .from("documents")
-      .select("id, owner_id, workspace_id")
-      .eq("id", docId)
-      .maybeSingle();
+    // Fetch existing document using centralized helper
+    let existing: any = null;
+    let fetchErr: any = null;
+    try {
+      existing = await fetchDocumentById(docId, svc);
+    } catch (e: any) {
+      fetchErr = e;
+    }
 
     if (fetchErr) {
       console.error("Failed to fetch document for update:", fetchErr);
@@ -368,22 +492,71 @@ export async function PUT(req: Request) {
       }
     }
 
-    // Perform the update (persist content and updated_at)
+    // Perform the update (persist content, status, published, published_at and updated_at)
+    // Fetch current publication state to decide whether to set/clear published_at
+    // Fetch current document state using centralized helper (returns full row)
+    let currentDoc: any = null;
+    let currentErr: any = null;
+    try {
+      currentDoc = await fetchDocumentById(docId, svc);
+    } catch (e: any) {
+      currentErr = e;
+    }
+
+    if (currentErr) {
+      console.error("Failed to fetch current document state:", currentErr);
+      return NextResponse.json(
+        { error: "Failed to fetch document" },
+        { status: 500 },
+      );
+    }
+
     const updatePayload: Record<string, any> = {
-      content,
       // set updated_at to now so the "last edited" column reflects the save time
       updated_at: new Date().toISOString(),
     };
 
-    const { data: updated, error: updateErr } = await svc
-      .from("documents")
-      .update(updatePayload)
-      .eq("id", docId)
-      .select()
-      .single();
+    // content (optional)
+    if (typeof body.content !== "undefined" && body.content !== null) {
+      updatePayload.content = body.content;
+    }
+
+    // Optional: update status if provided
+    if (typeof body.status === "string" && body.status.trim().length > 0) {
+      updatePayload.status = body.status;
+    }
+
+    // Optional: update published flag and manage published_at accordingly
+    if (typeof body.published === "boolean") {
+      const requestedPublished = !!body.published;
+      const currentlyPublished = !!(currentDoc && currentDoc.published);
+
+      updatePayload.published = requestedPublished;
+
+      // if we're publishing now and it wasn't published before, set published_at
+      if (requestedPublished && !currentlyPublished) {
+        updatePayload.published_at = new Date().toISOString();
+      }
+
+      // if we're unpublishing and it was published before, clear published_at
+      if (!requestedPublished && currentlyPublished) {
+        updatePayload.published_at = null;
+      }
+
+      // if requestedPublished === currentlyPublished, we leave published_at untouched
+    }
+
+    // Perform update via centralized helper
+    let updated: any = null;
+    let updateErr: any = null;
+    try {
+      updated = await updateDocument(docId, updatePayload, svc);
+    } catch (e: any) {
+      updateErr = e;
+    }
 
     if (updateErr) {
-      console.error("Failed to update document content:", updateErr);
+      console.error("Failed to update document:", updateErr);
       return NextResponse.json(
         {
           error: "Failed to update document",
@@ -402,6 +575,129 @@ export async function PUT(req: Request) {
         message: "Unexpected server error processing PUT request",
         detail: String(err),
       },
+      { status: 500 },
+    );
+  }
+}
+
+// DELETE /api/documents - permanently delete an archived document
+export async function DELETE(req: Request) {
+  try {
+    const body = (await req.json().catch(() => ({}))) as Body;
+
+    // Try to determine document id from body or URL path
+    let docId: string | undefined = undefined;
+    if (body && typeof body.id === "string" && body.id.trim().length > 0) {
+      docId = body.id;
+    } else {
+      try {
+        const url = new URL(req.url);
+        const parts = url.pathname.split("/").filter(Boolean);
+        const idx = parts.lastIndexOf("documents");
+        if (idx >= 0 && parts.length > idx + 1) {
+          docId = parts[idx + 1];
+        }
+      } catch {
+        // ignore URL parse errors
+      }
+    }
+
+    if (!docId) {
+      return NextResponse.json(
+        { error: "Missing document id" },
+        { status: 400 },
+      );
+    }
+
+    // Ensure authenticated user
+    const sessionSupabase = await createClient();
+    const {
+      data: { user },
+      error: authErr,
+    } = await sessionSupabase.auth.getUser();
+    if (authErr || !user) {
+      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    }
+
+    const svc = createServiceClient();
+
+    // Fetch the existing document so we can authorize the deletion
+    // Fetch document to delete using centralized helper
+    let existing: any = null;
+    let fetchErr: any = null;
+    try {
+      existing = await fetchDocumentById(docId, svc);
+    } catch (e: any) {
+      fetchErr = e;
+    }
+
+    if (fetchErr) {
+      console.error("Failed to fetch document for deletion:", fetchErr);
+      return NextResponse.json(
+        { error: "Failed to fetch document" },
+        { status: 500 },
+      );
+    }
+
+    if (!existing) {
+      return NextResponse.json(
+        { error: "Document not found" },
+        { status: 404 },
+      );
+    }
+
+    // Authorization: allow delete if the user is the document owner or the workspace owner
+    if (String(existing.owner_id) !== String(user.id)) {
+      try {
+        const workspace = await fetchWorkspaceByIdServer(existing.workspace_id);
+        if (!workspace || String(workspace.owner_id) !== String(user.id)) {
+          return NextResponse.json(
+            { error: "Forbidden: not owner" },
+            { status: 403 },
+          );
+        }
+      } catch (e) {
+        console.error("Failed to validate workspace ownership:", e);
+        return NextResponse.json(
+          { error: "Failed to validate permissions" },
+          { status: 500 },
+        );
+      }
+    }
+
+    // Only allow deletion when doc is archived to avoid accidental permanent deletes
+    if (existing.status !== "archived") {
+      return NextResponse.json(
+        { error: "Can only delete archived documents" },
+        { status: 400 },
+      );
+    }
+
+    // Delete via centralized helper so any business logic and return shape are consistent.
+    let deleted: any = null;
+    let deleteErr: any = null;
+    try {
+      deleted = await deleteDocumentPermanently(docId, svc);
+    } catch (e: any) {
+      deleteErr = e;
+    }
+
+    if (deleteErr) {
+      console.error("Failed to delete document:", deleteErr);
+      return NextResponse.json(
+        {
+          error: "Failed to delete document",
+          detail: deleteErr?.message ?? String(deleteErr),
+        },
+        { status: 500 },
+      );
+    }
+
+    return NextResponse.json({ ok: true, document: deleted }, { status: 200 });
+  } catch (err) {
+    console.error("Server error in /api/documents DELETE:", err);
+    return NextResponse.json(
+      { error: "Server error", detail: String(err) },
       { status: 500 },
     );
   }

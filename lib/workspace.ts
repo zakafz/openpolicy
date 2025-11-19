@@ -1,14 +1,3 @@
-/**
- * Workspace helpers
- *
- * Provides a small set of reusable functions to fetch workspace rows from the DB.
- * - `fetchWorkspaceById` is a client-friendly helper (accepts an optional Supabase client).
- * - `fetchWorkspaceByIdServer` is a server-side wrapper that uses the service-role client.
- *
- * These helpers throw the Supabase error object on failure so callers can handle errors
- * consistently (catch the thrown error and inspect `error.message` / `error.status`).
- */
-
 import { createClient } from "@/lib/supabase/client";
 import { createServiceClient } from "@/lib/supabase/service";
 import type { WorkspaceRow } from "@/types/supabase";
@@ -108,4 +97,77 @@ export async function fetchWorkspacesForOwner(
   }
 
   return data ?? [];
+}
+
+/**
+ * Parse a persisted "selectedWorkspace" value and return a workspace id string or null.
+ *
+ * The app historically stores the selected workspace in localStorage in several shapes:
+ * - a plain string workspace id
+ * - a JSON string containing the id: { "id": "..." }
+ * - a JSON string containing workspaceId: { "workspaceId": "..." }
+ * - a JSON string containing selectedWorkspace: { "selectedWorkspace": "..." }
+ *
+ * This helper centralizes parsing logic so all components interpret the stored value consistently.
+ *
+ * @param raw - raw value from localStorage (may be null)
+ * @returns workspace id string or null
+ */
+export function parseSelectedWorkspaceId(raw?: string | null): string | null {
+  if (!raw) return null;
+
+  // fast path: if it's a simple id-looking string (no JSON braces), return it
+  const trimmed = raw.trim();
+  if (!trimmed) return null;
+
+  // If it doesn't look like JSON, treat as plain string id
+  if (!(trimmed.startsWith("{") || trimmed.startsWith("["))) {
+    return trimmed;
+  }
+
+  try {
+    const parsed = JSON.parse(trimmed);
+    if (!parsed) return null;
+    if (typeof parsed === "string") return parsed;
+    if (parsed && typeof parsed.id === "string") return parsed.id;
+    if (parsed && typeof parsed.workspaceId === "string")
+      return parsed.workspaceId;
+    if (parsed && typeof parsed.selectedWorkspace === "string")
+      return parsed.selectedWorkspace;
+    return null;
+  } catch {
+    // If JSON.parse fails, fall back to returning the raw string
+    return trimmed;
+  }
+}
+
+/**
+ * Read the selected workspace id from browser localStorage (if available).
+ * Returns null when not available or running server-side.
+ */
+export function readSelectedWorkspaceId(): string | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem("selectedWorkspace");
+    return parseSelectedWorkspaceId(raw);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Persist a selected workspace id into localStorage using the minimal string form.
+ * No-op in non-browser environments.
+ */
+export function writeSelectedWorkspaceId(id?: string | null): void {
+  if (typeof window === "undefined") return;
+  try {
+    if (!id) {
+      window.localStorage.removeItem("selectedWorkspace");
+    } else {
+      window.localStorage.setItem("selectedWorkspace", String(id));
+    }
+  } catch {
+    // ignore storage errors
+  }
 }

@@ -431,11 +431,29 @@ export function CreateWorkspaceForm({ products }: { products: Product[] }) {
         <Field className="gap-2">
           <FieldLabel htmlFor="slug">Workspace Slug</FieldLabel>
           <ButtonGroup>
-            <ButtonGroupText asChild>
-              <Label htmlFor="slug">openpolicyhq.com/d/</Label>
-            </ButtonGroupText>
             <InputGroup>
+              <InputGroupAddon align="inline-start">
+                {checkingSlug ? (
+                  <LoaderCircleIcon className="animate-spin" />
+                ) : slugValid && slugAvailable ? (
+                  <CircleCheckIcon className="text-green-500" />
+                ) : !slugValid && slug.length > 0 ? (
+                  <CircleAlertIcon className="text-rose-500" />
+                ) : slugValid && slugAvailable === false ? (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="inline-flex">
+                        <CircleAlertIcon className="text-rose-500" />
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent>Slug already in use</TooltipContent>
+                  </Tooltip>
+                ) : (
+                  <CircleCheckIcon className="text-muted-foreground" />
+                )}
+              </InputGroupAddon>
               <InputGroupInput
+                className="ring-0!"
                 id="slug"
                 placeholder="e.g., acme"
                 value={slug}
@@ -462,27 +480,10 @@ export function CreateWorkspaceForm({ products }: { products: Product[] }) {
                 aria-invalid={!slugValid && slug.length > 0}
                 aria-describedby="slug-desc"
               />
-              <InputGroupAddon align="inline-end">
-                {checkingSlug ? (
-                  <LoaderCircleIcon className="animate-spin" />
-                ) : slugValid && slugAvailable ? (
-                  <CircleCheckIcon className="text-green-500" />
-                ) : !slugValid && slug.length > 0 ? (
-                  <CircleAlertIcon className="text-rose-500" />
-                ) : slugValid && slugAvailable === false ? (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span className="inline-flex">
-                        <CircleAlertIcon className="text-rose-500" />
-                      </span>
-                    </TooltipTrigger>
-                    <TooltipContent>Slug already in use</TooltipContent>
-                  </Tooltip>
-                ) : (
-                  <CircleCheckIcon className="text-muted-foreground" />
-                )}
-              </InputGroupAddon>
             </InputGroup>
+            <ButtonGroupText asChild>
+              <Label htmlFor="slug">.openpolicyhq.com</Label>
+            </ButtonGroupText>
           </ButtonGroup>
           <FieldDescription id="slug-desc">
             This is your workspace's unique slug on OpenPolicy.

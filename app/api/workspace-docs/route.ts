@@ -1,20 +1,8 @@
 import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/service";
+import { fetchPublishedDocumentsForWorkspaceServer } from "@/lib/documents";
 
-/**
- * GET /api/workspace-docs?workspace={workspace_slug}
- *
- * Returns published documents for the given workspace slug.
- *
- * Query params:
- *  - workspace (required): workspace slug (string)
- *
- * Response:
- *  - 200: { documents: [...] }
- *  - 400: { error: "workspace query param required" }
- *  - 404: { error: "Workspace not found" }
- *  - 500: { error: "Unexpected error" }
- */
+// GET /api/workspace-docs?workspace={workspace_slug} — returns published documents for a workspace
 export async function GET(request: Request) {
   try {
     const url = new URL(request.url);
@@ -51,24 +39,33 @@ export async function GET(request: Request) {
       );
     }
 
-    // Fetch published documents for the workspace
-    const { data: documents, error: docsErr } = await svc
-      .from("documents")
-      .select("id,title,slug,updated_at,created_at,version,type,status,published,workspace_id")
-      .eq("workspace_id", workspace.id)
-      .eq("published", true)
-      .order("updated_at", { ascending: false })
-      .limit(200);
-
-    if (docsErr) {
-      console.error("workspace-docs: failed fetching documents", docsErr);
+    // Fetch published documents for the workspace using centralized helper
+    let documents: any[] = [];
+    try {
+      documents = await fetchPublishedDocumentsForWorkspaceServer(
+        workspace.id,
+        svc,
+        200,
+      );
+      if (!Array.isArray(documents)) {
+        documents = [];
+      }
+    } catch (e) {
+      console.error("workspace-docs: failed fetching documents", e);
       return NextResponse.json(
         { error: "Failed to fetch documents" },
         { status: 500 },
       );
     }
 
-    return NextResponse.json({ workspace: { id: workspace.id, name: workspace.name, slug: workspace.slug }, documents: documents ?? [] });
+    return NextResponse.json({
+      workspace: {
+        id: workspace.id,
+        name: workspace.name,
+        slug: workspace.slug,
+      },
+      documents: documents ?? [],
+    });
   } catch (err) {
     console.error("workspace-docs: unexpected error", err);
     return NextResponse.json({ error: "Unexpected error" }, { status: 500 });

@@ -17,7 +17,8 @@ import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { usePathname, useRouter } from "next/navigation";
 import { Check, ChevronsUpDown } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, resolveWorkspaceFromRequest } from "@/lib/utils";
+import { fetchPublishedDocumentsForWorkspace } from "@/lib/documents";
 import {
   Command,
   CommandEmpty,
@@ -55,27 +56,15 @@ export default function LayoutShell({
   const deriveInitialDocs = () => {
     if (Array.isArray(documents) && documents.length > 0) return documents;
     try {
-      const parts = pathname?.split("/").filter(Boolean) ?? [];
-      // detect host-based workspace slug
-      const host =
-        typeof window !== "undefined" ? window.location.hostname : null;
-      const hostParts = host ? host.split(".") : [];
-      const hostWs = hostParts.length >= 2 ? hostParts[0] : null;
-      let slug: string | null = null;
-      if (hostWs && workspace?.slug && hostWs === workspace.slug) {
-        // subdomain case: /<document_slug>
-        slug = parts.length >= 1 ? parts[0] : null;
-      } else {
-        // path case: /<workspace>/<document_slug>
-        slug = parts.length >= 2 ? parts[1] : null;
-      }
-      if (slug) {
-        // minimal placeholder doc so the selector shows the current document title immediately
-        return [{ id: `__placeholder__:${slug}`, title: slug, slug }];
-      }
-    } catch (e) {
-      // ignore
-    }
+      const res = resolveWorkspaceFromRequest({
+        hostname:
+          typeof window !== "undefined" ? window.location.hostname : undefined,
+        pathname,
+        workspaceSlug: workspace?.slug ?? null,
+      });
+      const slug = res.documentSlug;
+      if (slug) return [{ id: `__placeholder__:${slug}`, title: slug, slug }];
+    } catch {}
     return [];
   };
   const [clientDocs, setClientDocs] = useState<any[]>(deriveInitialDocs());
@@ -84,53 +73,43 @@ export default function LayoutShell({
   // If the layout did not receive documents from the server, attempt a client-side fetch.
   // This helps keep the header in sync if the server fetch was empty or transiently failed.
   useEffect(() => {
-    // Only attempt client fetch when there are no server-side docs and we have a workspace slug/id.
     if (
-      (!documents || (Array.isArray(documents) && documents.length === 0)) &&
+      (!documents || documents.length === 0) &&
       workspace?.slug &&
       workspace?.id
     ) {
       let cancelled = false;
-
-      const fetchDocs = async () => {
+      (async () => {
         try {
-          const supabase = createClient();
-          const { data: docs, error } = await supabase
-            .from("documents")
-            .select("id,title,slug,updated_at,created_at")
-            .eq("workspace_id", workspace.id)
-            .eq("published", true)
-            .order("updated_at", { ascending: false })
-            .limit(100);
-
-          if (cancelled) return;
-          if (!error && Array.isArray(docs)) {
-            setClientDocs(docs);
-          }
+          // Use centralized helper to fetch published documents for a workspace.
+          // This keeps query logic consistent across the app and delegates
+          // Supabase interactions to `lib/documents`.
+          const docs = await fetchPublishedDocumentsForWorkspace(
+            workspace.id,
+            createClient(),
+            100,
+          );
+          if (!cancelled && Array.isArray(docs)) setClientDocs(docs);
         } catch (e) {
           console.warn("LayoutShell client fetch failed", e);
         }
-      };
-
-      fetchDocs();
-
+      })();
       return () => {
         cancelled = true;
       };
-    } else {
-      // Ensure client state mirrors server-provided docs when available.
-      if (documents && Array.isArray(documents) && documents.length > 0) {
-        setClientDocs(documents);
-      }
     }
-    // workspace.id and documents are primary dependencies for the client fetch.
+    if (documents && Array.isArray(documents) && documents.length > 0) {
+      setClientDocs(documents);
+    }
   }, [workspace?.id, documents]);
 
-  console.log(workspace?.name);
   return (
     <div className="bg-card min-h-screen pt-5">
       <header className="w-[95%] max-w-4xl mx-auto bg-accent h-12 rounded-2xl flex flex-row justify-between p-1 items-center">
-        <a href={workspace?.return_url ? workspace.return_url : "/"} className="flex items-center">
+        <a
+          href={workspace?.return_url ? workspace.return_url : "/"}
+          className="flex items-center"
+        >
           {!workspace?.disable_icon && (
             <Avatar className="size-10 min-h-10 min-w-10 rounded-xl aspect-square">
               <AvatarImage src={workspace?.logo} alt="User avatar" />
@@ -164,56 +143,27 @@ export default function LayoutShell({
       </header>
       <div className="w-[95%] max-w-4xl mx-auto mt-10 pb-10 min-h-[calc(100vh-48px-60px)]">
         {children}
-        {docCount > 1 && (
+        {docCount > 1 && pathname !== "/" && (
           <div className="flex justify-end mt-5">
             <Button
               variant={"outline"}
               className="bg-card"
               onClick={() => {
                 try {
-                  // detect host/subdomain
-                  const host =
-                    typeof window !== "undefined"
-                      ? window.location.hostname
-                      : "";
-                  const parts = host.split(".");
-                  const subdomain = parts.length >= 2 ? parts[0] : null;
-
-                  // detect current document slug from pathname (subdomain or path case)
-                  const pathParts = pathname?.split("/").filter(Boolean) ?? [];
-                  let currentSlug: string | null = null;
-                  if (
-                    subdomain &&
-                    workspace?.slug &&
-                    subdomain === workspace.slug
-                  ) {
-                    // subdomain case: /<document_slug>
-                    currentSlug = pathParts.length >= 1 ? pathParts[0] : null;
-                  } else {
-                    // path case: /<workspace>/<document_slug>
-                    currentSlug = pathParts.length >= 2 ? pathParts[1] : null;
-                  }
-
-                  // build list of slugs from current client docs
+                  const res = resolveWorkspaceFromRequest({
+                    hostname:
+                      typeof window !== "undefined"
+                        ? window.location.hostname
+                        : undefined,
+                    pathname,
+                    workspaceSlug: workspace?.slug ?? null,
+                  });
                   const slugs = clientDocs.map((d) => d.slug).filter(Boolean);
                   if (slugs.length === 0) return;
-
-                  let currentIndex = slugs.indexOf(currentSlug as string);
-                  // if current not found, default to -1 so nextIndex becomes 0
+                  let currentIndex = slugs.indexOf(res.documentSlug as any);
                   if (currentIndex === -1) currentIndex = -1;
-                  const nextIndex = (currentIndex + 1) % slugs.length;
-                  const nextSlug = slugs[nextIndex];
-
-                  if (
-                    subdomain &&
-                    String(subdomain) === String(workspace?.slug)
-                  ) {
-                    router.push(`/${nextSlug}`);
-                  } else if (workspace?.slug) {
-                    router.push(`/${workspace.slug}/${nextSlug}`);
-                  } else {
-                    router.push(`/${nextSlug}`);
-                  }
+                  const nextSlug = slugs[(currentIndex + 1) % slugs.length];
+                  router.push(`/${nextSlug}`);
                 } catch (e) {
                   console.warn("Next doc navigation failed", e);
                 }
@@ -221,33 +171,19 @@ export default function LayoutShell({
             >
               {(() => {
                 try {
-                  // compute next label for display without repeating the full logic above
-                  const pathParts = pathname?.split("/").filter(Boolean) ?? [];
-                  const host =
-                    typeof window !== "undefined"
-                      ? window.location.hostname
-                      : "";
-                  const hostParts = host.split(".");
-                  const subdomain = hostParts.length >= 2 ? hostParts[0] : null;
-                  let currentSlug: string | null = null;
-                  if (
-                    subdomain &&
-                    workspace?.slug &&
-                    subdomain === workspace.slug
-                  ) {
-                    currentSlug = pathParts.length >= 1 ? pathParts[0] : null;
-                  } else {
-                    currentSlug = pathParts.length >= 2 ? pathParts[1] : null;
-                  }
-
+                  const res = resolveWorkspaceFromRequest({
+                    hostname:
+                      typeof window !== "undefined"
+                        ? window.location.hostname
+                        : undefined,
+                    pathname,
+                    workspaceSlug: workspace?.slug ?? null,
+                  });
                   const slugs = clientDocs.map((d) => d.slug).filter(Boolean);
                   if (slugs.length === 0) return "Next document";
-
-                  let currentIndex = slugs.indexOf(currentSlug as string);
+                  let currentIndex = slugs.indexOf(res.documentSlug as any);
                   if (currentIndex === -1) currentIndex = -1;
-                  const nextIndex = (currentIndex + 1) % slugs.length;
-                  const nextSlug = slugs[nextIndex];
-
+                  const nextSlug = slugs[(currentIndex + 1) % slugs.length];
                   const nextDocObj = clientDocs.find(
                     (d) => String(d.slug) === String(nextSlug),
                   );
@@ -300,15 +236,6 @@ function DocumentSelect({
     ? documents.map((d) => ({ value: d.slug, label: d.title ?? d.slug }))
     : [];
 
-  // Derive selection purely from current pathname (no localStorage).
-  // Behavior:
-  // - If path is "/" (no path segments), select "__all__" (All documents).
-  // - If using subdomain mode for this workspace (workspace.slug === subdomain) then:
-  //     - "/" -> "__all__"
-  //     - "/<doc>" -> select that doc slug
-  // - Otherwise (path mode):
-  //     - "/<workspace>" or "/" -> "__all__"
-  //     - "/<workspace>/<doc>" -> select that doc slug
   useEffect(() => {
     try {
       if (!pathname) {
@@ -316,47 +243,13 @@ function DocumentSelect({
         setSelectedName("All documents");
         return;
       }
-      const parts = pathname.split("/").filter(Boolean);
-      const host =
-        typeof window !== "undefined" ? window.location.hostname : "";
-      const hostParts = host.split(".");
-      const subdomain = hostParts.length >= 2 ? hostParts[0] : null;
-
-      let current: string | null = null;
-
-      if (
-        subdomain &&
-        workspace?.slug &&
-        String(subdomain) === String(workspace.slug)
-      ) {
-        // subdomain mode: path "/" => all, path "/slug" => slug
-        if (parts.length === 0) {
-          current = "__all__";
-        } else {
-          current = parts[0];
-        }
-      } else {
-        // path mode: "/" => all, "/workspace" => all, "/workspace/slug" => slug
-        if (parts.length === 0) {
-          current = "__all__";
-        } else if (parts.length === 1) {
-          // could be either workspace root or a top-level doc; treat matching workspace as root
-          if (workspace?.slug && parts[0] === workspace.slug) {
-            current = "__all__";
-          } else {
-            current = parts[0];
-          }
-        } else {
-          // parts.length >= 2
-          if (workspace?.slug && parts[0] === workspace.slug) {
-            current = parts[1];
-          } else {
-            // not a workspace-scoped route; default to all
-            current = "__all__";
-          }
-        }
-      }
-
+      const res = resolveWorkspaceFromRequest({
+        hostname:
+          typeof window !== "undefined" ? window.location.hostname : undefined,
+        pathname,
+        workspaceSlug: workspace?.slug ?? null,
+      });
+      const current = res.documentSlug ?? "__all__";
       setValue(current ?? "__all__");
       if (current === "__all__") {
         setSelectedName("All documents");
@@ -365,11 +258,9 @@ function DocumentSelect({
         setSelectedName(found ? found.label : null);
       }
     } catch (e) {
-      // fallback
       setValue("__all__");
       setSelectedName("All documents");
     }
-    // update when pathname, workspace slug or docs list change
   }, [pathname, workspace?.slug, documents]);
 
   // disable selector when there are no published documents
@@ -439,32 +330,17 @@ function DocumentSelect({
                     const newValue = currentValue === value ? "" : currentValue;
                     setValue(newValue);
                     setOpen(false);
-
-                    // Update displayed name immediately
                     setSelectedName(d.label);
-
-                    // Navigate to the selected document within the workspace
-                    if (workspace?.slug && newValue) {
-                      // If the current host uses the workspace as a subdomain,
-                      // navigate to `/docslug` (no workspace prefix). Otherwise include the workspace slug.
-                      const host =
+                    if (!newValue) return;
+                    const res = resolveWorkspaceFromRequest({
+                      hostname:
                         typeof window !== "undefined"
                           ? window.location.hostname
-                          : "";
-                      const parts = host.split(".");
-                      const subdomain = parts.length >= 2 ? parts[0] : null;
-                      if (
-                        subdomain &&
-                        String(subdomain) === String(workspace.slug)
-                      ) {
-                        router.push(`/${newValue}`);
-                      } else {
-                        router.push(`/${workspace.slug}/${newValue}`);
-                      }
-                    } else if (newValue) {
-                      // fallback: push top-level slug
-                      router.push(`/${newValue}`);
-                    }
+                          : undefined,
+                      pathname,
+                      workspaceSlug: workspace?.slug ?? null,
+                    });
+                    router.push(`/${newValue}`);
                   }}
                 >
                   {d.label}

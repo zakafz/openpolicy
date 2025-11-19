@@ -10,20 +10,7 @@ import {
 } from "@/components/ui/frame";
 import { Badge } from "@/components/ui/badge";
 import { timeAgo } from "@/lib/utils";
-/**
- * Public document page
- *
- * Route: /[workspace]/[slug]
- *
- * Server-rendered page that:
- *  - Resolves the workspace by slug
- *  - Loads a published document (published = true) for that workspace and slug
- *  - Renders the document title and the Tiptap editor in read-only mode
- *
- * Notes:
- *  - Uses the service-role Supabase client so it can read private metadata if needed.
- *  - Returns `notFound()` for any missing workspace or document (or non-published).
- */
+import { fetchDocumentBySlug } from "@/lib/documents";
 
 type Props = {
   params: {
@@ -33,6 +20,7 @@ type Props = {
 };
 
 export default async function Page({ params }: Props) {
+  // Next 16: `params` may be a Promise — unwrap it before accessing properties.
   const { workspace, slug } = (await params) as unknown as {
     workspace: string;
     slug: string;
@@ -41,31 +29,23 @@ export default async function Page({ params }: Props) {
   // Create privileged server client
   const svc = createServiceClient();
 
-  // 1) fetch workspace by slug
   const { data: ws, error: wsErr } = await svc
     .from("workspaces")
     .select("id,name,slug")
     .eq("slug", workspace)
     .maybeSingle();
 
-  if (wsErr || !ws) {
+  if (wsErr || !ws) return notFound();
+
+  // Fetch published document by slug + workspace_id using centralized helper
+  let doc = null;
+  try {
+    doc = await fetchDocumentBySlug(slug, ws.id, svc);
+  } catch {
     return notFound();
   }
 
-  // 2) fetch published document by slug + workspace_id
-  const { data: doc, error: docErr } = await svc
-    .from("documents")
-    .select(
-      "id,title,slug,content,type,version,created_at,updated_at,published,workspace_id",
-    )
-    .eq("slug", slug)
-    .eq("workspace_id", ws.id)
-    .eq("published", true)
-    .maybeSingle();
-
-  if (docErr || !doc) {
-    return notFound();
-  }
+  if (!doc) return notFound();
 
   // 3) Parse stored content. Stored content is usually a stringified Tiptap JSON.
   let parsedInitialContent: any = null;

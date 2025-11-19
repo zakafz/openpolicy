@@ -29,6 +29,8 @@ import {
 } from "lucide-react";
 import { TextShimmer } from "@/components/motion-primitives/text-shimmer";
 import { timeAgo } from "@/lib/utils";
+import { fetchDocumentsForWorkspace } from "@/lib/documents";
+import { readSelectedWorkspaceId } from "@/lib/workspace";
 
 const typeIconMap: Record<string, React.ComponentType<any>> = {
   privacy: Shield,
@@ -69,23 +71,9 @@ export default function DocumentsShell(props: {
   useEffect(() => {
     if (workspaceId) return;
     try {
-      const raw =
-        typeof window !== "undefined"
-          ? window.localStorage.getItem("selectedWorkspace")
-          : null;
-      if (!raw) return;
-      try {
-        const parsed = JSON.parse(raw);
-        if (typeof parsed === "string") setWorkspaceId(parsed);
-        else if (parsed && typeof parsed.id === "string")
-          setWorkspaceId(parsed.id);
-        else if (parsed && typeof parsed.workspaceId === "string")
-          setWorkspaceId(parsed.workspaceId);
-        else if (parsed && typeof parsed.selectedWorkspace === "string")
-          setWorkspaceId(parsed.selectedWorkspace);
-      } catch {
-        setWorkspaceId(raw);
-      }
+      const id = readSelectedWorkspaceId();
+      if (!id) return;
+      setWorkspaceId(id);
     } catch {}
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -105,37 +93,17 @@ export default function DocumentsShell(props: {
 
     async function load() {
       try {
-        const supabase = createClient();
-        // Build query and conditionally filter by status. For the 'all' view we
-        // do not apply a status filter and we order by updated_at desc so the
-        // most recently edited documents appear first.
-        let q = supabase
-          .from("documents")
-          .select(
-            "id,title,slug,type,status,version,created_at,updated_at,published",
-          )
-          .eq("workspace_id", workspaceId);
-
-        if (props.type !== "all") {
-          q = q.eq("status", props.type);
-        }
-
-        q = q.order(props.type === "all" ? "updated_at" : "created_at", {
-          ascending: false,
-        });
-
-        const { data, error: fetchErr } = await q;
-
+        // Use centralized helper for fetching documents to keep logic consistent.
+        const docs = await fetchDocumentsForWorkspace(
+          workspaceId,
+          props.type,
+          createClient(),
+        );
         if (cancelled) return;
-
-        if (fetchErr) {
-          setError("Failed to load documents");
-          setDocuments([]);
-        } else {
-          setDocuments(data ?? []);
-        }
+        setDocuments(docs ?? []);
       } catch (e) {
-        setError("Unexpected error loading documents");
+        if (cancelled) return;
+        setError("Failed to load documents");
         setDocuments([]);
       } finally {
         if (!cancelled) setLoading(false);
@@ -162,7 +130,7 @@ export default function DocumentsShell(props: {
   return (
     <>
       <PageTitle
-        title={title}
+        title={title + (documents ? ` (${documents.length})` : "")}
         description={`Manage your ${props.type} documents`}
       />
 

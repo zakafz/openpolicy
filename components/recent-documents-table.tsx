@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { fetchDocumentsForWorkspace } from "@/lib/documents";
 import { Frame, FramePanel } from "@/components/ui/frame";
 import {
   Table,
@@ -108,30 +109,21 @@ export default function RecentDocumentsTable({
       setLoading(true);
       setError(null);
       try {
-        const supabase = createClient();
-        let q = supabase
-          .from("documents")
-          .select("id,title,slug,type,status,updated_at")
-          .order("updated_at", { ascending: false })
-          .limit(5);
-
-        // Always scope recent documents to the effective workspace id
-        q = q.eq("workspace_id", effectiveWorkspaceId);
-
-        const { data, error: fetchErr } = await q;
-        if (fetchErr) {
-          console.error("Failed to load recent documents:", fetchErr);
-          if (!cancelled) {
-            setError("Failed to load recent documents");
-            setDocs([]);
-          }
-        } else {
-          if (!cancelled) setDocs((data as any[]) ?? []);
-        }
-      } catch (e) {
-        console.error("Unexpected error loading recent documents:", e);
+        // Use centralized helper to fetch recent documents for the selected workspace.
+        // Request the top 5 most-recent documents; the helper keeps query logic consistent.
+        const docs = await fetchDocumentsForWorkspace(
+          effectiveWorkspaceId,
+          "all",
+          createClient(),
+          5,
+        );
         if (!cancelled) {
-          setError("Unexpected error loading recent documents");
+          setDocs(docs ?? []);
+        }
+      } catch (fetchErr) {
+        console.error("Failed to load recent documents:", fetchErr);
+        if (!cancelled) {
+          setError("Failed to load recent documents");
           setDocs([]);
         }
       } finally {
@@ -217,7 +209,10 @@ export default function RecentDocumentsTable({
                         {d.status}
                       </Badge>
                     </TableCell>
-                    <TableCell className="flex justify-end" title={fmtAbsolute(d.updated_at)}>
+                    <TableCell
+                      className="flex justify-end"
+                      title={fmtAbsolute(d.updated_at)}
+                    >
                       <Badge variant="secondary">{timeAgo(d.updated_at)}</Badge>
                     </TableCell>
                   </TableRow>

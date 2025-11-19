@@ -2,6 +2,10 @@
 
 import React from "react";
 import type { WorkspaceRow } from "@/types/supabase";
+import {
+  parseSelectedWorkspaceId,
+  readSelectedWorkspaceId,
+} from "@/lib/workspace";
 
 type WorkspaceContextValue = {
   selectedWorkspaceId: string | null;
@@ -34,9 +38,10 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
   React.useEffect(() => {
     try {
       if (typeof window !== "undefined") {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if (raw) {
-          setSelectedWorkspaceIdState(raw);
+        // Use centralized reader which handles historical shapes and parsing.
+        const id = readSelectedWorkspaceId();
+        if (id) {
+          setSelectedWorkspaceIdState(id);
         }
       }
     } catch (e) {
@@ -66,7 +71,14 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
   React.useEffect(() => {
     const onStorage = (e: StorageEvent) => {
       if (e.key === STORAGE_KEY) {
-        setSelectedWorkspaceIdState(e.newValue ?? null);
+        try {
+          // Use centralized reader to interpret persisted value consistently.
+          const id = readSelectedWorkspaceId();
+          setSelectedWorkspaceIdState(id);
+        } catch {
+          // Fallback to the raw newValue when parsing fails to preserve previous behavior.
+          setSelectedWorkspaceIdState(e.newValue ?? null);
+        }
       }
     };
     if (typeof window !== "undefined") {

@@ -7,7 +7,6 @@ import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import {
   Frame,
   FrameDescription,
-  FrameFooter,
   FrameHeader,
   FramePanel,
   FrameTitle,

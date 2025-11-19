@@ -1,6 +1,7 @@
 import * as React from "react";
 import { useWorkspace } from "@/context/workspace";
 import { fetchWorkspaceById } from "@/lib/workspace";
+import { readSelectedWorkspaceId } from "@/lib/workspace";
 import type { WorkspaceRow } from "@/types/supabase";
 
 /**
@@ -77,16 +78,24 @@ export function useWorkspaceLoader(overrideId?: string | null) {
         // Prefer id from event (allows publishers to specify), otherwise fall back to current selectedId
         load(idFromEvent ?? selectedId);
       } catch (err) {
-        console.warn("useWorkspaceLoader: workspace-changed handler error", err);
+        console.warn(
+          "useWorkspaceLoader: workspace-changed handler error",
+          err,
+        );
       }
     }
 
     function onStorage(e: StorageEvent) {
-      // When another tab updates selectedWorkspace in localStorage, reload that id
+      // When another tab updates selectedWorkspace in localStorage, reload that id.
+      // Use the centralized parser/helper to ensure persisted shapes are interpreted consistently.
       if (e.key === "selectedWorkspace") {
-        const idFromStorage =
-          typeof window !== "undefined" ? localStorage.getItem("selectedWorkspace") : null;
-        load(idFromStorage);
+        try {
+          const idFromStorage = readSelectedWorkspaceId();
+          load(idFromStorage);
+        } catch {
+          // If anything goes wrong reading/parsing persisted selection, reload without an id.
+          load(null);
+        }
       }
     }
 

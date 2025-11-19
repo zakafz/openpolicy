@@ -168,9 +168,9 @@ export function WorkspaceSwitcher({
                 }}
                 className="gap-2 p-2"
               >
-                <div className="flex items-center justify-center rounded-md border">
+                <div className="flex items-center justify-center">
                   {item.logo ? (
-                    <Avatar className="size-8 min-h-8 min-w-8 rounded-lg">
+                    <Avatar className="size-8 min-h-8 min-w-8 rounded-lg border">
                       <AvatarImage
                         src={
                           item.logo ||
@@ -178,7 +178,7 @@ export function WorkspaceSwitcher({
                         }
                         alt={item.name || "Unknown"}
                       />
-                      <AvatarFallback className="rounded-lg uppercase text-primary">
+                      <AvatarFallback className="uppercase text-primary">
                         {item.name?.charAt(0) || "NA"}
                       </AvatarFallback>
                     </Avatar>

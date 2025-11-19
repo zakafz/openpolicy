@@ -2,18 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { api as polar } from "@/lib/polar";
 
-/**
- * GET /api/polar/customer
- *
- * Returns the Polar customer for the currently authenticated Supabase user
- * (looked up by externalId which we set to the Supabase user id during OAuth).
- *
- * Response:
- *  - 200: { customerId, externalId, customer }
- *  - 401: { error: "Not authenticated" }
- *  - 404: {} (not found)
- *  - 500: { error: "Polar lookup error" } or { error: "Server error" }
- */
+// GET /api/polar/customer — return Polar customer for authenticated Supabase user
 export async function GET(req: Request) {
   try {
     // server-side Supabase client (reads cookies)
@@ -58,7 +47,10 @@ export async function GET(req: Request) {
         return NextResponse.json({}, { status: 404 });
       }
       console.error("Polar lookup error:", err);
-      return NextResponse.json({ error: "Polar lookup error" }, { status: 500 });
+      return NextResponse.json(
+        { error: "Polar lookup error" },
+        { status: 500 },
+      );
     }
   } catch (err) {
     console.error("Server error in /api/polar/customer:", err);

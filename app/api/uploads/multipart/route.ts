@@ -2,22 +2,13 @@ import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { createClient } from "@/lib/supabase/server";
 
-/**
- * POST /api/uploads/multipart
- *
- * Accepts multipart/form-data with these fields:
- * - file (required): the uploaded file
- * - workspaceId (optional): when provided, the server verifies the requester owns the workspace
- * - isLogo (optional): if present and truthy, the uploaded file will be persisted to the workspace.logo/logo_path fields
- *
- * Returns JSON:
- * { ok: true, publicURL: string, path: string }
- *
- * Notes:
- * - This route runs server-side and uses the service-role Supabase client for storage writes.
- * - When workspaceId is provided, the route authenticates the session (reads cookies) and verifies ownership.
- * - The uploaded file is streamed from the request FormData and uploaded to the `workspace-logos` bucket by default.
- */
+// POST /api/uploads/multipart
+// Accepts multipart/form-data with:
+// - `file` (required)
+// - `workspaceId` (optional) — when provided, verifies requester owns the workspace
+// - `isLogo` (optional) — if truthy and workspaceId provided, saved as workspace logo
+// Returns: { ok: true, publicURL: string, path: string }
+// Notes: runs server-side; uses service-role Supabase client for storage writes and verifies ownership when applicable.
 export async function POST(req: Request) {
   try {
     // Parse incoming multipart/form-data
@@ -45,13 +36,18 @@ export async function POST(req: Request) {
     const {
       data: { user },
       error: authErr,
-    } = await sessionClient.auth.getUser().catch((e) => ({ data: { user: null }, error: e }));
+    } = await sessionClient.auth
+      .getUser()
+      .catch((e) => ({ data: { user: null }, error: e }));
 
     const svc = createServiceClient();
 
     if (workspaceId) {
       if (authErr || !user) {
-        return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+        return NextResponse.json(
+          { error: "Not authenticated" },
+          { status: 401 },
+        );
       }
 
       // Verify workspace ownership
@@ -64,10 +60,16 @@ export async function POST(req: Request) {
 
       if (wsErr) {
         console.error("uploads/multipart: failed to fetch workspace", wsErr);
-        return NextResponse.json({ error: "Failed to fetch workspace" }, { status: 500 });
+        return NextResponse.json(
+          { error: "Failed to fetch workspace" },
+          { status: 500 },
+        );
       }
       if (!wsData) {
-        return NextResponse.json({ error: "Workspace not found" }, { status: 404 });
+        return NextResponse.json(
+          { error: "Workspace not found" },
+          { status: 404 },
+        );
       }
       if (String(wsData.owner_id) !== String(user.id)) {
         return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -92,15 +94,25 @@ export async function POST(req: Request) {
     if (contentType) uploadOptions.contentType = contentType;
 
     // Upload to Supabase Storage using service client
-    const { error: uploadError } = await svc.storage.from(bucket).upload(destPath, buffer, uploadOptions);
+    const { error: uploadError } = await svc.storage
+      .from(bucket)
+      .upload(destPath, buffer, uploadOptions);
     if (uploadError) {
       console.error("uploads/multipart: upload error", uploadError);
-      return NextResponse.json({ error: "Storage upload failed", detail: uploadError }, { status: 500 });
+      return NextResponse.json(
+        { error: "Storage upload failed", detail: uploadError },
+        { status: 500 },
+      );
     }
 
     // Get public URL (bucket expected to be public)
-    const { data: publicUrlData } = svc.storage.from(bucket).getPublicUrl(destPath);
-    const publicURL = (publicUrlData as any)?.publicUrl ?? (publicUrlData as any)?.publicURL ?? "";
+    const { data: publicUrlData } = svc.storage
+      .from(bucket)
+      .getPublicUrl(destPath);
+    const publicURL =
+      (publicUrlData as any)?.publicUrl ??
+      (publicUrlData as any)?.publicURL ??
+      "";
 
     // If flagged as a logo and workspaceId present, persist to workspaces row
     if (workspaceId && isLogo) {
@@ -114,7 +126,10 @@ export async function POST(req: Request) {
           })
           .eq("id", workspaceId);
       } catch (e) {
-        console.warn("uploads/multipart: warning - failed to update workspace with logo", e);
+        console.warn(
+          "uploads/multipart: warning - failed to update workspace with logo",
+          e,
+        );
         // continue and return success for the upload itself
       }
     }
@@ -122,6 +137,9 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true, publicURL, path: destPath });
   } catch (err) {
     console.error("/api/uploads/multipart error:", err);
-    return NextResponse.json({ error: "Server error", detail: String(err) }, { status: 500 });
+    return NextResponse.json(
+      { error: "Server error", detail: String(err) },
+      { status: 500 },
+    );
   }
 }

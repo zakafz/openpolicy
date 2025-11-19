@@ -25,6 +25,10 @@ import {
 } from "lucide-react";
 import { contentTemplates } from "@/components/document-templates";
 import { DocumentType } from "@/types/documents";
+import {
+  writeSelectedWorkspaceId,
+  readSelectedWorkspaceId,
+} from "@/lib/workspace";
 
 const documentTypes: {
   value: DocumentType;
@@ -108,8 +112,6 @@ export default function NewDocumentShell({
   );
   const [version] = useState<number>(1);
 
-  
-
   function getTemplateForType(t: DocumentType, titleText: string) {
     const base = contentTemplates[t] ?? contentTemplates.other;
     const copy = JSON.parse(JSON.stringify(base));
@@ -131,9 +133,16 @@ export default function NewDocumentShell({
   const [error, setError] = useState<string | null>(null);
   const [successUrl, setSuccessUrl] = useState<string | null>(null);
 
-  // derive workspaceId: prop -> query param -> undefined
+  // derive workspaceId: prefer prop -> persisted selected workspace -> query param -> undefined
+  // Use persisted selection (localStorage) when available so the New Document form opens
+  // with the user's current workspace selection rather than an out-of-date query param.
   const workspaceId =
-    propWorkspaceId ?? searchParams?.get("workspaceId") ?? undefined;
+    propWorkspaceId ??
+    (typeof window !== "undefined"
+      ? (readSelectedWorkspaceId() ??
+        searchParams?.get("workspaceId") ??
+        undefined)
+      : (searchParams?.get("workspaceId") ?? undefined));
 
   // Slug validation (allow lowercase letters, numbers and dashes)
   const SLUG_REGEX = /^[a-z0-9-]+$/;
@@ -212,6 +221,33 @@ export default function NewDocumentShell({
           const docId = data?.id;
           const docSlug = data?.slug ?? slug;
           setSuccessUrl(`/dashboard/documents/${docId ?? docSlug}`);
+          // Persist the selected workspace and broadcast change so other tabs/components pick it up.
+          // Do this before navigation to ensure the UI is in the correct workspace when the new
+          // document page loads (prevents immediate "Access Denied" caused by stale selection).
+          try {
+            if (typeof window !== "undefined") {
+              writeSelectedWorkspaceId(workspaceId);
+              try {
+                window.dispatchEvent(
+                  new CustomEvent("workspace-changed", {
+                    detail: { id: workspaceId ?? null },
+                  }),
+                );
+              } catch (evErr) {
+                // Non-fatal: dispatch failure should not block navigation.
+                console.warn(
+                  "NewDocumentShell: failed to dispatch workspace-changed event",
+                  evErr,
+                );
+              }
+            }
+          } catch (e) {
+            // Non-fatal: do not surface to user; preserve navigation success.
+            console.warn(
+              "NewDocumentShell: failed to persist workspace selection",
+              e,
+            );
+          }
           // navigate to the new document or documents list
           router.push(`/dashboard/d/${docId ?? docSlug}`);
         } else if (res.status === 409) {

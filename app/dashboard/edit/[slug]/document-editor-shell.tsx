@@ -5,6 +5,8 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { Editor } from "@/components/tiptap/editor/editor";
 import { createClient } from "@/lib/supabase/client";
+import { fetchDocumentBySlug } from "@/lib/documents";
+import { readSelectedWorkspaceId } from "@/lib/workspace";
 import { TextShimmer } from "@/components/motion-primitives/text-shimmer";
 import {
   Empty,
@@ -42,11 +44,26 @@ export default function DocumentEditorShell() {
       try {
         const supabase = createClient();
 
-        const { data, error: fetchErr } = await supabase
-          .from("documents")
-          .select("id,slug,content,title,workspace_id")
-          .eq("slug", slug)
-          .maybeSingle();
+        // Determine selected workspace from localStorage similar to other components.
+        // If a selected workspace exists, scope the document fetch to that workspace.
+        let selectedWorkspaceId: string | null = null;
+        try {
+          // Use centralized helper to parse persisted selected workspace.
+          selectedWorkspaceId = readSelectedWorkspaceId();
+        } catch {
+          selectedWorkspaceId = null;
+        }
+
+        // Use centralized helper to fetch the document by slug (scoped to workspace when provided).
+        // Wrap in try/catch to mirror previous pattern where `fetchErr` was available.
+        let data: any = null;
+        let fetchErr: any = null;
+        try {
+          data = await fetchDocumentBySlug(slug, selectedWorkspaceId, supabase);
+        } catch (e: any) {
+          // Preserve previous behavior: downstream logic expects `fetchErr` when queries fail.
+          fetchErr = e;
+        }
 
         if (cancelled) return;
 
@@ -60,11 +77,68 @@ export default function DocumentEditorShell() {
         }
 
         if (!data) {
-          setError("Document not found");
-          setDocId(null);
-          setDocSlug(null);
-          setInitialContent(null);
-          return;
+          if (selectedWorkspaceId) {
+            // Fallback: try fetching without workspace scoping to check if the document
+            // exists in a different workspace and should therefore be blocked.
+            try {
+              // Fallback: try fetching without workspace scoping to check if the document
+              // exists in a different workspace and should therefore be blocked.
+              let fallbackData: any = null;
+              let fallbackErr: any = null;
+              try {
+                fallbackData = await fetchDocumentBySlug(
+                  slug,
+                  undefined,
+                  supabase,
+                );
+              } catch (e: any) {
+                fallbackErr = e;
+              }
+
+              if (cancelled) return;
+
+              if (fallbackErr) {
+                console.error("Fallback fetch error:", fallbackErr);
+                setError(fallbackErr.message ?? "Failed to load document");
+                setDocId(null);
+                setDocSlug(null);
+                setInitialContent(null);
+                return;
+              }
+
+              if (fallbackData) {
+                // Document exists but in a different workspace — block editing.
+                setBlocked(true);
+                setError(
+                  "You cannot edit this document from the selected workspace. Switch to the document's workspace to edit it.",
+                );
+                setDocId(null);
+                setDocSlug(null);
+                setInitialContent(null);
+                return;
+              }
+
+              // Not found at all
+              setError("Document not found");
+              setDocId(null);
+              setDocSlug(null);
+              setInitialContent(null);
+              return;
+            } catch (e: any) {
+              console.error("Fallback fetch unexpected error:", e);
+              setError("Failed to load document");
+              setDocId(null);
+              setDocSlug(null);
+              setInitialContent(null);
+              return;
+            }
+          } else {
+            setError("Document not found");
+            setDocId(null);
+            setDocSlug(null);
+            setInitialContent(null);
+            return;
+          }
         }
 
         // Determine whether content is JSON (Tiptap JSON) or HTML/plain string.
@@ -102,37 +176,15 @@ export default function DocumentEditorShell() {
             : String(data.title ?? ""),
         );
 
-        // Determine selected workspace from localStorage similar to other components.
-        // If a selected workspace exists and does not match the document's workspace_id,
-        // block editing.
+        // If we previously resolved a selected workspace, check it against the loaded document.
+        // Block editing if the selected workspace doesn't match the document's workspace.
         try {
-          let raw =
-            typeof window !== "undefined"
-              ? window.localStorage.getItem("selectedWorkspace")
-              : null;
-          let selectedWorkspaceId: string | null = null;
-          if (raw) {
-            try {
-              const parsed = JSON.parse(raw);
-              if (typeof parsed === "string") selectedWorkspaceId = parsed;
-              else if (parsed && typeof parsed.id === "string")
-                selectedWorkspaceId = parsed.id;
-              else if (parsed && typeof parsed.workspaceId === "string")
-                selectedWorkspaceId = parsed.workspaceId;
-              else if (parsed && typeof parsed.selectedWorkspace === "string")
-                selectedWorkspaceId = parsed.selectedWorkspace;
-            } catch {
-              selectedWorkspaceId = raw;
-            }
-          }
-
           if (
             selectedWorkspaceId &&
             data.workspace_id &&
-            selectedWorkspaceId !== String(data.workspace_id)
+            String(selectedWorkspaceId) !== String(data.workspace_id)
           ) {
             // The currently selected workspace is different from the document's workspace.
-            // Block editing and show a helpful message.
             setBlocked(true);
             setError(
               "You cannot edit this document from the selected workspace. Switch to the document's workspace to edit it.",
@@ -141,7 +193,6 @@ export default function DocumentEditorShell() {
             setInitialContent(null);
             return;
           } else {
-            // clear blocked state if workspace matches or no selection
             setBlocked(false);
           }
         } catch (e) {

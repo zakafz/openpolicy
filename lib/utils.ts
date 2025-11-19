@@ -1,11 +1,10 @@
-import { clsx, type ClassValue } from "clsx"
-import { twMerge } from "tailwind-merge"
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
+  return twMerge(clsx(inputs));
 }
 
-// Simple human-friendly relative time (e.g. "12 minutes ago", "3 hours ago")
 export function timeAgo(date?: string | null) {
   if (!date) return "";
   const then = new Date(date).getTime();
@@ -24,7 +23,6 @@ export function timeAgo(date?: string | null) {
   return `${d} day${d === 1 ? "" : "s"} ago`;
 }
 
-// Helper: absolute/relative formatting
 export function fmtAbsolute(date?: string | null) {
   if (!date) return "";
   try {
@@ -32,4 +30,81 @@ export function fmtAbsolute(date?: string | null) {
   } catch {
     return String(date);
   }
+}
+
+export function getHostSubdomain(hostname?: string): string | null {
+  if (!hostname) return null;
+  if (hostname === "localhost" || /^\d+\.\d+\.\d+\.\d+$/.test(hostname))
+    return null;
+  const parts = hostname.split(".");
+  if (parts.length < 3) return null;
+  return parts[0] ?? null;
+}
+
+export function splitPathname(pathname?: string): string[] {
+  if (!pathname) return [];
+  return pathname.split("/").filter(Boolean);
+}
+
+export function resolveWorkspaceFromRequest(options: {
+  hostname?: string;
+  pathname?: string;
+  workspaceSlug?: string | null;
+}): {
+  mode: "subdomain" | "path" | "none";
+  workspaceSlug: string | null;
+  documentSlug: string | null;
+} {
+  const { hostname, pathname, workspaceSlug } = options;
+  const sub = getHostSubdomain(hostname ?? undefined);
+  const parts = splitPathname(pathname);
+  if (sub && workspaceSlug && String(sub) === String(workspaceSlug)) {
+    const doc = parts.length >= 1 ? parts[0] : null;
+    return { mode: "subdomain", workspaceSlug, documentSlug: doc };
+  }
+  if (parts.length === 0) {
+    return {
+      mode: "path",
+      workspaceSlug: workspaceSlug ?? null,
+      documentSlug: null,
+    };
+  }
+  if (workspaceSlug && parts[0] === workspaceSlug) {
+    const doc = parts.length >= 2 ? parts[1] : null;
+    return { mode: "path", workspaceSlug, documentSlug: doc };
+  }
+  const doc = parts.length >= 1 ? parts[0] : null;
+  return {
+    mode: "none",
+    workspaceSlug: workspaceSlug ?? null,
+    documentSlug: doc,
+  };
+}
+
+export function buildDocumentUrl(options: {
+  workspaceSlug?: string | null;
+  documentSlug?: string | null;
+  useSubdomain?: boolean;
+  origin?: string | null;
+}): string {
+  const { workspaceSlug, documentSlug, useSubdomain, origin } = options;
+  const slug = documentSlug ?? "";
+  if (useSubdomain && workspaceSlug && origin) {
+    try {
+      const url = new URL(origin);
+      const hostParts = url.hostname.split(".");
+      if (hostParts.length >= 2) {
+        hostParts[0] = String(workspaceSlug);
+        url.hostname = hostParts.join(".");
+        url.pathname = `/${slug}`;
+        return url.toString();
+      }
+    } catch {
+      // fallback to path-based URL
+    }
+  }
+  if (workspaceSlug) {
+    return `/${workspaceSlug}/${slug}`;
+  }
+  return `/${slug}`;
 }

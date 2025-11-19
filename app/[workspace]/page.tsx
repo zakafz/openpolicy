@@ -1,6 +1,7 @@
 import Container from "@/components/dashboard-container";
 import Link from "next/link";
 import { createServiceClient } from "@/lib/supabase/service";
+import { fetchPublishedDocumentsForWorkspaceServer } from "@/lib/documents";
 import { notFound } from "next/navigation";
 import { fmtAbsolute, timeAgo } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -16,25 +17,11 @@ type Props = {
       }>;
 };
 
-/**
- * Workspace index page
- *
- * Route: /[workspace]
- *
- * Server-rendered page that:
- *  - Resolves the workspace by slug
- *  - Lists published documents for that workspace (most-recent first)
- *
- * Notes:
- *  - Uses the service-role Supabase client so it can read workspace metadata.
- *  - Returns `notFound()` when the workspace doesn't exist.
- */
 export default async function Page({ params }: Props) {
   const { workspace } = (await params) as { workspace: string };
 
   const svc = createServiceClient();
 
-  // Fetch workspace (to validate it exists and to get display name)
   const { data: ws, error: wsErr } = await svc
     .from("workspaces")
     .select("id,name,slug")
@@ -45,21 +32,17 @@ export default async function Page({ params }: Props) {
     return notFound();
   }
 
-  // Fetch published documents for the workspace, most recent first
-  const { data: docs, error: docsErr } = await svc
-    .from("documents")
-    .select("id,title,slug,updated_at,created_at")
-    .eq("workspace_id", ws.id)
-    .eq("published", true)
-    .order("updated_at", { ascending: false })
-    .limit(100);
-
-  if (docsErr) {
-    // On error, show notFound to avoid leaking details. Could render an error UI instead.
+  let docList: any[] = [];
+  try {
+    const docs = await fetchPublishedDocumentsForWorkspaceServer(
+      ws.id,
+      svc,
+      100,
+    );
+    docList = Array.isArray(docs) ? docs : [];
+  } catch (e) {
     return notFound();
   }
-
-  const docList = Array.isArray(docs) ? docs : [];
 
   return (
     <div>
@@ -91,7 +74,6 @@ export default async function Page({ params }: Props) {
                       {d.title ?? d.slug}
                     </div>
                     <div className="text-sm text-muted-foreground mt-1">
-                      {/* show pretty timestamp if available */}
                       {d.updated_at
                         ? `Updated ${timeAgo(d.updated_at)} • ${fmtAbsolute(
                             d.updated_at,
