@@ -9,7 +9,7 @@ import {
   FrameTitle,
 } from "@/components/ui/frame";
 import { Badge } from "@/components/ui/badge";
-import { timeAgo } from "@/lib/utils";
+import { fmtAbsolute, timeAgo } from "@/lib/utils";
 import { fetchDocumentBySlug } from "@/lib/documents";
 
 type Props = {
@@ -37,7 +37,7 @@ export default async function Page({ params }: Props) {
 
   if (wsErr || !ws) return notFound();
 
-  // Fetch published document by slug + workspace_id using centralized helper
+  // Fetch document by slug + workspace_id using centralized helper
   let doc = null;
   try {
     doc = await fetchDocumentBySlug(slug, ws.id, svc);
@@ -45,7 +45,9 @@ export default async function Page({ params }: Props) {
     return notFound();
   }
 
-  if (!doc) return notFound();
+  // Ensure the public page only serves published documents.
+  // Return 404 for unpublished or archived documents.
+  if (!doc || doc.status !== "published" || !doc.published) return notFound();
 
   // 3) Parse stored content. Stored content is usually a stringified Tiptap JSON.
   let parsedInitialContent: any = null;
@@ -68,7 +70,7 @@ export default async function Page({ params }: Props) {
           <FrameTitle className="text-md font-mono">{doc.title}</FrameTitle>
           <FrameDescription>
             <Badge variant={"secondary"} className="font-mono mt-1">
-              Last update: {timeAgo(doc.updated_at)}
+              Last update: <span>{fmtAbsolute(doc.updated_at)}</span>
             </Badge>
           </FrameDescription>
         </FrameHeader>

@@ -36,5 +36,5 @@ export const GET = CustomerPortal({
       return null;
     }
   },
-  server: "sandbox",
+  server: polarServer!,
 });

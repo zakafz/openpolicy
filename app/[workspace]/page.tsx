@@ -5,7 +5,16 @@ import { fetchPublishedDocumentsForWorkspaceServer } from "@/lib/documents";
 import { notFound } from "next/navigation";
 import { fmtAbsolute, timeAgo } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
-import { ArrowUpRight } from "lucide-react";
+import { ArrowUpRight, FileSearchCorner, RouteIcon } from "lucide-react";
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
+import { Button } from "@/components/ui/button";
 
 type Props = {
   params:
@@ -24,7 +33,7 @@ export default async function Page({ params }: Props) {
 
   const { data: ws, error: wsErr } = await svc
     .from("workspaces")
-    .select("id,name,slug")
+    .select("id,name,return_url,slug")
     .eq("slug", workspace)
     .maybeSingle();
 
@@ -57,9 +66,26 @@ export default async function Page({ params }: Props) {
 
       <main>
         {docList.length === 0 ? (
-          <div className="rounded-2xl p-6 bg-accent text-muted-foreground">
-            No published documents found.
-          </div>
+          <Empty className="bg-accent">
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <FileSearchCorner />
+              </EmptyMedia>
+              <EmptyTitle>No published documents</EmptyTitle>
+              <EmptyDescription>
+                This workspace has no published documents.
+              </EmptyDescription>
+            </EmptyHeader>
+            {ws?.return_url && (
+              <EmptyContent>
+                <div className="flex gap-2">
+                  <Link href={ws?.return_url}>
+                    <Button size="sm">Back to website</Button>
+                  </Link>
+                </div>
+              </EmptyContent>
+            )}
+          </Empty>
         ) : (
           <div className="flex flex-col gap-2">
             {docList.map((d: any) => (

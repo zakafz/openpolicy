@@ -147,7 +147,10 @@ export function canColorHighlight(
     if (!isExtensionAvailable(editor, ["nodeBackground"])) return false
 
     try {
-      return editor.can().toggleNodeBackgroundColor("test")
+      // toggleNodeBackgroundColor may not be declared on the CanCommands type,
+      // so use a safe any cast and optional chaining.
+      const can = editor.can() as any
+      return !!can?.toggleNodeBackgroundColor?.("test")
     } catch {
       return false
     }
@@ -202,7 +205,10 @@ export function removeHighlight(
   if (mode === "mark") {
     return editor.chain().focus().unsetMark("highlight").run()
   } else {
-    return editor.chain().focus().unsetNodeBackgroundColor().run()
+    // unsetNodeBackgroundColor may not be declared on the ChainedCommands type,
+    // so cast to any before invoking.
+    const chain = editor.chain() as any
+    return chain.focus().unsetNodeBackgroundColor().run()
   }
 }
 
@@ -291,8 +297,10 @@ export function useColorHighlight(config: UseColorHighlightConfig) {
 
       return true
     } else {
-      const success = editor
-        .chain()
+      // toggleNodeBackgroundColor may not be declared on the ChainedCommands type,
+      // so cast to any before invoking.
+      const chain = editor.chain() as any
+      const success = chain
         .focus()
         .toggleNodeBackgroundColor(highlightColor)
         .run()

@@ -425,7 +425,7 @@ export function AppSidebar(props: { user: any; products: Product[] }) {
                 disabled
               >
                 <EyeClosed />
-                Workspace Unavailable
+                Open Workspace
               </Button>
             </div>
           )}

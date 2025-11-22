@@ -121,6 +121,23 @@ export default function LayoutShell({
           </div>
         </a>
         <div className="flex flex-row gap-1 items-center">
+          <Tooltip delayDuration={500}>
+            <TooltipTrigger asChild>
+              <a href={`/`}>
+                <Button
+                  onClick={() => router.push("/")}
+                  variant={"ghost"}
+                  className="text-muted-foreground hover:text-primary"
+                >
+                  Home
+                </Button>
+              </a>
+            </TooltipTrigger>
+            <TooltipContent className="text-xs font-mono rounded p-1 px-2">
+              See all documents
+            </TooltipContent>
+          </Tooltip>
+
           <DocumentSelect workspace={workspace} documents={clientDocs} />
           {workspace?.support_email ? (
             <Tooltip delayDuration={500}>

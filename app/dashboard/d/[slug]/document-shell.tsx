@@ -27,13 +27,18 @@ import {
 } from "@/components/ui/alert-dialog";
 import {
   Archive,
+  BookCheck,
+  BookDashed,
   ChevronDownIcon,
   Edit,
   Edit2,
+  Eye,
   MoreVertical,
   Notebook,
+  PackageOpen,
   RouteIcon,
   Trash,
+  TriangleAlertIcon,
 } from "lucide-react";
 import { TextShimmer } from "@/components/motion-primitives/text-shimmer";
 import { Button } from "@/components/ui/button";
@@ -49,21 +54,18 @@ import {
   FramePanel,
 } from "@/components/ui/frame";
 import { Badge } from "@/components/ui/badge";
+import { Badge as BadgeCoss } from "@/components/ui/badge-coss";
 import { Separator } from "@/components/ui/separator";
 import { cn, fmtAbsolute, timeAgo } from "@/lib/utils";
 import PageTitle from "@/components/dashboard-page-title";
 import {
-  Dialog,
-  DialogClose,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogPopup,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
+  Menu,
+  MenuItem,
+  MenuPopup,
+  MenuSeparator,
+  MenuTrigger,
+} from "@/components/ui/menu";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export default function DocumentShell() {
   const pathname = usePathname();
@@ -353,9 +355,26 @@ export default function DocumentShell() {
         title={doc.title.charAt(0).toUpperCase() + doc.title.slice(1)}
       />
       {info ? (
-        <div className="p-3 mb-4 rounded border-l-4 border-amber-400 bg-amber-50 text-amber-800 text-sm">
-          {info}
-        </div>
+        <Alert
+          variant={
+            doc?.status === "archived"
+              ? "error"
+              : doc.status === "draft"
+                ? "warning"
+                : "info"
+          }
+          className="mb-5"
+        >
+          {doc?.status === "archived" ? (
+            <PackageOpen />
+          ) : doc.status === "draft" ? (
+            <BookDashed />
+          ) : (
+            <BookCheck />
+          )}
+
+          <AlertTitle>{info}</AlertTitle>
+        </Alert>
       ) : null}
       <Frame className="w-full">
         <Collapsible defaultOpen>
@@ -369,37 +388,85 @@ export default function DocumentShell() {
                 {doc.title}
               </CollapsibleTrigger>
 
-              <Badge variant={"secondary"}>
-                Slug: <span className="font-semibold">{doc.slug ?? "—"}</span>
-              </Badge>
-
-              <Badge variant="secondary" className="capitalize">
+              <BadgeCoss
+                variant={
+                  doc.status === "published"
+                    ? "info"
+                    : doc.status === "archived"
+                      ? "secondary"
+                      : "warning"
+                }
+                className="capitalize"
+                size={"lg"}
+              >
                 <span
                   className={`size-1.5 rounded-full ${
                     doc.status === "published"
-                      ? "bg-emerald-500"
+                      ? "bg-info"
                       : doc.status === "archived"
                         ? "bg-muted-foreground/60"
-                        : "bg-amber-500"
+                        : "bg-warning"
                   }`}
                   aria-hidden="true"
                 />
                 {doc.status}
-              </Badge>
-              <Badge variant={"secondary"}>
+              </BadgeCoss>
+              <BadgeCoss variant={"outline"} size={"lg"}>
+                Slug: <span className="font-semibold">{doc.slug ?? "—"}</span>
+              </BadgeCoss>
+
+              <BadgeCoss variant={"outline"} size={"lg"}>
                 Version:{" "}
                 <span className="font-semibold">
                   {String(doc.version ?? "1")}
                 </span>
-              </Badge>
+              </BadgeCoss>
             </div>
             <div className="flex items-center gap-2">
               <AlertDialog>
-                <AlertDialogTrigger
-                  render={<Button size={"sm"} variant="destructive-outline" />}
-                >
-                  {doc.status === "archived" ? <Trash /> : <Archive />}
-                </AlertDialogTrigger>
+                <Menu openOnHover>
+                  <MenuTrigger
+                    render={<Button size="icon-sm" variant="ghost" />}
+                  >
+                    <MoreVertical />
+                  </MenuTrigger>
+                  <MenuPopup>
+                    {/*<MenuItem>
+                      <Eye /> Preview
+                    </MenuItem>*/}
+                    {blocked ? (
+                      <MenuItem aria-label="Edit" disabled>
+                        <Edit />
+                        Edit
+                      </MenuItem>
+                    ) : (
+                      <Link href={`/dashboard/edit/${doc.slug}`}>
+                        <MenuItem aria-label="Edit">
+                          <Edit />
+                          Edit
+                        </MenuItem>
+                      </Link>
+                    )}
+                    <MenuSeparator />
+                    <AlertDialogTrigger
+                      nativeButton={false}
+                      render={<MenuItem variant="destructive" />}
+                    >
+                      {doc.status === "archived" ? (
+                        <div className="flex gap-2 items-center">
+                          <Trash />
+                          Delete
+                        </div>
+                      ) : (
+                        <div className="flex gap-2 items-center">
+                          <Archive />
+                          Archive
+                        </div>
+                      )}
+                    </AlertDialogTrigger>
+                  </MenuPopup>
+                </Menu>
+
                 <AlertDialogPopup>
                   <AlertDialogHeader>
                     <AlertDialogTitle>
@@ -505,18 +572,6 @@ export default function DocumentShell() {
                 </AlertDialogPopup>
               </AlertDialog>
 
-              <Separator orientation="vertical" className={"h-5 ml-2"} />
-              {blocked ? (
-                <Button aria-label="Edit" variant="ghost" size={"sm"} disabled>
-                  Edit
-                </Button>
-              ) : (
-                <Link href={`/dashboard/edit/${doc.slug}`}>
-                  <Button aria-label="Edit" variant="ghost" size={"sm"}>
-                    Edit
-                  </Button>
-                </Link>
-              )}
               {doc.status === "draft" ? (
                 <Button
                   aria-label="Publish"
