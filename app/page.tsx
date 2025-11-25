@@ -10,9 +10,13 @@ import {
 } from "@/components/kibo-ui/announcement";
 import Section from "@/components/section";
 import { Button } from "@/components/ui/button";
+import CTA from "@/components/cta";
+import { Safari } from "@/components/ui/safari";
+import { EditorShowcase } from "@/components/tiptap/editor/editor-showcase";
+import FeaturesSection from "@/components/features";
 
 export const metadata: Metadata = {
-  title: 'Home',
+  title: 'OpenPolicy - The Better Way to Handle Your Policies',
   description: 'The better way to handle your policies and documents. Effortlessly host, manage, and update your policies in one secure platform.',
   openGraph: {
     title: 'OpenPolicy - The Better Way to Handle Your Policies',
@@ -28,43 +32,43 @@ export const metadata: Metadata = {
 export default function Home() {
   const features = [
     {
-      title: "Faaast",
+      title: "1. Create",
       icon: (
-        <div className="w-fit size-7! justify-center flex items-center rounded-lg bg-border/60">
+        <div className="w-fit size-7! justify-center flex items-center border bg-border/60">
           1
         </div>
       ),
-      description: "It supports an entire helping developers and innovate.",
+      description: "Create a new document in seconds.",
     },
     {
-      title: "Powerful",
+      title: "2. Write",
       icon: (
-        <div className="w-fit size-7! justify-center flex items-center rounded-lg bg-border/60">
+        <div className="w-fit size-7! justify-center flex items-center border bg-border/60">
           2
         </div>
       ),
-      description: "It supports an entire helping developers and businesses.",
+      description: "Write your document in a easy to use text editor.",
     },
     {
-      title: "Security",
+      title: "3. Publish",
       icon: (
-        <div className="w-fit size-7! justify-center flex items-center rounded-lg bg-border/60">
+        <div className="w-fit size-7! justify-center flex items-center border bg-border/60">
           3
         </div>
       ),
-      description: "It supports an helping developers businesses.",
+      description: "Your document is live, secure, and optimized for SEO instantly.",
     },
   ];
   return (
     <>
       <Header />
 
-      <Section className="p-0! -mt-14">
-        <div className="flex flex-col items-center justify-center max-w-[700px] mx-auto pt-32 pb-32">
+      <Section className="p-4">
+        <div className="flex flex-col items-center justify-center max-w-[800px] mx-auto pt-32 pb-32">
           <Announcement className="mb-3 cursor-pointer">
             <AnnouncementTag>Latest update</AnnouncementTag>
             <AnnouncementTitle>
-              New feature added
+              OpenPolicy 1.0 is now live
               <ArrowUpRightIcon
                 className="shrink-0 text-muted-foreground"
                 size={16}
@@ -73,12 +77,10 @@ export default function Home() {
           </Announcement>
 
           <h1 className="text-5xl font-medium text-center mb-5 leading-15">
-            The Better Way to Handle Your Policies and Documents
+            The Easiest Way to Host Your Policies
           </h1>
-          <p className="text-lg text-center max-w-[550px] mx-auto text-muted-foreground">
-            Effortlessly host, manage, and update your policies and documents.
-            All in one secure platform, ensuring your users always see the
-            latest version and your business stays compliant.
+          <p className="text-lg text-center max-w-[600px] mx-auto text-muted-foreground">
+            Stop messing with PDF uploads and complex CMSs. OpenPolicy lets you write, host, and manage your public legal documents in minutes.
           </p>
           <div className="mx-auto flex gap-2 mt-5">
             <Button size="lg">Get Started</Button>
@@ -90,10 +92,10 @@ export default function Home() {
       </Section>
       <Section className="py-8">
         <h2 className="text-balance font-medium text-3xl text-center">
-          With us, appointment scheduling is easy
+          Document management doesn't have to be complicated
         </h2>
         <p className="mt-2 text-balance text-muted-foreground text-sm mb-10 text-center">
-          Everything you need to build fast, secure, scalable apps.
+          Get your policies, public documents, and other legal documents live in three simple steps.
         </p>
         <div className="grid grid-cols-1 divide-x divide-y border-t border-l sm:grid-cols-2 md:grid-cols-3">
           {features.map((feature) => (
@@ -105,6 +107,144 @@ export default function Home() {
           ))}
         </div>
       </Section>
+      <Section className="py-8">
+        <h2 className="text-balance font-medium text-3xl text-start">
+          Centralized document repository for your organization
+        </h2>
+        <p className="mt-2 text-balance text-muted-foreground text-sm mb-10 text-start">
+          View and manage all your documents in one place. Never lose track of your documents again. Neither you or your clients will have to search through multiple systems to find the documents they need.
+        </p>
+        <Safari
+          url="more.openpolicyhq.com"
+          imageSrc="https://placehold.co/1200x750?text=Open+Policy"
+        />
+      </Section>
+      <Section>
+        <FeaturesSection /> 
+      </Section>
+      <Section className="py-8">
+        <h2 className="text-balance font-medium text-3xl text-start">
+          A simple and straightforward editor
+        </h2>
+        <p className="mt-2 text-balance text-muted-foreground text-sm mb-7 text-start">
+          Focus on the content, not the formatting. Our intuitive text editor provides all the tools you need to write comprehensive, easy-to-read document.
+        </p>
+        <div className="mx-auto w-full flex items-center justify-center">
+          <EditorShowcase
+            initialContent={{
+              type: "doc",
+              content: [
+                {
+                  type: "heading",
+                  attrs: { textAlign: null, level: 1 },
+                  content: [{ type: "text", text: "What is OpenPolicy?" }]
+                },
+                {
+                  type: "paragraph",
+                  attrs: { textAlign: null },
+                  content: [
+                    { type: "text", text: "OpenPolicy is a modern platform designed to simplify how organizations create, manage, and publish their legal documents and policies. We believe that policy management shouldn't require complex systems or technical expertise." }
+                  ]
+                },
+                {
+                  type: 'paragraph',
+                  attrs: { textAlign: null },
+                },
+                {
+                  type: "heading",
+                  attrs: { textAlign: null, level: 2 },
+                  content: [{ type: "text", text: "Key Features" }]
+                },
+                {
+                  type: "bulletList",
+                  content: [
+                    {
+                      type: "listItem",
+                      content: [
+                        {
+                          type: "paragraph",
+                          attrs: { textAlign: null },
+                          content: [
+                            { type: "text", marks: [{ type: "bold" }], text: "Rich Text Editor" },
+                            { type: "text", text: " - Write policies with a powerful, easy-to-use editor that supports formatting, lists, and more" }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      type: "listItem",
+                      content: [
+                        {
+                          type: "paragraph",
+                          attrs: { textAlign: null },
+                          content: [
+                            { type: "text", marks: [{ type: "bold" }], text: "Instant Publishing" },
+                            { type: "text", text: " - Your documents go live immediately with SEO optimization built-in" }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      type: "listItem",
+                      content: [
+                        {
+                          type: "paragraph",
+                          attrs: { textAlign: null },
+                          content: [
+                            { type: "text", marks: [{ type: "bold" }], text: "Centralized Management" },
+                            { type: "text", text: " - Keep all your documents organized in one secure location" }
+                          ]
+                        }
+                      ]
+                    },
+                  ]
+                },
+                {
+                  type: "heading",
+                  attrs: { textAlign: null, level: 2 },
+                  content: [{ type: "text", text: "Perfect For" }]
+                },
+                {
+                  type: "paragraph",
+                  attrs: { textAlign: null },
+                  content: [
+                    { type: "text", text: "OpenPolicy is ideal for startups, small businesses, and enterprises that need to maintain " },
+                    { type: "text", marks: [{ type: "italic" }], text: "privacy policies" },
+                    { type: "text", text: ", " },
+                    { type: "text", marks: [{ type: "italic" }], text: "terms of service" },
+                    { type: "text", text: ", " },
+                    { type: "text", marks: [{ type: "italic" }], text: "acceptable use policies" },
+                    { type: "text", text: ", and other legal documentation without the hassle." }
+                  ]
+                },
+                {
+                  type: "blockquote",
+                  content: [
+                    {
+                      type: "paragraph",
+                      attrs: { textAlign: null },
+                      content: [
+                        { type: "text", marks: [{ type: "italic" }], text: "\"Stop wrestling with PDFs and complex CMSs. Start managing your policies the modern way.\"" }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  type: "paragraph",
+                  attrs: { textAlign: null },
+                  content: [
+                    { type: "text", text: "Get started today and experience the difference of " },
+                    { type: "text", marks: [{ type: "highlight", attrs: { color: "#fef08a" } }], text: "streamlined policy management" },
+                    { type: "text", text: "." }
+                  ]
+                }
+              ]
+            }}
+            initialIsJson={true}
+          />
+        </div>
+      </Section>
+      <CTA />
       <Footer />
     </>
   );

@@ -14,12 +14,8 @@ export function Header() {
 
   const links = [
     {
-      label: "Features",
-      href: "/features",
-    },
-    {
       label: "About",
-      href: "#",
+      href: "/about",
     },
     {
       label: "Pricing",
@@ -41,7 +37,7 @@ export function Header() {
   return (
     <header
       className={cn(
-        "sticky top-0 z-50 border-transparent border-b w-[calc(100vw-242px)] mx-auto",
+        "fixed top-0 left-1/2 -translate-x-1/2 z-50 max-xl:bg-background max-xl:border-border border-x border-transparent border-b w-full max-w-6xl",
         {
           "border-border bg-background/95 backdrop-blur-lg supports-[backdrop-filter]:bg-background/50t":
             scrolled,

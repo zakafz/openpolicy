@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ToastProvider } from "@/components/ui/toast";
 import { WorkspaceProvider } from "@/context/workspace";
+import { Analytics } from "@vercel/analytics/react";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -83,6 +84,7 @@ export default function RootLayout({
       >
         <ToastProvider timeout={2000}>
           <WorkspaceProvider>{children}</WorkspaceProvider>
+          <Analytics />
         </ToastProvider>
       </body>
     </html>

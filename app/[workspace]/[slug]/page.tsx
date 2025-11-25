@@ -66,7 +66,7 @@ export default async function Page({ params }: Props) {
   return (
     <>
       <Frame className="w-full">
-        <FrameHeader className="flex flex-row items-center justify-between">
+        <FrameHeader className="flex flex-row max-md:flex-col md:items-center justify-between">
           <FrameTitle className="text-md font-mono">{doc.title}</FrameTitle>
           <FrameDescription>
             <Badge variant={"secondary"} className="font-mono mt-1">

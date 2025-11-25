@@ -25,7 +25,7 @@ export default async function Success({
   return (
     <>
       <Header />
-      <Section className="p-0! -mt-14">
+      <Section className="p-0!">
         <div className="w-full min-h-screen flex justify-center items-center">
           <div className="w-full max-w-md flex justify-center items-center flex-col">
             <div className="size-16 mb-2 bg-green-500/10 border border-green-500/20 rounded-2xl flex items-center justify-center">

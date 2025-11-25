@@ -25,7 +25,7 @@ export default async function Pricing() {
   return (
     <>
       <Header />
-      <Section className="p-0! -mt-14">
+      <Section className="p-4">
         <div className="w-full min-h-screen flex justify-center items-center">
           <PricingSection
             heading="Plans that Scale with You"

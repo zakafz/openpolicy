@@ -3,56 +3,41 @@ import { cn } from "@/lib/utils";
 import { Separator } from "./ui/separator";
 
 export function Footer() {
-  const company = [
+  const links = [
     {
-      title: "About Us",
-      href: "#",
+      title: "Log in",
+      href: "/auth/login",
     },
     {
-      title: "Careers",
-      href: "#",
+      title: "Pricing",
+      href: "/pricing",
     },
     {
-      title: "Brand assets",
-      href: "#",
+      title: "Contact us",
+      href: "/contact",
     },
+    {
+      title: "What's OpenPolicy?",
+      href: "https://docs.openpolicyhq.com/whats-openpolicy",
+    }
+
+  ];
+
+  const legal = [
     {
       title: "Privacy Policy",
-      href: "#",
+      href: "https://docs.openpolicyhq.com/privacy-policy",
     },
     {
       title: "Terms of Service",
-      href: "#",
-    },
-  ];
-
-  const resources = [
-    {
-      title: "Blog",
-      href: "#",
-    },
-    {
-      title: "Help Center",
-      href: "#",
-    },
-    {
-      title: "Contact Support",
-      href: "#",
-    },
-    {
-      title: "Community",
-      href: "#",
-    },
-    {
-      title: "Security",
-      href: "#",
-    },
+      href: "https://docs.openpolicyhq.com/terms-of-service",
+    }
   ];
 
   return (
-    <footer className="relative flex h-fit">
-      <div className="w-30 min-w-30 border-r" />
-      <div className={cn("mx-auto w-full h-fit pb-20 pt-5")}>
+    <footer className="flex w-full">
+      <div className="h-[full] min-w-4 flex-grow border-r" />
+      <div className={cn("w-full max-w-6xl h-fit pb-20 pt-5")}>
         <div className="grid max-w-5xl grid-cols-6 gap-6 p-4 h-full">
           <div className="col-span-6 flex flex-col h-full gap-4 pt-5 md:col-span-4">
             <a className="w-max" href="/">
@@ -73,9 +58,9 @@ export function Footer() {
             </p>
           </div>
           <div className="col-span-3 w-full md:col-span-1">
-            <span className="text-muted-foreground text-xs">Resources</span>
+            <span className="text-muted-foreground text-xs">Links</span>
             <div className="mt-2 flex flex-col gap-2">
-              {resources.map(({ href, title }) => (
+              {links.map(({ href, title }) => (
                 <a
                   className="w-max text-sm hover:underline"
                   href={href}
@@ -87,9 +72,9 @@ export function Footer() {
             </div>
           </div>
           <div className="col-span-3 w-full md:col-span-1">
-            <span className="text-muted-foreground text-xs">Company</span>
+            <span className="text-muted-foreground text-xs">Legal</span>
             <div className="mt-2 flex flex-col gap-2">
-              {company.map(({ href, title }) => (
+              {legal.map(({ href, title }) => (
                 <a
                   className="w-max text-sm hover:underline"
                   href={href}
@@ -102,7 +87,7 @@ export function Footer() {
           </div>
         </div>
       </div>
-      <div className="w-30 min-w-30 border-l " />
+      <div className="h-[full] min-w-4 flex-grow border-l" />
     </footer>
   );
 }

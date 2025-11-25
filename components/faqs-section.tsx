@@ -12,7 +12,7 @@ export function FaqsSection() {
         <h2 className="font-medium text-3xl">Frequently Asked Questions</h2>
         <p className="max-w-2xl text-sm text-muted-foreground">
           Here are some common questions and answers that you might encounter
-          when using Efferd. If you don't find the answer you're looking for,
+          when using OpenPolicy. If you don't find the answer you're looking for,
           feel free to reach out.
         </p>
       </div>
@@ -53,44 +53,44 @@ export function FaqsSection() {
 const questions = [
   {
     id: "item-1",
-    title: "What is Efferd?",
+    title: "What is OpenPolicy?",
     content:
-      "Efferd is a collection of beautifully crafted Shadcn UI blocks and components, designed to help developers build modern websites with ease.",
+      "OpenPolicy is a modern platform designed to help organizations host, manage, and update their legal documents and policies. It provides an intuitive text editor and centralized repository for all your policy documentation.",
   },
   {
     id: "item-2",
-    title: "Who can benefit from Efferd?",
+    title: "Who can benefit from OpenPolicy?",
     content:
-      "Efferd is built for founders, product teams, and agencies that want to accelerate idea validation and delivery.",
+      "OpenPolicy is built for startups, small businesses, and enterprises that need to maintain privacy policies, terms of service, acceptable use policies, and other legal documentation without the complexity of traditional systems.",
   },
   {
     id: "item-3",
-    title: "What features does Efferd include?",
+    title: "What features does OpenPolicy include?",
     content:
-      "Efferd offers a collaborative workspace where you can design and build beautiful web applications, with reusable UI blocks, deployment automation, and comprehensive analytics all in one place. With Efferd, you can streamline your team’s workflow and deliver high-quality websites quickly and efficiently.",
+      "OpenPolicy offers a powerful rich text editor, instant publishing with SEO optimization, centralized document management, version control, and a secure hosting platform. Everything you need to create, manage, and publish your policies in one place.",
   },
   {
     id: "item-4",
-    title: "Can I customize components in Efferd?",
+    title: "Can I customize my documents in OpenPolicy?",
     content:
-      "Yes. Efferd offers editable design systems and code scaffolding so you can tailor blocks to your brand and workflow.",
+      "Yes. OpenPolicy provides a flexible text editor with formatting options, allowing you to create documents that match your brand and requirements. You have full control over the content and structure of your policies.",
   },
   {
     id: "item-5",
-    title: "Does Efferd integrate with my existing tools?",
+    title: "Is my data secure with OpenPolicy?",
     content:
-      "Efferd connects with popular source control, design tools, and cloud providers to fit into your current stack.",
+      "Yes. OpenPolicy uses industry-standard security practices to protect your documents. All data is stored securely, and you maintain full control over who can access and edit your policies.",
   },
   {
     id: "item-6",
-    title: "How do I get support while using Efferd?",
+    title: "How do I get support while using OpenPolicy?",
     content:
-      "You can access detailed docs, community forums, and dedicated customer success channels for help at any time.",
+      "You can reach out through our contact page, access our documentation, or connect with us on GitHub and LinkedIn. We're committed to helping you get the most out of OpenPolicy.",
   },
   {
     id: "item-7",
-    title: "How do I get started with Efferd?",
+    title: "How do I get started with OpenPolicy?",
     content:
-      "You can access detailed docs, community forums, and dedicated customer success channels for help at any time.",
+      "Getting started is easy! Simply sign up for an account, create your first document, write your policy using our intuitive editor, and publish. Your document will be live instantly with a secure, SEO-optimized URL.",
   },
 ];

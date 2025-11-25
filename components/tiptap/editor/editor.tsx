@@ -70,6 +70,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
 
 /**
  * Editor component
@@ -101,6 +102,10 @@ type Props = {
   documentSlug: string | null;
   // when true the editor will be rendered read-only and toolbar hidden
   readOnly?: boolean;
+  // when true, hide save and back buttons (for showcase mode)
+  hideActions?: boolean;
+
+  className?: string;
 };
 
 const MainToolbarContent = ({
@@ -110,6 +115,7 @@ const MainToolbarContent = ({
   onSave,
   isSaved,
   documentSlug,
+  hideActions,
 }: {
   onHighlighterClick: () => void;
   onLinkClick: () => void;
@@ -117,15 +123,16 @@ const MainToolbarContent = ({
   onSave?: () => void;
   isSaved?: boolean;
   documentSlug: string | null;
+  hideActions?: boolean;
 }) => {
   const router = useRouter();
   return (
     <>
       <ToolbarGroup>
         <Spacer />
-        <SidebarTrigger className="size-8" />
+        {!hideActions && <SidebarTrigger className="size-8" />}
 
-        <ToolbarSeparator />
+        {!hideActions && <ToolbarSeparator />}
 
         <ToolbarGroup>
           <UndoRedoButton action="undo" />
@@ -183,45 +190,47 @@ const MainToolbarContent = ({
 
       {isMobile && <ToolbarSeparator />}
 
-      <ToolbarGroup>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              aria-label="Edit"
-              disabled={!isSaved}
-              onClick={() => router.push(`/dashboard/d/${documentSlug}`)}
-            >
-              Back
-            </Button>
-          </TooltipTrigger>
-          {!isSaved ? (
+      {!hideActions && (
+        <ToolbarGroup>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                aria-label="Edit"
+                disabled={!isSaved}
+                onClick={() => router.push(`/dashboard/d/${documentSlug}`)}
+              >
+                Back
+              </Button>
+            </TooltipTrigger>
+            {!isSaved ? (
+              <TooltipContent>
+                <p className="text-xs">Save the document to enable editing</p>
+              </TooltipContent>
+            ) : null}
+          </Tooltip>
+          <Spacer />
+          {/* Top-right save button: uses parent-provided handler & state */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                onClick={onSave}
+                className={isSaved ? "bg-green-500/10!" : "bg-gray-200!"}
+              >
+                {isSaved ? (
+                  <CircleCheck
+                    className={`size-4 ${isSaved ? "text-green-500" : "text-gray-600"}`}
+                  />
+                ) : (
+                  <Spinner className="size-4 text-gray-600" />
+                )}
+              </Button>
+            </TooltipTrigger>
             <TooltipContent>
-              <p className="text-xs">Save the document to enable editing</p>
+              <p className="text-xs">Save document</p>
             </TooltipContent>
-          ) : null}
-        </Tooltip>
-        <Spacer />
-        {/* Top-right save button: uses parent-provided handler & state */}
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              onClick={onSave}
-              className={isSaved ? "bg-green-500/10!" : "bg-gray-200!"}
-            >
-              {isSaved ? (
-                <CircleCheck
-                  className={`size-4 ${isSaved ? "text-green-500" : "text-gray-600"}`}
-                />
-              ) : (
-                <Spinner className="size-4 text-gray-600" />
-              )}
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p className="text-xs">Save document</p>
-          </TooltipContent>
-        </Tooltip>
-      </ToolbarGroup>
+          </Tooltip>
+        </ToolbarGroup>
+      )}
     </>
   );
 };
@@ -262,6 +271,8 @@ export function Editor({
   docTitle = undefined,
   documentSlug = null,
   readOnly = false,
+  hideActions = false,
+  className = "",
 }: Props) {
   const isMobile = useIsBreakpoint();
   const { height } = useWindowSize();
@@ -502,7 +513,7 @@ export function Editor({
           className="simple-editor-content"
         />
       ) : (
-        <Frame className="max-h-[calc(100vh-24px)] h-[calc(100vh-24px)] mt-3 flex">
+        <Frame className={cn("max-h-[calc(100vh-24px)] h-[calc(100vh-24px)] mt-3 flex", className)}>
           <FrameHeader className="flex flex-row justify-between py-1!">
             {!readOnly && (
               <Toolbar
@@ -511,8 +522,8 @@ export function Editor({
                 style={{
                   ...(isMobile
                     ? {
-                        bottom: `calc(100% - ${height - rect.y}px)`,
-                      }
+                      bottom: `calc(100% - ${height - rect.y}px)`,
+                    }
                     : {}),
                 }}
               >
@@ -524,6 +535,7 @@ export function Editor({
                     onSave={handleManualSave}
                     isSaved={!isDirty && !isSaving}
                     documentSlug={documentSlug}
+                    hideActions={hideActions}
                   />
                 ) : (
                   <MobileToolbarContent
@@ -538,7 +550,7 @@ export function Editor({
             <EditorContent
               editor={editor}
               role="presentation"
-              className="simple-editor-content-edit py-20!"
+              className={cn("py-20!", hideActions ? "simple-editor-content" : "simple-editor-content-edit ")}
             />
           </FramePanel>
         </Frame>
