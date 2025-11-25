@@ -1,7 +1,7 @@
-import LayoutShell from "./layout-shell";
-import { createServiceClient } from "@/lib/supabase/service";
 import { notFound } from "next/navigation";
 import { fetchPublishedDocumentsForWorkspace } from "@/lib/documents";
+import { createServiceClient } from "@/lib/supabase/service";
+import LayoutShell from "./layout-shell";
 
 export default async function Layout({ children, params }: any) {
   const { workspace } = (await params) as { workspace?: string | undefined };

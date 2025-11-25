@@ -1,19 +1,19 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { EditorContent, EditorContext, useEditor } from "@tiptap/react";
-
-// --- Tiptap Core Extensions ---
-import { StarterKit } from "@tiptap/starter-kit";
+import { Highlight } from "@tiptap/extension-highlight";
 import { Image } from "@tiptap/extension-image";
 import { TaskItem, TaskList } from "@tiptap/extension-list";
-import { TextAlign } from "@tiptap/extension-text-align";
-import { Typography } from "@tiptap/extension-typography";
-import { Highlight } from "@tiptap/extension-highlight";
 import { Subscript } from "@tiptap/extension-subscript";
 import { Superscript } from "@tiptap/extension-superscript";
+import { TextAlign } from "@tiptap/extension-text-align";
+import { Typography } from "@tiptap/extension-typography";
 import { Selection } from "@tiptap/extensions";
-
+import { EditorContent, EditorContext, useEditor } from "@tiptap/react";
+// --- Tiptap Core Extensions ---
+import { StarterKit } from "@tiptap/starter-kit";
+import { useEffect, useRef, useState } from "react";
+// --- Tiptap Node ---
+import { HorizontalRule } from "@/components/tiptap-node/horizontal-rule-node/horizontal-rule-node-extension";
 // --- UI Primitives ---
 import { Button } from "@/components/tiptap-ui-primitive/button";
 import { Spacer } from "@/components/tiptap-ui-primitive/spacer";
@@ -22,9 +22,6 @@ import {
   ToolbarGroup,
   ToolbarSeparator,
 } from "@/components/tiptap-ui-primitive/toolbar";
-
-// --- Tiptap Node ---
-import { HorizontalRule } from "@/components/tiptap-node/horizontal-rule-node/horizontal-rule-node-extension";
 import "@/components/tiptap-node/blockquote-node/blockquote-node.scss";
 import "@/components/tiptap-node/code-block-node/code-block-node.scss";
 import "@/components/tiptap-node/horizontal-rule-node/horizontal-rule-node.scss";
@@ -33,40 +30,39 @@ import "@/components/tiptap-node/image-node/image-node.scss";
 import "@/components/tiptap-node/heading-node/heading-node.scss";
 import "@/components/tiptap-node/paragraph-node/paragraph-node.scss";
 
-// --- Tiptap UI ---
-import { HeadingDropdownMenu } from "@/components/tiptap-ui/heading-dropdown-menu";
-import { ListDropdownMenu } from "@/components/tiptap-ui/list-dropdown-menu";
-import { BlockquoteButton } from "@/components/tiptap-ui/blockquote-button";
-import { CodeBlockButton } from "@/components/tiptap-ui/code-block-button";
-import {
-  ColorHighlightPopover,
-  ColorHighlightPopoverContent,
-  ColorHighlightPopoverButton,
-} from "@/components/tiptap-ui/color-highlight-popover";
-import {
-  LinkPopover,
-  LinkContent,
-  LinkButton,
-} from "@/components/tiptap-ui/link-popover";
-import { MarkButton } from "@/components/tiptap-ui/mark-button";
-import { TextAlignButton } from "@/components/tiptap-ui/text-align-button";
-import { UndoRedoButton } from "@/components/tiptap-ui/undo-redo-button";
-
 // --- Icons ---
 import { ArrowLeftIcon } from "@/components/tiptap-icons/arrow-left-icon";
 import { HighlighterIcon } from "@/components/tiptap-icons/highlighter-icon";
 import { LinkIcon } from "@/components/tiptap-icons/link-icon";
-
+import { BlockquoteButton } from "@/components/tiptap-ui/blockquote-button";
+import { CodeBlockButton } from "@/components/tiptap-ui/code-block-button";
+import {
+  ColorHighlightPopover,
+  ColorHighlightPopoverButton,
+  ColorHighlightPopoverContent,
+} from "@/components/tiptap-ui/color-highlight-popover";
+// --- Tiptap UI ---
+import { HeadingDropdownMenu } from "@/components/tiptap-ui/heading-dropdown-menu";
+import {
+  LinkButton,
+  LinkContent,
+  LinkPopover,
+} from "@/components/tiptap-ui/link-popover";
+import { ListDropdownMenu } from "@/components/tiptap-ui/list-dropdown-menu";
+import { MarkButton } from "@/components/tiptap-ui/mark-button";
+import { TextAlignButton } from "@/components/tiptap-ui/text-align-button";
+import { UndoRedoButton } from "@/components/tiptap-ui/undo-redo-button";
+import { useCursorVisibility } from "@/hooks/use-cursor-visibility";
 // --- Hooks ---
 import { useIsBreakpoint } from "@/hooks/use-is-breakpoint";
 import { useWindowSize } from "@/hooks/use-window-size";
-import { useCursorVisibility } from "@/hooks/use-cursor-visibility";
 
 // --- Styles ---
 import "@/components/tiptap/editor/editor.scss";
 
-import { Frame, FrameHeader, FramePanel } from "@/components/ui/frame";
 import { CircleCheck } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Frame, FrameHeader, FramePanel } from "@/components/ui/frame";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Spinner } from "@/components/ui/spinner";
 import {
@@ -74,7 +70,6 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { useRouter } from "next/navigation";
 
 /**
  * Editor component

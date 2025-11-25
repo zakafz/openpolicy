@@ -1,22 +1,22 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import Link from "next/link";
 import {
+  Cookie,
   Folder,
   Forward,
-  MoreHorizontal,
-  Trash2,
-  Shield,
-  Handshake,
-  Cookie,
-  TicketX,
-  Truck,
-  NotebookPen,
   GlobeIcon,
+  Handshake,
   LayersIcon,
   type LucideIcon,
+  MoreHorizontal,
+  NotebookPen,
+  Shield,
+  TicketX,
+  Trash2,
+  Truck,
 } from "lucide-react";
+import Link from "next/link";
+import { useEffect, useState } from "react";
 
 import {
   DropdownMenu,
@@ -34,10 +34,9 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-
-import { createClient } from "@/lib/supabase/client";
-import { fetchDocumentsForWorkspace } from "@/lib/documents";
 import { useWorkspace } from "@/context/workspace";
+import { fetchDocumentsForWorkspace } from "@/lib/documents";
+import { createClient } from "@/lib/supabase/client";
 
 export function NavDocuments() {
   const { isMobile } = useSidebar();

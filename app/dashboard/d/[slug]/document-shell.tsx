@@ -1,20 +1,24 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { Editor as TiptapEditor } from "@/components/tiptap/editor/editor";
-import Link from "next/link";
-import { createClient } from "@/lib/supabase/client";
-import { fetchDocumentBySlug } from "@/lib/documents";
-import { readSelectedWorkspaceId } from "@/lib/workspace";
-import { usePathname, useRouter } from "next/navigation";
 import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from "@/components/ui/empty";
+  Archive,
+  BookCheck,
+  BookDashed,
+  ChevronDownIcon,
+  Edit,
+  ExternalLink,
+  MoreVertical,
+  Notebook,
+  PackageOpen,
+  Trash,
+} from "lucide-react";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import PageTitle from "@/components/dashboard-page-title";
+import { TextShimmer } from "@/components/motion-primitives/text-shimmer";
+import { Editor as TiptapEditor } from "@/components/tiptap/editor/editor";
+import { Alert, AlertTitle } from "@/components/ui/alert";
 import {
   AlertDialog,
   AlertDialogClose,
@@ -25,22 +29,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import {
-  Archive,
-  BookCheck,
-  BookDashed,
-  ChevronDownIcon,
-  Edit,
-  Edit2,
-  Eye,
-  MoreVertical,
-  Notebook,
-  PackageOpen,
-  RouteIcon,
-  Trash,
-  TriangleAlertIcon,
-} from "lucide-react";
-import { TextShimmer } from "@/components/motion-primitives/text-shimmer";
+import { Badge } from "@/components/ui/badge";
+import { Badge as BadgeCoss } from "@/components/ui/badge-coss";
 import { Button } from "@/components/ui/button";
 import {
   Collapsible,
@@ -48,16 +38,19 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
+import {
   Frame,
   FrameFooter,
   FrameHeader,
   FramePanel,
 } from "@/components/ui/frame";
-import { Badge } from "@/components/ui/badge";
-import { Badge as BadgeCoss } from "@/components/ui/badge-coss";
-import { Separator } from "@/components/ui/separator";
-import { cn, fmtAbsolute, timeAgo } from "@/lib/utils";
-import PageTitle from "@/components/dashboard-page-title";
 import {
   Menu,
   MenuItem,
@@ -65,7 +58,11 @@ import {
   MenuSeparator,
   MenuTrigger,
 } from "@/components/ui/menu";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { fetchDocumentBySlug } from "@/lib/documents";
+import { createClient } from "@/lib/supabase/client";
+import { fmtAbsolute, timeAgo } from "@/lib/utils";
+import { readSelectedWorkspaceId } from "@/lib/workspace";
+import useWorkspaceLoader from "@/hooks/use-workspace-loader";
 
 export default function DocumentShell() {
   const pathname = usePathname();
@@ -73,6 +70,7 @@ export default function DocumentShell() {
     ? pathname.replace(/^\/dashboard\/d\//, "").split("/")[0] || null
     : null;
   const router = useRouter();
+  const { workspace } = useWorkspaceLoader();
   const [workspaceId, setWorkspaceId] = useState<string | null>(null);
   const [doc, setDoc] = useState<any | null>(null);
   const [loading, setLoading] = useState(false);
@@ -400,13 +398,12 @@ export default function DocumentShell() {
                 size={"lg"}
               >
                 <span
-                  className={`size-1.5 rounded-full ${
-                    doc.status === "published"
-                      ? "bg-info"
-                      : doc.status === "archived"
-                        ? "bg-muted-foreground/60"
-                        : "bg-warning"
-                  }`}
+                  className={`size-1.5 rounded-full ${doc.status === "published"
+                    ? "bg-info"
+                    : doc.status === "archived"
+                      ? "bg-muted-foreground/60"
+                      : "bg-warning"
+                    }`}
                   aria-hidden="true"
                 />
                 {doc.status}
@@ -446,6 +443,25 @@ export default function DocumentShell() {
                           Edit
                         </MenuItem>
                       </Link>
+                    )}
+                    {doc.status === "published" && workspace?.slug && (
+                      <MenuItem
+                        onClick={() => {
+                          const workspaceSlug = workspace.slug;
+                          let url: string;
+
+                          if (process.env.NODE_ENV === "production") {
+                            url = `https://${workspaceSlug}.openpolicyhq.com/${doc.slug}`;
+                          } else {
+                            url = `http://${workspaceSlug}.localhost:3000/${doc.slug}`;
+                          }
+
+                          window.open(url, "_blank");
+                        }}
+                      >
+                        <ExternalLink />
+                        Open
+                      </MenuItem>
                     )}
                     <MenuSeparator />
                     <AlertDialogTrigger
@@ -503,6 +519,8 @@ export default function DocumentShell() {
                                 });
                                 const payload = await res.json();
                                 if (res.ok && payload?.ok) {
+                                  // Dispatch event to update sidebar counts
+                                  window.dispatchEvent(new CustomEvent("document-updated"));
                                   // navigate back to documents list after deletion
                                   try {
                                     router.push("/dashboard/documents/all");
@@ -513,7 +531,7 @@ export default function DocumentShell() {
                                 } else {
                                   setInfo(
                                     payload?.error ??
-                                      "Failed to delete document",
+                                    "Failed to delete document",
                                   );
                                 }
                               } catch (e: any) {
@@ -550,10 +568,12 @@ export default function DocumentShell() {
                                 if (res.ok && payload?.document) {
                                   setDoc(payload.document);
                                   setInfo("Document archived");
+                                  // Dispatch event to update sidebar counts
+                                  window.dispatchEvent(new CustomEvent("document-updated"));
                                 } else {
                                   setInfo(
                                     payload?.error ??
-                                      "Failed to archive document",
+                                    "Failed to archive document",
                                   );
                                 }
                               } catch (e: any) {
@@ -593,6 +613,8 @@ export default function DocumentShell() {
                       if (res.ok && payload?.document) {
                         setDoc(payload.document);
                         setInfo("Document published");
+                        // Dispatch event to update sidebar counts
+                        window.dispatchEvent(new CustomEvent("document-updated"));
                       } else {
                         setInfo(payload?.error ?? "Failed to publish document");
                       }
@@ -627,6 +649,8 @@ export default function DocumentShell() {
                       if (res.ok && payload?.document) {
                         setDoc(payload.document);
                         setInfo("Document restored to draft");
+                        // Dispatch event to update sidebar counts
+                        window.dispatchEvent(new CustomEvent("document-updated"));
                       } else {
                         setInfo(payload?.error ?? "Failed to restore document");
                       }
@@ -661,6 +685,8 @@ export default function DocumentShell() {
                       if (res.ok && payload?.document) {
                         setDoc(payload.document);
                         setInfo("Document unpublished");
+                        // Dispatch event to update sidebar counts
+                        window.dispatchEvent(new CustomEvent("document-updated"));
                       } else {
                         setInfo(
                           payload?.error ?? "Failed to unpublish document",

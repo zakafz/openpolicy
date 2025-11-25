@@ -1,7 +1,19 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import * as React from "react";
 import PageTitle from "@/components/dashboard-page-title";
+import {
+  AlertDialog,
+  AlertDialogClose,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogPopup,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import {
@@ -12,29 +24,17 @@ import {
   FrameTitle,
 } from "@/components/ui/frame";
 import { Input } from "@/components/ui/input";
-import useWorkspaceLoader from "@/hooks/use-workspace-loader";
-import { useWorkspace } from "@/context/workspace";
+import { toastManager } from "@/components/ui/toast";
 import {
   ErrorWorkspace,
   LoadingWorkspace,
   NoSelectedWorkspace,
   NoWorkspace,
 } from "@/components/workspace-states";
+import { useWorkspace } from "@/context/workspace";
+import useWorkspaceLoader from "@/hooks/use-workspace-loader";
 import { createClient } from "@/lib/supabase/client";
-import { useRouter } from "next/navigation";
 import type { UsersRow } from "@/types/supabase";
-import { Badge } from "@/components/ui/badge";
-import {
-  AlertDialog,
-  AlertDialogTrigger,
-  AlertDialogPopup,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogClose,
-} from "@/components/ui/alert-dialog";
-import { toastManager } from "@/components/ui/toast";
 
 export default function AccountShell() {
   const { selectedWorkspaceId } = useWorkspace();

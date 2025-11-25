@@ -1,7 +1,7 @@
 "use client";
 
-import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
 
 export function LogoutButton({ children }: React.PropsWithChildren) {
   const router = useRouter();

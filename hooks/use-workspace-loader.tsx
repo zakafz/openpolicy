@@ -1,7 +1,6 @@
 import * as React from "react";
 import { useWorkspace } from "@/context/workspace";
-import { fetchWorkspaceById } from "@/lib/workspace";
-import { readSelectedWorkspaceId } from "@/lib/workspace";
+import { fetchWorkspaceById, readSelectedWorkspaceId } from "@/lib/workspace";
 import type { WorkspaceRow } from "@/types/supabase";
 
 /**

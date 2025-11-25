@@ -1,23 +1,5 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
-import { fetchDocumentsForWorkspace } from "@/lib/documents";
-import { readSelectedWorkspaceId } from "@/lib/workspace";
-import { Frame, FramePanel } from "@/components/ui/frame";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableFooter,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
-import { TextShimmer } from "./motion-primitives/text-shimmer";
 import {
   Cookie,
   GlobeIcon,
@@ -28,7 +10,26 @@ import {
   TicketX,
   Truck,
 } from "lucide-react";
+import Link from "next/link";
+import type React from "react";
+import { useEffect, useState } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Frame, FramePanel } from "@/components/ui/frame";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableFooter,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { useWorkspace } from "@/context/workspace";
+import { fetchDocumentsForWorkspace } from "@/lib/documents";
+import { createClient } from "@/lib/supabase/client";
+import { readSelectedWorkspaceId } from "@/lib/workspace";
+import { TextShimmer } from "./motion-primitives/text-shimmer";
 
 /**
  * Map document `type` values to icons and human-readable labels.

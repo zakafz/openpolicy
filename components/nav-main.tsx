@@ -1,7 +1,8 @@
 "use client";
 
-import { ChevronRight, type LucideIcon } from "lucide-react";
-
+import { type LucideIcon } from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   Collapsible,
   CollapsibleContent,
@@ -17,7 +18,6 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
 } from "@/components/ui/sidebar";
-import { usePathname } from "next/navigation";
 
 export function NavMain({
   items,
@@ -55,10 +55,10 @@ export function NavMain({
                     pathname + "/" === item.url ? "bg-sidebar-accent" : ""
                   }
                 >
-                  <a href={item.url}>
+                  <Link href={item.url}>
                     {item.icon && <item.icon />}
                     <span>{item.title}</span>
-                  </a>
+                  </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             );
@@ -99,7 +99,7 @@ export function NavMain({
                               : ""
                           }
                         >
-                          <a
+                          <Link
                             href={subItem.url}
                             className="flex items-center w-full gap-2"
                           >
@@ -114,7 +114,7 @@ export function NavMain({
                                 return counts[key] ?? null;
                               })()}
                             </span>
-                          </a>
+                          </Link>
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>
                     ))}

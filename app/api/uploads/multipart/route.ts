@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { createServiceClient } from "@/lib/supabase/service";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 
 // POST /api/uploads/multipart
 // Accepts multipart/form-data with:
@@ -24,7 +24,6 @@ export async function POST(req: Request) {
 
     // fileField is a File-like object from the Fetch API
     // Use its properties and arrayBuffer() to get bytes
-    // @ts-ignore - File type from formData
     const incomingFile: File = fileField as File;
     const originalName = incomingFile.name ?? `upload-${Date.now()}`;
     const contentType = incomingFile.type || undefined;
@@ -77,7 +76,7 @@ export async function POST(req: Request) {
     }
 
     // Build destination path
-    const safeName = String(originalName).replace(/[^a-zA-Z0-9_.\-]/g, "-");
+    const safeName = String(originalName).replace(/[^a-zA-Z0-9_.-]/g, "-");
     const timestamp = Date.now();
     const bucket = "workspace-logos";
     const destPath = workspaceId

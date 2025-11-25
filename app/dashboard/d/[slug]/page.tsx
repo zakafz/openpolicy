@@ -4,7 +4,7 @@ import DocumentShell from "./document-shell";
 export default function Page() {
   return (
     <Container>
-      <DocumentShell/>
+      <DocumentShell />
     </Container>
   );
 }

@@ -1,16 +1,15 @@
 "use client";
 
-import * as React from "react";
+import type { Product } from "@polar-sh/sdk/models/components/product.js";
 import { Check, ChevronsUpDown, Plus } from "lucide-react";
-
+import { useRouter } from "next/navigation";
+import * as React from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuShortcut,
-  DropdownMenuTrigger,
+  DropdownMenuSeparator, DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 import {
   SidebarMenu,
@@ -18,11 +17,15 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { WorkspaceRow } from "@/types/supabase";
-import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
-import { Product } from "@polar-sh/sdk/models/components/product.js";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useWorkspace } from "@/context/workspace";
-import { useRouter } from "next/navigation";
+import type { WorkspaceRow } from "@/types/supabase";
+import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 
 export function WorkspaceSwitcher({
   workspaces,
@@ -203,16 +206,41 @@ export function WorkspaceSwitcher({
               </DropdownMenuItem>
             ))}
             <DropdownMenuSeparator />
-            <a href="/create">
-              <DropdownMenuItem className="gap-2 p-2">
-                <div className="flex size-6 items-center justify-center rounded-md border bg-transparent">
-                  <Plus className="size-4" />
-                </div>
-                <div className="text-muted-foreground font-medium">
-                  Add workspace
-                </div>
-              </DropdownMenuItem>
-            </a>
+            {workspaces.length >= 1 ? (
+              <TooltipProvider>
+                <Tooltip delayDuration={500}>
+                  <TooltipTrigger asChild>
+                    <div className="opacity-50 cursor-not-allowed">
+                      <DropdownMenuItem disabled className="gap-2 p-2">
+                        <div className="flex size-6 items-center justify-center rounded-md border bg-transparent">
+                          <Plus className="size-4" />
+                        </div>
+                        <div className="text-muted-foreground font-medium">
+                          Add workspace
+                        </div>
+                      </DropdownMenuItem>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent
+                    side="bottom"
+                    className="text-xs z-50 font-mono"
+                  >
+                    You can only have one workspace.
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            ) : (
+              <a href="/create">
+                <DropdownMenuItem className="gap-2 p-2">
+                  <div className="flex size-6 items-center justify-center rounded-md border bg-transparent">
+                    <Plus className="size-4" />
+                  </div>
+                  <div className="text-muted-foreground font-medium">
+                    Add workspace
+                  </div>
+                </DropdownMenuItem>
+              </a>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       </SidebarMenuItem>

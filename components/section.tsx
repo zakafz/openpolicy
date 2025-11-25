@@ -1,5 +1,4 @@
 import { Plus } from "lucide-react";
-import { Footer } from "./footer";
 
 export default function Section({
   children,

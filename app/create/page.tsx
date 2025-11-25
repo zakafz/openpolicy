@@ -1,9 +1,26 @@
+import { redirect } from "next/navigation";
 import { CreateWorkspaceForm } from "@/components/create-workspace-form";
 import { LogoutButton } from "@/components/logout-button";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/polar";
+import { createClient } from "@/lib/supabase/server";
+import { fetchWorkspacesForOwner } from "@/lib/workspace";
 
 export default async function Page() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/login");
+  }
+
+  const workspaces = await fetchWorkspacesForOwner(user.id, supabase);
+  if (workspaces.length > 0) {
+    redirect("/dashboard");
+  }
+
   const products = await api.products.list({ isArchived: false });
 
   return (

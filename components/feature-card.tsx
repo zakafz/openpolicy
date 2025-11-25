@@ -1,10 +1,8 @@
 import type React from "react";
-
+import type { ReactNode } from "react";
 // https://magicui.design/docs/components/grid-pattern
 import { GridPattern } from "@/components/ui/grid-pattern";
-
 import { cn } from "@/lib/utils";
-import { ReactNode } from "react";
 
 type FeatureType = {
   title: string;

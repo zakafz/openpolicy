@@ -1,6 +1,6 @@
-import { createServiceClient } from "@/lib/supabase/service";
 import { notFound } from "next/navigation";
 import { Editor as TiptapEditor } from "@/components/tiptap/editor/editor";
+import { Badge } from "@/components/ui/badge";
 import {
   Frame,
   FrameDescription,
@@ -8,9 +8,9 @@ import {
   FramePanel,
   FrameTitle,
 } from "@/components/ui/frame";
-import { Badge } from "@/components/ui/badge";
-import { fmtAbsolute, timeAgo } from "@/lib/utils";
 import { fetchDocumentBySlug } from "@/lib/documents";
+import { createServiceClient } from "@/lib/supabase/service";
+import { fmtAbsolute, timeAgo } from "@/lib/utils";
 
 type Props = {
   params: {

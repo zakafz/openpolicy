@@ -1,9 +1,39 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import {
+  Archive,
+  Edit,
+  ExternalLink,
+  LayersIcon,
+  MoreVertical,
+  RotateCcw,
+  Trash,
+} from "lucide-react";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 import PageTitle from "@/components/dashboard-page-title";
-import { createClient } from "@/lib/supabase/client";
+import { DocumentsTableSkeleton } from "@/components/skeletons";
+import {
+  AlertDialog,
+  AlertDialogClose,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogPopup,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Frame, FramePanel } from "@/components/ui/frame";
+import {
+  Menu,
+  MenuItem,
+  MenuPopup,
+  MenuSeparator,
+  MenuTrigger,
+} from "@/components/ui/menu";
 import {
   Table,
   TableBody,
@@ -13,52 +43,23 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 import {
-  Cookie,
-  GlobeIcon,
-  Handshake,
-  LayersIcon,
-  NotebookPen,
-  Shield,
-  TicketX,
-  Truck,
-} from "lucide-react";
-import { TextShimmer } from "@/components/motion-primitives/text-shimmer";
-import { timeAgo } from "@/lib/utils";
+  DOCUMENT_TYPE_ICON_MAP,
+  DOCUMENT_TYPE_LABEL_MAP,
+} from "@/lib/constants";
 import { fetchDocumentsForWorkspace } from "@/lib/documents";
+import { createClient } from "@/lib/supabase/client";
+import { timeAgo } from "@/lib/utils";
 import { readSelectedWorkspaceId } from "@/lib/workspace";
-
-const typeIconMap: Record<string, React.ComponentType<any>> = {
-  privacy: Shield,
-  terms: Handshake,
-  cookie: Cookie,
-  refund: TicketX,
-  shipping: Truck,
-  "intellectual-property": NotebookPen,
-  "data-protection": GlobeIcon,
-  other: LayersIcon,
-};
-
-const typeLabelMap: Record<string, string> = {
-  privacy: "Privacy Policy",
-  terms: "Terms of Service",
-  cookie: "Cookie Policy",
-  refund: "Refund Policy",
-  shipping: "Shipping Policy",
-  "intellectual-property": "Intellectual Property",
-  "data-protection": "Data Protection",
-  other: "Other",
-};
+import useWorkspaceLoader from "@/hooks/use-workspace-loader";
 
 export default function DocumentsShell(props: {
   type: "published" | "draft" | "archived" | "all";
 }) {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const initialWorkspaceId = searchParams?.get("workspaceId") ?? null;
+  const { workspace } = useWorkspaceLoader();
 
   const [workspaceId, setWorkspaceId] = useState<string | null>(
     initialWorkspaceId,
@@ -66,6 +67,22 @@ export default function DocumentsShell(props: {
   const [documents, setDocuments] = useState<any[] | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
+
+  // Reload documents function
+  const reloadDocuments = async () => {
+    if (!workspaceId) return;
+    try {
+      const docs = await fetchDocumentsForWorkspace(
+        workspaceId,
+        props.type,
+        createClient(),
+      );
+      setDocuments(docs ?? []);
+    } catch (e) {
+      setError("Failed to reload documents");
+    }
+  };
 
   // On mount: if workspaceId wasn't provided in the url, attempt to read from localStorage
   useEffect(() => {
@@ -74,7 +91,9 @@ export default function DocumentsShell(props: {
       const id = readSelectedWorkspaceId();
       if (!id) return;
       setWorkspaceId(id);
-    } catch {}
+    } catch {
+      // ignore
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -137,9 +156,7 @@ export default function DocumentsShell(props: {
       <Frame className="w-full">
         <FramePanel>
           {loading ? (
-            <TextShimmer className="font-mono text-sm">
-              Loading documents…
-            </TextShimmer>
+            <DocumentsTableSkeleton />
           ) : error ? (
             <div className="p-8 text-center text-sm text-destructive">
               {error}
@@ -167,9 +184,9 @@ export default function DocumentsShell(props: {
                   <TableHead>Slug</TableHead>
                   <TableHead>Type</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Version</TableHead>
                   <TableHead>Last edited</TableHead>
-                  <TableHead className="text-right">Created</TableHead>
+                  <TableHead>Created</TableHead>
+                  <TableHead className="w-[50px] text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -182,7 +199,8 @@ export default function DocumentsShell(props: {
                       >
                         {(() => {
                           const Icon =
-                            (d?.type && typeIconMap[String(d.type)]) ??
+                            (d?.type &&
+                              DOCUMENT_TYPE_ICON_MAP[String(d.type)]) ??
                             LayersIcon;
                           return (
                             <Icon
@@ -196,37 +214,192 @@ export default function DocumentsShell(props: {
                     </TableCell>
                     <TableCell>{d.slug ?? "—"}</TableCell>
                     <TableCell>
-                      {(() => {
-                        const label =
-                          typeLabelMap[String(d.type)] ??
-                          String(d.type ?? "other");
-                        return label;
-                      })()}
+                      {DOCUMENT_TYPE_LABEL_MAP[String(d.type)] ??
+                        String(d.type ?? "other")}
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline" className="capitalize">
                         <span
-                          className={`size-1.5 rounded-full ${
-                            d.status === "published"
-                              ? "bg-emerald-500"
-                              : d.status === "archived"
-                                ? "bg-muted-foreground/60"
-                                : "bg-amber-500"
-                          }`}
+                          className={`size-1.5 rounded-full ${d.status === "published"
+                            ? "bg-info"
+                            : d.status === "archived"
+                              ? "bg-muted-foreground/60"
+                              : "bg-amber-500"
+                            }`}
                           aria-hidden="true"
                         />
                         {d.status}
                       </Badge>
                     </TableCell>
-                    <TableCell>{d.version ?? "1"}</TableCell>
                     <TableCell>
                       <Badge variant="secondary">{timeAgo(d.updated_at)}</Badge>
                     </TableCell>
                     <TableCell
-                      className="text-right"
                       title={new Date(d.created_at).toLocaleString()}
                     >
                       {timeAgo(d.created_at)}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <AlertDialog>
+                        <Menu>
+                          <MenuTrigger
+                            render={<Button size="icon-sm" variant="ghost" />}
+                            disabled={actionLoading === d.id}
+                          >
+                            <MoreVertical className="size-4" />
+                          </MenuTrigger>
+                          <MenuPopup>
+                            <Link href={`/dashboard/edit/${d.slug}`}>
+                              <MenuItem>
+                                <Edit className="size-4" />
+                                Edit
+                              </MenuItem>
+                            </Link>
+                            {d.status === "published" && workspace?.slug && (
+                              <MenuItem
+                                onClick={() => {
+                                  const workspaceSlug = workspace.slug;
+                                  let url: string;
+
+                                  if (process.env.NODE_ENV === "production") {
+                                    url = `https://${workspaceSlug}.openpolicyhq.com/${d.slug}`;
+                                  } else {
+                                    url = `http://${workspaceSlug}.localhost:3000/${d.slug}`;
+                                  }
+
+                                  window.open(url, "_blank");
+                                }}
+                              >
+                                <ExternalLink className="size-4" />
+                                Open
+                              </MenuItem>
+                            )}
+                            <MenuSeparator />
+                            {d.status === "archived" ? (
+                              <>
+                                <MenuItem
+                                  onClick={async () => {
+                                    setActionLoading(d.id);
+                                    try {
+                                      const res = await fetch("/api/documents", {
+                                        method: "PUT",
+                                        headers: {
+                                          "Content-Type": "application/json",
+                                        },
+                                        body: JSON.stringify({
+                                          id: d.id,
+                                          status: "draft",
+                                          published: false,
+                                        }),
+                                      });
+                                      if (res.ok) {
+                                        window.dispatchEvent(
+                                          new CustomEvent("document-updated"),
+                                        );
+                                        await reloadDocuments();
+                                      }
+                                    } catch (e) {
+                                      console.error("Failed to restore:", e);
+                                    } finally {
+                                      setActionLoading(null);
+                                    }
+                                  }}
+                                >
+                                  <RotateCcw className="size-4" />
+                                  Restore
+                                </MenuItem>
+                                <AlertDialogTrigger
+                                  nativeButton={false}
+                                  render={<MenuItem variant="destructive" />}
+                                >
+                                  <Trash className="size-4" />
+                                  Delete
+                                </AlertDialogTrigger>
+                              </>
+                            ) : (
+                              <MenuItem
+                                onClick={async () => {
+                                  setActionLoading(d.id);
+                                  try {
+                                    const res = await fetch("/api/documents", {
+                                      method: "PUT",
+                                      headers: {
+                                        "Content-Type": "application/json",
+                                      },
+                                      body: JSON.stringify({
+                                        id: d.id,
+                                        status: "archived",
+                                        published: false,
+                                      }),
+                                    });
+                                    if (res.ok) {
+                                      window.dispatchEvent(
+                                        new CustomEvent("document-updated"),
+                                      );
+                                      await reloadDocuments();
+                                    }
+                                  } catch (e) {
+                                    console.error("Failed to archive:", e);
+                                  } finally {
+                                    setActionLoading(null);
+                                  }
+                                }}
+                              >
+                                <Archive className="size-4" />
+                                Archive
+                              </MenuItem>
+                            )}
+                          </MenuPopup>
+                        </Menu>
+
+                        <AlertDialogPopup>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>
+                              Delete "{d.title}"
+                            </AlertDialogTitle>
+                            <AlertDialogDescription>
+                              This will permanently delete "{d.title}" from this
+                              workspace. This action cannot be undone.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogClose render={<Button variant="ghost" />}>
+                              Cancel
+                            </AlertDialogClose>
+                            <AlertDialogClose
+                              render={
+                                <Button
+                                  variant="destructive-outline"
+                                  onClick={async () => {
+                                    setActionLoading(d.id);
+                                    try {
+                                      const res = await fetch("/api/documents", {
+                                        method: "DELETE",
+                                        headers: {
+                                          "Content-Type": "application/json",
+                                        },
+                                        body: JSON.stringify({ id: d.id }),
+                                      });
+                                      if (res.ok) {
+                                        window.dispatchEvent(
+                                          new CustomEvent("document-updated"),
+                                        );
+                                        await reloadDocuments();
+                                      }
+                                    } catch (e) {
+                                      console.error("Failed to delete:", e);
+                                    } finally {
+                                      setActionLoading(null);
+                                    }
+                                  }}
+                                />
+                              }
+                            >
+                              Delete
+                            </AlertDialogClose>
+                          </AlertDialogFooter>
+                        </AlertDialogPopup>
+                      </AlertDialog>
                     </TableCell>
                   </TableRow>
                 ))}

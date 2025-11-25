@@ -1,19 +1,15 @@
 "use client";
 
-import * as React from "react";
 import {
-  ArrowUpRight,
-  BadgeCheck,
-  Bell,
-  ChevronsUpDown,
-  CreditCard,
+  ArrowUpRight, CreditCard,
   Home,
   LogOut,
   MoreVertical,
   Sparkles,
-  User,
+  User
 } from "lucide-react";
-
+import Link from "next/link";
+import * as React from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -31,17 +27,12 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { UsersRow } from "@/types/supabase";
+import type { UsersRow } from "@/types/supabase";
 import { LogoutButton } from "./logout-button";
-import Link from "next/link";
 
 /**
- * NavUser now keeps local UI state and listens for a global update event.
- * When an external component (for example the account settings page) dispatches:
- *
- * window.dispatchEvent(new CustomEvent('user:updated', { detail: { full_name, avatar_url, email, ... } }))
- *
- * this component will merge the updated fields into its local state and re-render.
+ * NavUser handles user profile display and updates.
+ * Listens for 'user:updated' events to refresh local state.
  */
 
 export function NavUser({ user }: { user: UsersRow }) {
@@ -169,11 +160,11 @@ export function NavUser({ user }: { user: UsersRow }) {
 
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <Link href={'/dashboard/settings/account'}>
-              <DropdownMenuItem>
-                <User />
-                Account
-              </DropdownMenuItem>
+              <Link href={"/dashboard/settings/account"}>
+                <DropdownMenuItem>
+                  <User />
+                  Account
+                </DropdownMenuItem>
               </Link>
               <Link href={"/portal"}>
                 <DropdownMenuItem>

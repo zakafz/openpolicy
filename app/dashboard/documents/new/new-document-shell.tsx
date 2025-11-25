@@ -1,6 +1,8 @@
 "use client";
-import { useState, useEffect, useTransition } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState, useTransition } from "react";
+import { contentTemplates } from "@/components/document-templates";
 import { Button } from "@/components/ui/button";
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { FieldGroup } from "@/components/ui/field-shadcn";
@@ -12,23 +14,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import Link from "next/link";
 import {
-  Cookie,
-  GlobeIcon,
-  Handshake,
-  LayersIcon,
-  NotebookPen,
-  Shield,
-  TicketX,
-  Truck,
-} from "lucide-react";
-import { contentTemplates } from "@/components/document-templates";
-import { DocumentType } from "@/types/documents";
-import {
-  writeSelectedWorkspaceId,
   readSelectedWorkspaceId,
+  writeSelectedWorkspaceId,
 } from "@/lib/workspace";
+import type { DocumentType } from "@/types/documents";
+import {
+  DOCUMENT_TYPE_ICON_MAP,
+  DOCUMENT_TYPE_LABEL_MAP,
+} from "@/lib/constants";
 
 const documentTypes: {
   value: DocumentType;
@@ -38,53 +32,53 @@ const documentTypes: {
 }[] = [
   {
     value: "privacy",
-    label: "Privacy Policy",
+    label: DOCUMENT_TYPE_LABEL_MAP.privacy,
     description:
       "Details what personal data is collected, how it's used, and how it's protected.",
-    icon: Shield,
+    icon: DOCUMENT_TYPE_ICON_MAP.privacy,
   },
   {
     value: "terms",
-    label: "Terms of Service",
+    label: DOCUMENT_TYPE_LABEL_MAP.terms,
     description:
       "An agreement that outlines the rules users must follow to use a website and service, which can include limitations on liability.",
-    icon: Handshake,
+    icon: DOCUMENT_TYPE_ICON_MAP.terms,
   },
   {
     value: "cookie",
-    label: "Cookie Policy",
+    label: DOCUMENT_TYPE_LABEL_MAP.cookie,
     description: "Explains the use of cookies, what they are for.",
-    icon: Cookie,
+    icon: DOCUMENT_TYPE_ICON_MAP.cookie,
   },
   {
     value: "refund",
-    label: "Refund Policy",
+    label: DOCUMENT_TYPE_LABEL_MAP.refund,
     description: "Explains the refund policy for the product.",
-    icon: TicketX,
+    icon: DOCUMENT_TYPE_ICON_MAP.refund,
   },
   {
     value: "shipping",
-    label: "Shipping Policy",
+    label: DOCUMENT_TYPE_LABEL_MAP.shipping,
     description: "Explains the shipping policy for the product.",
-    icon: Truck,
+    icon: DOCUMENT_TYPE_ICON_MAP.shipping,
   },
   {
     value: "intellectual-property",
-    label: "Intellectual Property Policy",
+    label: DOCUMENT_TYPE_LABEL_MAP["intellectual-property"],
     description: "Explains the intellectual property policy for the product.",
-    icon: NotebookPen,
+    icon: DOCUMENT_TYPE_ICON_MAP["intellectual-property"],
   },
   {
     value: "data-protection",
-    label: "Data Protection Policy",
+    label: DOCUMENT_TYPE_LABEL_MAP["data-protection"],
     description: "Explains the data protection policy for the product.",
-    icon: GlobeIcon,
+    icon: DOCUMENT_TYPE_ICON_MAP["data-protection"],
   },
   {
     value: "other",
-    label: "Other",
+    label: DOCUMENT_TYPE_LABEL_MAP.other,
     description: "Other type of document",
-    icon: LayersIcon,
+    icon: DOCUMENT_TYPE_ICON_MAP.other,
   },
 ];
 
@@ -233,10 +227,12 @@ export default function NewDocumentShell({
                     detail: { id: workspaceId ?? null },
                   }),
                 );
+                // Dispatch document-updated to refresh sidebar counts
+                window.dispatchEvent(new CustomEvent("document-updated"));
               } catch (evErr) {
                 // Non-fatal: dispatch failure should not block navigation.
                 console.warn(
-                  "NewDocumentShell: failed to dispatch workspace-changed event",
+                  "NewDocumentShell: failed to dispatch events",
                   evErr,
                 );
               }

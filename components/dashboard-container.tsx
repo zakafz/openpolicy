@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import type { ReactNode } from "react";
 
 export default function Container({
   children,
@@ -8,7 +8,9 @@ export default function Container({
   className?: string;
 }) {
   return (
-    <div className={`pt-12 pb-32 max-w-4xl w-full mx-auto min-h-full ${className || ""}`}>
+    <div
+      className={`pt-12 pb-32 max-w-4xl w-full mx-auto min-h-full ${className || ""}`}
+    >
       {children}
     </div>
   );

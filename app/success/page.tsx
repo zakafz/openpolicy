@@ -1,9 +1,9 @@
+import { Receipt } from "lucide-react";
+import Link from "next/link";
 import { Footer } from "@/components/footer";
 import { Header } from "@/components/header";
 import Section from "@/components/section";
 import { Button } from "@/components/ui/button";
-import { Receipt } from "lucide-react";
-import Link from "next/link";
 
 export default async function Success({
   searchParams,

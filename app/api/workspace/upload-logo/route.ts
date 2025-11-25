@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { createServiceClient } from "@/lib/supabase/service";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 
 // POST /api/workspace/upload-logo — upload workspace logo.
 // Expects JSON: { workspaceId, filename, contentType?, fileBase64 }.
@@ -18,7 +18,7 @@ export async function POST(req: Request) {
     }
 
     // Basic filename sanitization
-    const safeFilename = String(filename).replace(/[^a-zA-Z0-9_.\-]/g, "-");
+    const safeFilename = String(filename).replace(/[^a-zA-Z0-9_.-]/g, "-");
     if (safeFilename.length === 0) {
       return NextResponse.json({ error: "Invalid filename" }, { status: 400 });
     }

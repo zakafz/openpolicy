@@ -1,11 +1,9 @@
-import Container from "@/components/dashboard-container";
-import Link from "next/link";
-import { createServiceClient } from "@/lib/supabase/service";
-import { fetchPublishedDocumentsForWorkspaceServer } from "@/lib/documents";
-import { notFound } from "next/navigation";
-import { fmtAbsolute, timeAgo } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
 import { ArrowUpRight, FileSearchCorner, RouteIcon } from "lucide-react";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import Container from "@/components/dashboard-container";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Empty,
   EmptyContent,
@@ -14,7 +12,9 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
-import { Button } from "@/components/ui/button";
+import { fetchPublishedDocumentsForWorkspaceServer } from "@/lib/documents";
+import { createServiceClient } from "@/lib/supabase/service";
+import { fmtAbsolute, timeAgo } from "@/lib/utils";
 
 type Props = {
   params:

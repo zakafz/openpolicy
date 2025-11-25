@@ -1,11 +1,10 @@
 "use client";
 
 import React from "react";
-import type { WorkspaceRow } from "@/types/supabase";
 import {
-  parseSelectedWorkspaceId,
-  readSelectedWorkspaceId,
+  readSelectedWorkspaceId
 } from "@/lib/workspace";
+import type { WorkspaceRow } from "@/types/supabase";
 
 type WorkspaceContextValue = {
   selectedWorkspaceId: string | null;

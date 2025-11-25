@@ -3,8 +3,8 @@ import { api as polar } from "@/lib/polar";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import {
-  fetchWorkspacesForOwner,
   fetchWorkspaceByIdServer,
+  fetchWorkspacesForOwner,
 } from "@/lib/workspace";
 
 export async function POST(req: Request) {
@@ -181,7 +181,7 @@ export async function POST(req: Request) {
         ? rawSlug
             .toLowerCase()
             .replace(/-+/g, "-")
-            .replace(/^\-+|\-+$/g, "")
+            .replace(/^-+|-+$/g, "")
         : "";
       normalizedSlug = candidate || null;
 

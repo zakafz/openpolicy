@@ -1,8 +1,8 @@
 "use client";
+import type { Product } from "@polar-sh/sdk/models/components/product.js";
 import { CheckCircleIcon, StarIcon } from "lucide-react";
-import React from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import React from "react";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
@@ -10,8 +10,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
-import { Product } from "@polar-sh/sdk/models/components/product.js";
 
 interface PricingSectionProps extends React.ComponentProps<"div"> {
   plans: Product[];

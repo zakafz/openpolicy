@@ -147,10 +147,6 @@ async function finalizePendingWorkspace({
       }
       if (Array.isArray(data) && data.length > 0) {
         pending = data[0];
-        console.log(`finalizePendingWorkspace: matched pending via ${label}`, {
-          id: pending.id,
-          label,
-        });
         break;
       }
     }
@@ -196,24 +192,12 @@ async function finalizePendingWorkspace({
           return false;
         });
         if (pending) {
-          console.log(
-            "finalizePendingWorkspace: heuristic matched recent pending",
-            { pendingId: pending.id },
-          );
+          // Matched via heuristic
         }
       }
     }
 
     if (!pending) {
-      console.log(
-        "finalizePendingWorkspace: no pending_workspaces row matched",
-        {
-          pendingWorkspaceId,
-          customerExternalId,
-          customerEmail,
-          customerId,
-        },
-      );
       return;
     }
 
@@ -239,11 +223,6 @@ async function finalizePendingWorkspace({
     }
 
     if (duplicateFound) {
-      console.log("pending already has workspace, deleting pending", {
-        pendingId: pending.id,
-        owner: pending.owner_id,
-        name: pending.name,
-      });
       await svc.from("pending_workspaces").delete().eq("id", pending.id);
       return;
     }
@@ -331,10 +310,6 @@ async function finalizePendingWorkspace({
     }
 
     // Delete pending row now that workspace is created
-    console.log("workspace created, deleting pending", {
-      pendingId: pending.id,
-      workspaceId: workspace.id,
-    });
     try {
       await svc.from("pending_workspaces").delete().eq("id", pending.id);
     } catch (delErr) {

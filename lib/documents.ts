@@ -1,33 +1,14 @@
 /**
- * Central document helpers
- *
- * Provides reusable functions for working with `documents` rows across the app.
- * - Normalization / slug helpers
- * - Query helpers (client+server friendly)
- * - CRUD helpers that use the service-role client
- *
- * Functions throw Supabase error objects on query failures so callers can handle
- * errors consistently.
+ * Document helpers for CRUD operations and queries.
+ * Functions throw Supabase errors on failure.
  */
 
 import { createClient } from "@/lib/supabase/client";
 import { createServiceClient } from "@/lib/supabase/service";
 
-/**
- * Permissive DocumentRow alias
- *
- * The generated `types/supabase` in this repository does not currently
- * export a `DocumentRow` interface. Use a permissive `any` alias here so
- * the helper functions remain usable while keeping type-checking lax.
- *
- * Replace with the concrete `DocumentRow` type from `types/supabase`
- * when it becomes available.
- */
 type DocumentRow = any;
 
-/**
- * Normalize a human-friendly raw string into a URL-safe slug candidate.
- */
+/** Normalize string to URL-safe slug. */
 export function normalizeSlug(raw: string): string {
   return raw
     .toLowerCase()
@@ -38,19 +19,12 @@ export function normalizeSlug(raw: string): string {
     .replace(/^-+|-+$/g, "");
 }
 
-/**
- * Validate slug format: starts with alnum then alnum or dash; max 64 chars.
- */
+/** Validate slug format (alphanumeric + dash, max 64 chars). */
 export function isValidSlug(s: string): boolean {
   return /^[a-z0-9][a-z0-9-]{0,63}$/.test(s);
 }
 
-/**
- * Try to produce a unique slug by appending a counter when needed.
- *
- * Uses a case-insensitive search scoped to a workspace when provided.
- * Returns a candidate even if uniqueness-check fails (best-effort).
- */
+/** Generate unique slug by appending counter. Best-effort if check fails. */
 export async function makeUniqueSlug(
   svc: ReturnType<typeof createServiceClient>,
   base: string,
@@ -68,9 +42,8 @@ export async function makeUniqueSlug(
 
     const { data, error } = await q.limit(1);
     if (error) {
-      // On check error, return the current candidate so we don't block creation.
       console.warn(
-        "makeUniqueSlug: uniqueness check failed, returning candidate",
+        "makeUniqueSlug: check failed, returning candidate",
         { error, candidate },
       );
       return candidate;
@@ -84,16 +57,11 @@ export async function makeUniqueSlug(
     candidate = `${base}-${attempt}`;
   }
 
-  // Fallback: append timestamp
+
   return `${base}-${Date.now()}`;
 }
 
-/**
- * Fetch a single document by id (client-friendly).
- * If a Supabase client is provided it will be used; otherwise createClient() is used.
- *
- * Throws Supabase error on query failure.
- */
+/** Fetch document by ID. */
 export async function fetchDocumentById(
   id?: string | null,
   supabaseClient?: ReturnType<typeof createClient>,
@@ -111,12 +79,7 @@ export async function fetchDocumentById(
   return (data as DocumentRow) ?? null;
 }
 
-/**
- * Fetch a single document by slug (optionally scoped to workspaceId).
- * Uses provided client if available, otherwise createClient().
- *
- * Throws Supabase error on query failure.
- */
+/** Fetch document by slug, optionally scoped to workspace. */
 export async function fetchDocumentBySlug(
   slug?: string | null,
   workspaceId?: string | null,
@@ -133,12 +96,7 @@ export async function fetchDocumentBySlug(
   return (data as DocumentRow) ?? null;
 }
 
-/**
- * Fetch published documents for a given workspace id (most recent first).
- * Use client param for client-side fetching, otherwise will use service client if called server-side.
- *
- * Throws Supabase error on query failure.
- */
+/** Fetch published documents for workspace (most recent first). */
 export async function fetchPublishedDocumentsForWorkspace(
   workspaceId?: string | null,
   supabaseClient?: ReturnType<typeof createClient>,
@@ -161,18 +119,7 @@ export async function fetchPublishedDocumentsForWorkspace(
   return (data as DocumentRow[]) ?? [];
 }
 
-/**
- * Fetch documents for a workspace with optional status filtering.
- *
- * - If `status` is omitted or `status === 'all'`, no status filter is applied.
- * - If `status` is provided (e.g. 'draft', 'published', 'archived'), the query
- *   will filter by `status`. When `status === 'published'`, the helper will
- *   also ensure `published = true` for safety.
- *
- * The `orderBy` behavior mirrors parts of the UI:
- * - when `status === 'all'` order by `updated_at`
- * - otherwise order by `created_at`
- */
+/** Fetch workspace documents with optional status filter. */
 export async function fetchDocumentsForWorkspace(
   workspaceId?: string | null,
   status?: string | null,
@@ -208,13 +155,7 @@ export async function fetchDocumentsForWorkspace(
   }
 }
 
-/**
- * Create a new document (server-side, uses service-role client unless svc provided).
- * Accepts a minimal payload; normalizes/validates slug externally if needed.
- *
- * Returns the created document row on success.
- * Throws Supabase error on failure.
- */
+/** Create document (server-side). */
 export async function createDocument(
   payload: {
     title: string;
@@ -258,10 +199,7 @@ export async function createDocument(
   return created as DocumentRow;
 }
 
-/**
- * Update an existing document by id (server-side; uses service client by default).
- * `updates` is a partial set of columns to update. Returns the updated row.
- */
+/** Update document by ID (server-side). */
 export async function updateDocument(
   id: string,
   updates: Record<string, any>,
@@ -281,10 +219,7 @@ export async function updateDocument(
   return updated as DocumentRow;
 }
 
-/**
- * Permanently delete a document by id (server-side).
- * Returns the deleted row on success.
- */
+/** Delete document permanently (server-side). */
 export async function deleteDocumentPermanently(
   id: string,
   svc?: ReturnType<typeof createServiceClient>,
@@ -303,14 +238,7 @@ export async function deleteDocumentPermanently(
   return deleted as DocumentRow;
 }
 
-/**
- * Server-side variant to fetch published documents for a workspace.
- *
- * This helper is intended for server code and accepts an optional service-role
- * Supabase client. It mirrors `fetchPublishedDocumentsForWorkspace` but uses the
- * provided `svc` (or creates one via `createServiceClient()`) to ensure server
- * privileges are available when needed.
- */
+/** Fetch published documents (server-side variant). */
 export async function fetchPublishedDocumentsForWorkspaceServer(
   workspaceId?: string | null,
   svc?: ReturnType<typeof createServiceClient>,
@@ -333,12 +261,7 @@ export async function fetchPublishedDocumentsForWorkspaceServer(
   return (data as DocumentRow[]) ?? [];
 }
 
-/**
- * Fetch workspace document counts (total, published, drafts, archived).
- *
- * Returns an object with numeric counts. Uses head queries with exact counts for
- * efficiency. Throws on underlying query errors.
- */
+/** Fetch document counts by status for workspace. */
 export async function fetchWorkspaceDocumentCounts(
   workspaceId?: string | null,
   supabaseClient?: ReturnType<typeof createClient>,
@@ -354,8 +277,7 @@ export async function fetchWorkspaceDocumentCounts(
 
   const client = supabaseClient ?? createClient();
 
-  // Perform head/count queries in sequence. Using parallel requests is possible
-  // but sequencing keeps error-handling straightforward and matches existing patterns.
+
   const totalRes = await client
     .from("documents")
     .select("id", { count: "exact", head: true })

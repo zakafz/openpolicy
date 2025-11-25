@@ -1,16 +1,16 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
-import { createServiceClient } from "@/lib/supabase/service";
 import {
   createDocument,
-  fetchDocumentBySlug,
-  fetchDocumentById,
-  makeUniqueSlug,
-  updateDocument,
   deleteDocumentPermanently,
-  normalizeSlug,
+  fetchDocumentById,
+  fetchDocumentBySlug,
   isValidSlug,
+  makeUniqueSlug,
+  normalizeSlug,
+  updateDocument,
 } from "@/lib/documents";
+import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import { fetchWorkspaceByIdServer } from "@/lib/workspace";
 
 type Body = {
@@ -31,7 +31,7 @@ type Body = {
 export async function POST(req: Request) {
   try {
     const body = (await req.json().catch(() => ({}))) as Body;
-    let {
+    const {
       title,
       slug: rawSlug,
       content,
@@ -409,7 +409,7 @@ export async function PUT(req: Request) {
     const body = (await req.json().catch(() => ({}))) as Body;
 
     // Try to determine document id from body or URL path
-    let docId: string | undefined = undefined;
+    let docId: string | undefined;
     if (body && typeof body.id === "string" && body.id.trim().length > 0) {
       docId = body.id;
     } else {
@@ -586,7 +586,7 @@ export async function DELETE(req: Request) {
     const body = (await req.json().catch(() => ({}))) as Body;
 
     // Try to determine document id from body or URL path
-    let docId: string | undefined = undefined;
+    let docId: string | undefined;
     if (body && typeof body.id === "string" && body.id.trim().length > 0) {
       docId = body.id;
     } else {

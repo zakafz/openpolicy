@@ -1,7 +1,9 @@
 "use client";
 
+import type { Product } from "@polar-sh/sdk/models/components/product.js";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { AppSidebar } from "@/components/app-sidebar";
 import {
   Breadcrumb,
@@ -10,6 +12,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
+import { Button } from "@/components/ui/button";
 import {
   SidebarInset,
   SidebarProvider,
@@ -18,10 +21,6 @@ import {
 import { createClient } from "@/lib/supabase/client";
 import { fetchWorkspacesForOwner } from "@/lib/workspace";
 import type { UsersRow } from "@/types/supabase";
-import { usePathname } from "next/navigation";
-import { Product } from "@polar-sh/sdk/models/components/product.js";
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
 
 export default function LayoutShell({
   children,
@@ -141,7 +140,11 @@ export default function LayoutShell({
 
   return (
     <SidebarProvider>
-      <AppSidebar user={profile} products={products} />
+      <AppSidebar
+        user={profile}
+        products={products}
+        workspaces={ownerWorkspaces ?? []}
+      />
       <SidebarInset className="bg-card">
         {!isDocumentEdit && (
           <header className="flex h-14 shrink-0 border-b items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">

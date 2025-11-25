@@ -1,3 +1,6 @@
+import { RouteIcon } from "lucide-react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 import {
   Empty,
   EmptyContent,
@@ -6,10 +9,7 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
-import { RouteIcon } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { TextShimmer } from "./motion-primitives/text-shimmer";
-import Link from "next/link";
 
 export function NoSelectedWorkspace() {
   return (

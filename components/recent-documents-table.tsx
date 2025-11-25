@@ -1,8 +1,10 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
-import { fetchDocumentsForWorkspace } from "@/lib/documents";
+import { Clock, LayersIcon } from "lucide-react";
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import { RecentDocumentsSkeleton } from "@/components/skeletons";
+import { Badge } from "@/components/ui/badge";
 import { Frame, FramePanel } from "@/components/ui/frame";
 import {
   Table,
@@ -13,20 +15,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import Link from "next/link";
 import { useWorkspace } from "@/context/workspace";
 import {
-  Clock,
-  Cookie,
-  GlobeIcon,
-  Handshake,
-  LayersIcon,
-  NotebookPen,
-  Shield,
-  TicketX,
-  Truck,
-} from "lucide-react";
+  DOCUMENT_TYPE_ICON_MAP,
+  DOCUMENT_TYPE_LABEL_MAP,
+} from "@/lib/constants";
+import { fetchDocumentsForWorkspace } from "@/lib/documents";
+import { createClient } from "@/lib/supabase/client";
+import { fmtAbsolute, timeAgo } from "@/lib/utils";
 import {
   Empty,
   EmptyDescription,
@@ -34,43 +30,6 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "./ui/empty";
-import { fmtAbsolute } from "@/lib/utils";
-
-/**
- * Map document `type` values to lucide-react icons and human labels.
- */
-const typeIconMap: Record<string, React.ComponentType<any>> = {
-  privacy: Shield,
-  terms: Handshake,
-  cookie: Cookie,
-  refund: TicketX,
-  shipping: Truck,
-  "intellectual-property": NotebookPen,
-  "data-protection": GlobeIcon,
-  other: LayersIcon,
-};
-
-const typeLabelMap: Record<string, string> = {
-  privacy: "Privacy Policy",
-  terms: "Terms of Service",
-  cookie: "Cookie Policy",
-  refund: "Refund Policy",
-  shipping: "Shipping Policy",
-  "intellectual-property": "Intellectual Property",
-  "data-protection": "Data Protection",
-  other: "Other",
-};
-
-function timeAgo(date?: string | null) {
-  if (!date) return "—";
-  const then = new Date(date).getTime();
-  const now = Date.now();
-  const diffSec = Math.max(0, Math.floor((now - then) / 1000));
-  if (diffSec < 60) return `${diffSec}s`;
-  if (diffSec < 3600) return `${Math.floor(diffSec / 60)}m`;
-  if (diffSec < 86400) return `${Math.floor(diffSec / 3600)}h`;
-  return `${Math.floor(diffSec / 86400)}d`;
-}
 
 /**
  * RecentDocumentsTable
@@ -140,9 +99,7 @@ export default function RecentDocumentsTable({
     <Frame className="w-full">
       <FramePanel>
         {loading ? (
-          <div className="p-6 text-center text-sm text-muted-foreground">
-            Loading recent documents…
-          </div>
+          <RecentDocumentsSkeleton />
         ) : error ? (
           <div className="p-6 text-center text-sm text-destructive">
             {error}
@@ -176,9 +133,11 @@ export default function RecentDocumentsTable({
             <TableBody>
               {docs.map((d) => {
                 const Icon =
-                  (d?.type && typeIconMap[String(d.type)]) ?? LayersIcon;
+                  (d?.type && DOCUMENT_TYPE_ICON_MAP[String(d.type)]) ??
+                  LayersIcon;
                 const typeLabel =
-                  typeLabelMap[String(d.type)] ?? String(d.type ?? "other");
+                  DOCUMENT_TYPE_LABEL_MAP[String(d.type)] ??
+                  String(d.type ?? "other");
                 return (
                   <TableRow key={d.id}>
                     <TableCell className="font-medium">

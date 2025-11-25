@@ -1,5 +1,7 @@
-import React from "react";
+import { FileSearchCorner, SearchX } from "lucide-react";
 import Link from "next/link";
+import React from "react";
+import { Button } from "@/components/ui/button";
 import {
   Empty,
   EmptyContent,
@@ -8,8 +10,6 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
-import { Button } from "@/components/ui/button";
-import { FileSearchCorner, SearchX } from "lucide-react";
 
 /**
  * Workspace-level not-found page

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
 import { api as polar } from "@/lib/polar";
+import { createClient } from "@/lib/supabase/server";
 
 // GET /api/polar/customer — return Polar customer for authenticated Supabase user
 export async function GET(req: Request) {

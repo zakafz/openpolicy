@@ -1,10 +1,10 @@
 "use client";
 
-import { createClient } from "@/lib/supabase/client";
-import { Button } from "@/components/ui/button";
 import { useState } from "react";
-import { GithubLight } from "./ui/svgs/githubLight";
+import { Button } from "@/components/ui/button";
+import { createClient } from "@/lib/supabase/client";
 import { Spinner } from "./ui/spinner";
+import { GithubLight } from "./ui/svgs/githubLight";
 import { Google } from "./ui/svgs/google";
 
 export function LoginForm({

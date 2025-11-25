@@ -1,3 +1,5 @@
+import { ArrowUpRightIcon } from "lucide-react";
+import { FeatureCard } from "@/components/feature-card";
 import { Footer } from "@/components/footer";
 import { Header } from "@/components/header";
 import {
@@ -7,8 +9,6 @@ import {
 } from "@/components/kibo-ui/announcement";
 import Section from "@/components/section";
 import { Button } from "@/components/ui/button";
-import { ArrowUpRightIcon } from "lucide-react";
-import { FeatureCard } from "@/components/feature-card";
 
 export default function Home() {
   const features = [

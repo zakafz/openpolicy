@@ -1,24 +1,18 @@
 "use client";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import { Button as ButtonShadcn } from "@/components/ui/button-shadcn";
-
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import {
   ArrowRight,
+  Check,
+  ChevronsUpDown,
   MessageCircleMore,
   MessageCircleQuestionMark,
 } from "lucide-react";
-import { useState, useEffect } from "react";
-import { createClient } from "@/lib/supabase/client";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { Check, ChevronsUpDown } from "lucide-react";
-import { cn, resolveWorkspaceFromRequest } from "@/lib/utils";
-import { fetchPublishedDocumentsForWorkspace } from "@/lib/documents";
+import { useEffect, useState } from "react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Button as ButtonShadcn } from "@/components/ui/button-shadcn";
 import {
   Command,
   CommandEmpty,
@@ -33,9 +27,15 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import Image from "next/image";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { fetchPublishedDocumentsForWorkspace } from "@/lib/documents";
+import { createClient } from "@/lib/supabase/client";
+import { cn, resolveWorkspaceFromRequest } from "@/lib/utils";
 
 export default function LayoutShell({
   children,

@@ -1,5 +1,14 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
+import type { Product } from "@polar-sh/sdk/models/components/product.js";
+import {
+  CircleAlertIcon,
+  CircleCheckIcon,
+  LoaderCircleIcon,
+} from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Field,
@@ -8,23 +17,16 @@ import {
   FieldLabel,
 } from "@/components/ui/field-shadcn";
 import { Input } from "@/components/ui/input";
-import Image from "next/image";
-import { ButtonGroup, ButtonGroupText } from "./ui/button-group";
-import { InputGroup, InputGroupInput, InputGroupAddon } from "./ui/input-group";
 import { Label } from "@/components/ui/label";
 import {
-  CircleCheckIcon,
-  CircleAlertIcon,
-  LoaderCircleIcon,
-} from "lucide-react";
-import {
   Tooltip,
-  TooltipTrigger,
   TooltipContent,
+  TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { fetchWorkspacesForOwner } from "@/lib/workspace";
+import { ButtonGroup, ButtonGroupText } from "./ui/button-group";
+import { InputGroup, InputGroupAddon, InputGroupInput } from "./ui/input-group";
 import {
   Select,
   SelectItem,
@@ -32,8 +34,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "./ui/select";
-import { Product } from "@polar-sh/sdk/models/components/product.js";
-import Link from "next/link";
 
 export function CreateWorkspaceForm({ products }: { products: Product[] }) {
   const supabase = createClient();
@@ -214,8 +214,8 @@ export function CreateWorkspaceForm({ products }: { products: Product[] }) {
         );
       }
 
-      let customerId: string | undefined = undefined;
-      let customerExternalId: string | undefined = undefined;
+      let customerId: string | undefined;
+      let customerExternalId: string | undefined;
       try {
         const res = await fetch("/api/polar/customer", {
           method: "GET",
@@ -606,7 +606,7 @@ export function CreateWorkspaceForm({ products }: { products: Product[] }) {
           </Select>
           <FieldDescription>
             What plan your workspace will have.{" "}
-            <a href="/pricing" target="_blank">
+            <a href="/pricing" target="_blank" rel="noopener">
               View Plans
             </a>
           </FieldDescription>

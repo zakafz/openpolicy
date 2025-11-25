@@ -1,13 +1,12 @@
 "use client";
+import Image from "next/image";
+import Link from "next/link";
 import React from "react";
 import { createPortal } from "react-dom";
-import { Logo } from "@/components/logo";
 import { MenuToggleIcon } from "@/components/menu-toggle-icon";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { useScroll } from "@/hooks/use-scroll";
 import { cn } from "@/lib/utils";
-import Image from "next/image";
-import Link from "next/link";
 
 export function Header() {
   const [open, setOpen] = React.useState(false);

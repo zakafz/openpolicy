@@ -1,7 +1,7 @@
-import LayoutShell from "./layout-shell";
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
 import { api } from "@/lib/polar";
+import { createClient } from "@/lib/supabase/server";
+import LayoutShell from "./layout-shell";
 
 export default async function Layout({ children }: any) {
   const supabase = await createClient();

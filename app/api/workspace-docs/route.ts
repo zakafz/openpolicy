@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { createServiceClient } from "@/lib/supabase/service";
 import { fetchPublishedDocumentsForWorkspaceServer } from "@/lib/documents";
+import { createServiceClient } from "@/lib/supabase/service";
 
 // GET /api/workspace-docs?workspace={workspace_slug} — returns published documents for a workspace
 export async function GET(request: Request) {

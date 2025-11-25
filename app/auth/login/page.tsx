@@ -1,8 +1,8 @@
+import { redirect } from "next/navigation";
 import { Footer } from "@/components/footer";
 import { Header } from "@/components/header";
 import { LoginForm } from "@/components/login-form";
 import Section from "@/components/section";
-import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function Login() {

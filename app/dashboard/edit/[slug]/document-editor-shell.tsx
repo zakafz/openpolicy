@@ -1,21 +1,21 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { usePathname } from "next/navigation";
+import { Notebook } from "lucide-react";
 import Link from "next/link";
-import { Editor } from "@/components/tiptap/editor/editor";
-import { createClient } from "@/lib/supabase/client";
-import { fetchDocumentBySlug } from "@/lib/documents";
-import { readSelectedWorkspaceId } from "@/lib/workspace";
+import { usePathname } from "next/navigation";
+import React, { useEffect, useState } from "react";
 import { TextShimmer } from "@/components/motion-primitives/text-shimmer";
+import { Editor } from "@/components/tiptap/editor/editor";
 import {
   Empty,
+  EmptyDescription,
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
-  EmptyDescription,
 } from "@/components/ui/empty";
-import { Notebook } from "lucide-react";
+import { fetchDocumentBySlug } from "@/lib/documents";
+import { createClient } from "@/lib/supabase/client";
+import { readSelectedWorkspaceId } from "@/lib/workspace";
 
 export default function DocumentEditorShell() {
   const pathname = usePathname();

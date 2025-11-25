@@ -21,7 +21,7 @@ export function FrequencyToggle({
     <div
       className={cn(
         "mx-auto flex w-fit rounded-full border bg-background p-1 shadow-sm",
-        props.className
+        props.className,
       )}
       {...props}
     >
