@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { ArrowUpRightIcon } from "lucide-react";
 import { FeatureCard } from "@/components/feature-card";
 import { Footer } from "@/components/footer";
@@ -9,6 +10,20 @@ import {
 } from "@/components/kibo-ui/announcement";
 import Section from "@/components/section";
 import { Button } from "@/components/ui/button";
+
+export const metadata: Metadata = {
+  title: 'Home',
+  description: 'The better way to handle your policies and documents. Effortlessly host, manage, and update your policies in one secure platform.',
+  openGraph: {
+    title: 'OpenPolicy - The Better Way to Handle Your Policies',
+    description: 'Effortlessly host, manage, and update your policies and documents. All in one secure platform.',
+    url: '/',
+  },
+  twitter: {
+    title: 'OpenPolicy - Modern Policy Documentation Platform',
+    description: 'The better way to handle your policies and documents.',
+  },
+};
 
 export default function Home() {
   const features = [

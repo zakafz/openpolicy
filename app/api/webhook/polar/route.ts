@@ -1,4 +1,5 @@
 import { Webhooks } from "@polar-sh/nextjs";
+import * as Sentry from "@sentry/nextjs";
 import { createServiceClient } from "@/lib/supabase/service";
 import { fetchWorkspacesForOwner } from "@/lib/workspace";
 
@@ -143,6 +144,9 @@ async function finalizePendingWorkspace({
       const { data, error } = await query;
       if (error) {
         console.warn(`finalizePendingWorkspace: query error (${label})`, error);
+        Sentry.captureException(error, {
+          tags: { context: 'finalizePendingWorkspace', query_label: label },
+        });
         continue;
       }
       if (Array.isArray(data) && data.length > 0) {
@@ -220,6 +224,9 @@ async function finalizePendingWorkspace({
         "Error checking existing workspaces via helper:",
         existsErr,
       );
+      Sentry.captureException(existsErr, {
+        tags: { context: 'finalizePendingWorkspace', step: 'check_duplicates' },
+      });
     }
 
     if (duplicateFound) {
@@ -262,6 +269,10 @@ async function finalizePendingWorkspace({
 
     if (createErr || !workspace) {
       console.error("Failed to create workspace in DB (webhook):", createErr);
+      Sentry.captureException(createErr, {
+        tags: { context: 'finalizePendingWorkspace', step: 'create_workspace' },
+        extra: { pendingId: pending.id, workspaceName: pending.name },
+      });
       try {
         await svc
           .from("pending_workspaces")
@@ -278,6 +289,9 @@ async function finalizePendingWorkspace({
           "Failed to annotate pending_workspaces after create failure:",
           annotateErr,
         );
+        Sentry.captureException(annotateErr, {
+          tags: { context: 'finalizePendingWorkspace', step: 'annotate_error' },
+        });
       }
       return;
     }
@@ -317,9 +331,15 @@ async function finalizePendingWorkspace({
         "Failed to delete pending_workspaces after workspace creation:",
         delErr,
       );
+      Sentry.captureException(delErr, {
+        tags: { context: 'finalizePendingWorkspace', step: 'cleanup_pending' },
+      });
     }
   } catch (e) {
     console.error("finalizePendingWorkspace error:", e);
+    Sentry.captureException(e, {
+      tags: { context: 'finalizePendingWorkspace', step: 'general_error' },
+    });
   }
 }
 
@@ -479,6 +499,9 @@ export const POST = Webhooks({
       }
     } catch (err) {
       console.error("Error marking pending_workspaces as canceled:", err);
+      Sentry.captureException(err, {
+        tags: { context: 'onSubscriptionCanceled' },
+      });
     }
   },
 
@@ -512,6 +535,9 @@ export const POST = Webhooks({
         "Error marking pending_workspaces as revoked/canceled:",
         err,
       );
+      Sentry.captureException(err, {
+        tags: { context: 'onSubscriptionRevoked' },
+      });
     }
   },
 

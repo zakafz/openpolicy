@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import * as Sentry from "@sentry/nextjs";
 import {
   createDocument,
   deleteDocumentPermanently,
@@ -392,6 +393,9 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true, document: created }, { status: 201 });
   } catch (err) {
     console.error("Server error in /api/documents:", err);
+    Sentry.captureException(err, {
+      tags: { api_route: 'documents', method: 'POST' },
+    });
     return NextResponse.json(
       {
         error: "Server error",
@@ -569,6 +573,9 @@ export async function PUT(req: Request) {
     return NextResponse.json({ ok: true, document: updated }, { status: 200 });
   } catch (err) {
     console.error("Server error in /api/documents PUT:", err);
+    Sentry.captureException(err, {
+      tags: { api_route: 'documents', method: 'PUT' },
+    });
     return NextResponse.json(
       {
         error: "Server error",
@@ -696,6 +703,9 @@ export async function DELETE(req: Request) {
     return NextResponse.json({ ok: true, document: deleted }, { status: 200 });
   } catch (err) {
     console.error("Server error in /api/documents DELETE:", err);
+    Sentry.captureException(err, {
+      tags: { api_route: 'documents', method: 'DELETE' },
+    });
     return NextResponse.json(
       { error: "Server error", detail: String(err) },
       { status: 500 },
