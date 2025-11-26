@@ -281,7 +281,7 @@ export function AppSidebar(props: {
             >
               <Button variant="outline" size={"sm"} className="w-full">
                 <Eye />
-                Open Workspace
+                View Workspace
               </Button>
             </a>
           ) : (
@@ -293,7 +293,7 @@ export function AppSidebar(props: {
                 disabled
               >
                 <EyeClosed />
-                Open Workspace
+                View Workspace
               </Button>
             </div>
           )}
