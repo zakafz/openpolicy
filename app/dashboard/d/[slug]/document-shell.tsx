@@ -7,6 +7,7 @@ import {
   ChevronDownIcon,
   Edit,
   ExternalLink,
+  FileEdit,
   MoreVertical,
   Notebook,
   PackageOpen,
@@ -63,6 +64,8 @@ import { createClient } from "@/lib/supabase/client";
 import { fmtAbsolute, timeAgo } from "@/lib/utils";
 import { readSelectedWorkspaceId } from "@/lib/workspace";
 import useWorkspaceLoader from "@/hooks/use-workspace-loader";
+import { Input } from "@/components/ui/input";
+import { toastManager } from "@/components/ui/toast";
 
 export default function DocumentShell() {
   const pathname = usePathname();
@@ -77,6 +80,10 @@ export default function DocumentShell() {
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [blocked, setBlocked] = useState<boolean>(false);
+  const [renameDialogOpen, setRenameDialogOpen] = useState(false);
+  const [newTitle, setNewTitle] = useState("");
+  const [renamingInProgress, setRenamingInProgress] = useState(false);
+  const [renameError, setRenameError] = useState<string | null>(null);
 
   // Try to read selected workspace from localStorage (if not already set)
   useEffect(() => {
@@ -252,6 +259,80 @@ export default function DocumentShell() {
       cancelled = true;
     };
   }, [workspaceId, slug]);
+
+  const handleRename = async () => {
+    const trimmedTitle = newTitle.trim();
+
+    if (!trimmedTitle) {
+      setRenameError("Document name cannot be empty");
+      return;
+    }
+
+    if (trimmedTitle === doc.title) {
+      setRenameDialogOpen(false);
+      return;
+    }
+
+    setRenamingInProgress(true);
+    setRenameError(null);
+
+    try {
+      const supabase = createClient();
+
+      // Check for duplicate names in the same workspace
+      const { data: existingDocs, error: checkError } = await supabase
+        .from("documents")
+        .select("id, title")
+        .eq("workspace_id", doc.workspace_id)
+        .ilike("title", trimmedTitle)
+        .neq("id", doc.id);
+
+      if (checkError) {
+        console.error("Error checking for duplicate names:", checkError);
+        setRenameError("Failed to validate document name");
+        setRenamingInProgress(false);
+        return;
+      }
+
+      if (existingDocs && existingDocs.length > 0) {
+        setRenameError("A document with this name already exists in this workspace");
+        setRenamingInProgress(false);
+        return;
+      }
+
+      // Update the document
+      const res = await fetch("/api/documents", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: doc.id,
+          title: trimmedTitle,
+        }),
+      });
+
+      const payload = await res.json();
+
+      if (res.ok && payload?.document) {
+        setDoc(payload.document);
+        toastManager.add({
+          title: "Success!",
+          description: `Document renamed to "${trimmedTitle}"`,
+          type: "success",
+        });
+        setRenameDialogOpen(false);
+        // Dispatch event to update sidebar
+        window.dispatchEvent(new CustomEvent("document-updated"));
+      } else {
+        setRenameError(payload?.error ?? "Failed to rename document");
+      }
+    } catch (e: any) {
+      console.error("Error renaming document:", e);
+      setRenameError(String(e?.message ?? e ?? "Failed to rename document"));
+    } finally {
+      setRenamingInProgress(false);
+    }
+  };
+
   if (!slug) {
     return (
       <div className="w-full justify-center flex items-center h-full">
@@ -322,7 +403,7 @@ export default function DocumentShell() {
             <EmptyDescription>Details: {message}</EmptyDescription>
           </EmptyHeader>
           <EmptyContent>
-            <Link href="/dashboard/documents">
+            <Link href="/dashboard/documents/all">
               <Button>Back to documents</Button>
             </Link>
           </EmptyContent>
@@ -412,12 +493,12 @@ export default function DocumentShell() {
                 Slug: <span className="font-semibold">{doc.slug ?? "—"}</span>
               </BadgeCoss>
 
-              <BadgeCoss variant={"outline"} size={"lg"}>
+              {/* <BadgeCoss variant={"outline"} size={"lg"}>
                 Version:{" "}
                 <span className="font-semibold">
                   {String(doc.version ?? "1")}
                 </span>
-              </BadgeCoss>
+              </BadgeCoss> */}
             </div>
             <div className="flex items-center gap-2">
               <AlertDialog>
@@ -443,6 +524,18 @@ export default function DocumentShell() {
                           Edit
                         </MenuItem>
                       </Link>
+                    )}
+                    {doc.status !== "archived" && (
+                      <MenuItem
+                        onClick={() => {
+                          setNewTitle(doc.title);
+                          setRenameError(null);
+                          setRenameDialogOpen(true);
+                        }}
+                      >
+                        <FileEdit />
+                        Rename
+                      </MenuItem>
                     )}
                     {doc.status === "published" && workspace?.slug && (
                       <MenuItem
@@ -588,6 +681,48 @@ export default function DocumentShell() {
                         Archive
                       </AlertDialogClose>
                     )}
+                  </AlertDialogFooter>
+                </AlertDialogPopup>
+              </AlertDialog>
+
+              {/* Rename Dialog */}
+              <AlertDialog open={renameDialogOpen} onOpenChange={setRenameDialogOpen}>
+                <AlertDialogPopup>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Rename Document</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Enter a new name for "{doc.title}". Document names must be unique within the workspace.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <Input
+                    type="text"
+                    value={newTitle}
+                    onChange={(e) => {
+                      setNewTitle(e.target.value);
+                      setRenameError(null);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !renamingInProgress) {
+                        e.preventDefault();
+                        handleRename();
+                      }
+                    }}
+                    placeholder={doc.title}
+                    autoFocus
+                  />
+                  {renameError && (
+                    <p className="text-sm text-destructive mt-2">{renameError}</p>
+                  )}
+                  <AlertDialogFooter>
+                    <AlertDialogClose render={<Button variant="ghost" />}>
+                      Cancel
+                    </AlertDialogClose>
+                    <Button
+                      onClick={handleRename}
+                      disabled={renamingInProgress || !newTitle.trim()}
+                    >
+                      {renamingInProgress ? "Renaming..." : "Rename"}
+                    </Button>
                   </AlertDialogFooter>
                 </AlertDialogPopup>
               </AlertDialog>

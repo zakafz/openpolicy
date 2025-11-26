@@ -559,6 +559,11 @@ export async function PUT(req: Request) {
       updatePayload.content = body.content;
     }
 
+    // Optional: update title if provided
+    if (typeof body.title === "string" && body.title.trim().length > 0) {
+      updatePayload.title = body.title.trim();
+    }
+
     // Optional: update status if provided
     if (typeof body.status === "string" && body.status.trim().length > 0) {
       updatePayload.status = body.status;

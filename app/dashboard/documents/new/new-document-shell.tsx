@@ -30,60 +30,59 @@ const documentTypes: {
   description: string;
   icon: React.ComponentType<any>;
 }[] = [
-  {
-    value: "privacy",
-    label: DOCUMENT_TYPE_LABEL_MAP.privacy,
-    description:
-      "Details what personal data is collected, how it's used, and how it's protected.",
-    icon: DOCUMENT_TYPE_ICON_MAP.privacy,
-  },
-  {
-    value: "terms",
-    label: DOCUMENT_TYPE_LABEL_MAP.terms,
-    description:
-      "An agreement that outlines the rules users must follow to use a website and service, which can include limitations on liability.",
-    icon: DOCUMENT_TYPE_ICON_MAP.terms,
-  },
-  {
-    value: "cookie",
-    label: DOCUMENT_TYPE_LABEL_MAP.cookie,
-    description: "Explains the use of cookies, what they are for.",
-    icon: DOCUMENT_TYPE_ICON_MAP.cookie,
-  },
-  {
-    value: "refund",
-    label: DOCUMENT_TYPE_LABEL_MAP.refund,
-    description: "Explains the refund policy for the product.",
-    icon: DOCUMENT_TYPE_ICON_MAP.refund,
-  },
-  {
-    value: "shipping",
-    label: DOCUMENT_TYPE_LABEL_MAP.shipping,
-    description: "Explains the shipping policy for the product.",
-    icon: DOCUMENT_TYPE_ICON_MAP.shipping,
-  },
-  {
-    value: "intellectual-property",
-    label: DOCUMENT_TYPE_LABEL_MAP["intellectual-property"],
-    description: "Explains the intellectual property policy for the product.",
-    icon: DOCUMENT_TYPE_ICON_MAP["intellectual-property"],
-  },
-  {
-    value: "data-protection",
-    label: DOCUMENT_TYPE_LABEL_MAP["data-protection"],
-    description: "Explains the data protection policy for the product.",
-    icon: DOCUMENT_TYPE_ICON_MAP["data-protection"],
-  },
-  {
-    value: "other",
-    label: DOCUMENT_TYPE_LABEL_MAP.other,
-    description: "Other type of document",
-    icon: DOCUMENT_TYPE_ICON_MAP.other,
-  },
-];
+    {
+      value: "privacy",
+      label: DOCUMENT_TYPE_LABEL_MAP.privacy,
+      description:
+        "Details what personal data is collected, how it's used, and how it's protected.",
+      icon: DOCUMENT_TYPE_ICON_MAP.privacy,
+    },
+    {
+      value: "terms",
+      label: DOCUMENT_TYPE_LABEL_MAP.terms,
+      description:
+        "An agreement that outlines the rules users must follow to use a website and service, which can include limitations on liability.",
+      icon: DOCUMENT_TYPE_ICON_MAP.terms,
+    },
+    {
+      value: "cookie",
+      label: DOCUMENT_TYPE_LABEL_MAP.cookie,
+      description: "Explains the use of cookies, what they are for.",
+      icon: DOCUMENT_TYPE_ICON_MAP.cookie,
+    },
+    {
+      value: "refund",
+      label: DOCUMENT_TYPE_LABEL_MAP.refund,
+      description: "Explains the refund policy for the product.",
+      icon: DOCUMENT_TYPE_ICON_MAP.refund,
+    },
+    {
+      value: "shipping",
+      label: DOCUMENT_TYPE_LABEL_MAP.shipping,
+      description: "Explains the shipping policy for the product.",
+      icon: DOCUMENT_TYPE_ICON_MAP.shipping,
+    },
+    {
+      value: "intellectual-property",
+      label: DOCUMENT_TYPE_LABEL_MAP["intellectual-property"],
+      description: "Explains the intellectual property policy for the product.",
+      icon: DOCUMENT_TYPE_ICON_MAP["intellectual-property"],
+    },
+    {
+      value: "data-protection",
+      label: DOCUMENT_TYPE_LABEL_MAP["data-protection"],
+      description: "Explains the data protection policy for the product.",
+      icon: DOCUMENT_TYPE_ICON_MAP["data-protection"],
+    },
+    {
+      value: "other",
+      label: DOCUMENT_TYPE_LABEL_MAP.other,
+      description: "Other type of document",
+      icon: DOCUMENT_TYPE_ICON_MAP.other,
+    },
+  ];
 
 export default function NewDocumentShell({
-  // Optionally allow parent components to pass workspace/owner context
   workspaceId: propWorkspaceId,
   ownerId: propOwnerId,
 }: {
@@ -94,12 +93,10 @@ export default function NewDocumentShell({
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
 
-  // Basic form state
   const [title, setTitle] = useState("");
   const [slug, setSlug] = useState("");
   const [slugDirty, setSlugDirty] = useState(false);
   const [type, setType] = useState<DocumentType>("privacy");
-  const [published, setPublished] = useState(false);
   const [parentId, setParentId] = useState<string | null>(null);
   const [status, setStatus] = useState<"draft" | "published" | "archived">(
     "draft",
@@ -127,9 +124,6 @@ export default function NewDocumentShell({
   const [error, setError] = useState<string | null>(null);
   const [successUrl, setSuccessUrl] = useState<string | null>(null);
 
-  // derive workspaceId: prefer prop -> persisted selected workspace -> query param -> undefined
-  // Use persisted selection (localStorage) when available so the New Document form opens
-  // with the user's current workspace selection rather than an out-of-date query param.
   const workspaceId =
     propWorkspaceId ??
     (typeof window !== "undefined"
@@ -138,12 +132,8 @@ export default function NewDocumentShell({
         undefined)
       : (searchParams?.get("workspaceId") ?? undefined));
 
-  // Slug validation (allow lowercase letters, numbers and dashes)
   const SLUG_REGEX = /^[a-z0-9-]+$/;
 
-  // On input: convert to lowercase, replace spaces with dashes and remove invalid chars.
-  // This mirrors the workspace slug behavior: do not collapse dashes or trim here so users
-  // can continue typing freely.
   function handleSlugChange(value: string) {
     const raw = String(value ?? "");
     const lower = raw.toLowerCase();
@@ -153,8 +143,6 @@ export default function NewDocumentShell({
     setSlugDirty(true);
   }
 
-  // On blur: collapse consecutive dashes but DO NOT trim leading/trailing dashes.
-  // This matches the workspace form behavior where an ending dash is allowed.
   function handleSlugBlur() {
     const normalized = String(slug ?? "")
       .toLowerCase()
@@ -164,7 +152,6 @@ export default function NewDocumentShell({
     if (normalized !== slug) setSlug(normalized);
   }
 
-  // Basic client-side validation:
   function validate(): string | null {
     if (!workspaceId) return "Missing workspace. Provide a Workspace ID.";
     if (!title.trim()) return "Title is required.";
@@ -185,17 +172,15 @@ export default function NewDocumentShell({
       return;
     }
 
-    // Prepare payload matching the `documents` table columns we care about
     const payload: Record<string, any> = {
       title: title.trim(),
       slug: slug.trim(),
       type,
-      published,
+      published: status === "published",
       version,
       workspace_id: workspaceId,
       parent_id: parentId || null,
       status,
-      // Set initial content using the template for the selected type. Persist as a JSON string
       content: JSON.stringify(getTemplateForType(type, title.trim())),
     };
 
@@ -211,13 +196,9 @@ export default function NewDocumentShell({
 
         if (res.ok) {
           const data = await res.json();
-          // Expect server to return created document (id/slug/etc)
           const docId = data?.id;
           const docSlug = data?.slug ?? slug;
           setSuccessUrl(`/dashboard/documents/${docId ?? docSlug}`);
-          // Persist the selected workspace and broadcast change so other tabs/components pick it up.
-          // Do this before navigation to ensure the UI is in the correct workspace when the new
-          // document page loads (prevents immediate "Access Denied" caused by stale selection).
           try {
             if (typeof window !== "undefined") {
               writeSelectedWorkspaceId(workspaceId);
@@ -227,10 +208,8 @@ export default function NewDocumentShell({
                     detail: { id: workspaceId ?? null },
                   }),
                 );
-                // Dispatch document-updated to refresh sidebar counts
                 window.dispatchEvent(new CustomEvent("document-updated"));
               } catch (evErr) {
-                // Non-fatal: dispatch failure should not block navigation.
                 console.warn(
                   "NewDocumentShell: failed to dispatch events",
                   evErr,
@@ -238,20 +217,17 @@ export default function NewDocumentShell({
               }
             }
           } catch (e) {
-            // Non-fatal: do not surface to user; preserve navigation success.
             console.warn(
               "NewDocumentShell: failed to persist workspace selection",
               e,
             );
           }
-          // navigate to the new document or documents list
           router.push(`/dashboard/d/${docId ?? docSlug}`);
         } else if (res.status === 409) {
-          // Conflict, slug taken
           const body = await res.json().catch(() => null);
           setError(
             body?.message ??
-              "Slug already in use. Pick a different slug and try again.",
+            "Slug already in use. Pick a different slug and try again.",
           );
         } else {
           const body = await res.json().catch(() => null);
@@ -263,7 +239,6 @@ export default function NewDocumentShell({
     });
   }
 
-  // Show a helpful message (when workspaceId is missing)
   useEffect(() => {
     if (!workspaceId) {
       setError(
@@ -279,10 +254,10 @@ export default function NewDocumentShell({
 
   return (
     <form
-      className="w-full max-w-3xl rounded-xl border bg-card"
+      className="w-full max-w-[500px] rounded-xl border bg-card"
       onSubmit={handleSubmit}
     >
-      <div className="flex flex-col items-center justify-center gap-6 rounded-t-xl border-b bg-background/60 py-8">
+      <div className="flex flex-col items-center justify-center gap-6 rounded-t-xl border-b bg-accent/60 py-8">
         <div className="flex flex-col items-center space-y-1">
           <h2 className="font-medium text-2xl">Create a document</h2>
           <p className="text-muted-foreground text-sm max-w-[80%] text-center">
@@ -369,7 +344,6 @@ export default function NewDocumentShell({
           </FieldDescription>
         </Field>
 
-        <div className="grid grid-cols-2 gap-4">
           <Field className="gap-2">
             <FieldLabel htmlFor="status">Status</FieldLabel>
             <Select
@@ -394,23 +368,9 @@ export default function NewDocumentShell({
             </Select>
             <FieldDescription>Document workflow status</FieldDescription>
           </Field>
-
-          <Field className="gap-2">
-            <FieldLabel htmlFor="parent">Parent Document (optional)</FieldLabel>
-            <Input
-              id="parent"
-              placeholder="Parent document id (optional)"
-              value={parentId ?? ""}
-              onChange={(e) => setParentId(e.target.value || null)}
-            />
-            <FieldDescription>
-              If this is a revision or child document, provide the parent's ID.
-            </FieldDescription>
-          </Field>
-        </div>
       </FieldGroup>
 
-      <div className="rounded-b-xl border-t bg-background/60 p-4 w-full">
+      <div className="rounded-b-xl border-t bg-accent/60 p-4 w-full">
         {error ? (
           <div className="mb-2 text-sm text-destructive">{error}</div>
         ) : null}

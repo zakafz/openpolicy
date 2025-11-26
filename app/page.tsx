@@ -14,6 +14,7 @@ import CTA from "@/components/cta";
 import { Safari } from "@/components/ui/safari";
 import { EditorShowcase } from "@/components/tiptap/editor/editor-showcase";
 import FeaturesSection from "@/components/features";
+import Link from "next/link";
 
 export const metadata: Metadata = {
   title: 'OpenPolicy - The Better Way to Handle Your Policies',
@@ -107,21 +108,25 @@ export default function Home() {
           ))}
         </div>
       </Section>
+      <Section>
+        <FeaturesSection />
+      </Section>
       <Section className="py-8">
         <h2 className="text-balance font-medium text-3xl text-start">
           Centralized document repository for your organization
         </h2>
-        <p className="mt-2 text-balance text-muted-foreground text-sm mb-10 text-start">
+        <p className="mt-2 text-balance text-muted-foreground text-sm mb-5 text-start">
           View and manage all your documents in one place. Never lose track of your documents again. Neither you or your clients will have to search through multiple systems to find the documents they need.
         </p>
+        <Link href="https://more.openpolicyhq.com/" >
+          <Button className="mb-10">View demo</Button>
+        </Link>
         <Safari
           url="more.openpolicyhq.com"
-          imageSrc="https://placehold.co/1200x750?text=Open+Policy"
+          imageSrc="/demo-2.png"
         />
       </Section>
-      <Section>
-        <FeaturesSection /> 
-      </Section>
+
       <Section className="py-8">
         <h2 className="text-balance font-medium text-3xl text-start">
           A simple and straightforward editor

@@ -37,6 +37,7 @@ import {
 import { useWorkspace } from "@/context/workspace";
 import { fetchDocumentsForWorkspace } from "@/lib/documents";
 import { createClient } from "@/lib/supabase/client";
+import { Badge } from "@/components/ui/badge";
 
 export function NavDocuments() {
   const { isMobile } = useSidebar();
@@ -106,8 +107,18 @@ export function NavDocuments() {
 
     load();
 
+    // Listen for document updates (create, rename, delete, etc.)
+    const handleDocumentUpdate = () => {
+      if (!cancelled) {
+        load();
+      }
+    };
+
+    window.addEventListener("document-updated", handleDocumentUpdate);
+
     return () => {
       cancelled = true;
+      window.removeEventListener("document-updated", handleDocumentUpdate);
     };
   }, [selectedWorkspaceId]);
 
@@ -142,29 +153,46 @@ export function NavDocuments() {
                 <SidebarMenuButton asChild>
                   <Link
                     href={`/dashboard/d/${d.slug}`}
-                    className="flex items-center gap-2"
+                    className="flex items-center gap-2 justify-between w-full"
                   >
-                    {(() => {
-                      // Narrow the key to the known literal union so TypeScript can
-                      // safely index `typeIconMap` without an `any` cast.
-                      const key = String(d?.type ?? "other") as
-                        | "privacy"
-                        | "terms"
-                        | "cookie"
-                        | "refund"
-                        | "shipping"
-                        | "intellectual-property"
-                        | "data-protection"
-                        | "other";
-                      const Icon = typeIconMap[key] ?? Folder;
-                      return (
-                        <Icon
-                          className="w-4 h-4 opacity-80"
-                          aria-hidden="true"
-                        />
-                      );
-                    })()}
-                    <span className="truncate">{d.title}</span>
+                    <div className="flex items-center gap-2 min-w-0">
+                      {(() => {
+                        // Narrow the key to the known literal union so TypeScript can
+                        // safely index `typeIconMap` without an `any` cast.
+                        const key = String(d?.type ?? "other") as
+                          | "privacy"
+                          | "terms"
+                          | "cookie"
+                          | "refund"
+                          | "shipping"
+                          | "intellectual-property"
+                          | "data-protection"
+                          | "other";
+                        const Icon = typeIconMap[key] ?? Folder;
+                        return (
+                          <Icon
+                            className="w-4 h-4 opacity-80 shrink-0"
+                            aria-hidden="true"
+                          />
+                        );
+                      })()}
+                      <span className="truncate">{d.title}</span>
+                    </div>
+                    <Badge
+                      className={`text-xs capitalize shrink-0 ${d.status === "published"
+                          ? "bg-info/15 text-info-foreground"
+                          : d.status === "archived"
+                            ? ""
+                            : "bg-warning/20 text-warning-foreground"
+                        }`}
+                      variant={
+                        d.status === "archived"
+                          ? "secondary"
+                          : "default"
+                      }
+                    >
+                      {d.status || "draft"}
+                    </Badge>
                   </Link>
                 </SidebarMenuButton>
                 <DropdownMenu>
