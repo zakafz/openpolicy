@@ -25,7 +25,6 @@ import {
 } from "@/components/ui/tooltip";
 import { createClient } from "@/lib/supabase/client";
 import { fetchWorkspacesForOwner } from "@/lib/workspace";
-import { FREE_PLAN_LIMITS, PRO_PLAN_LIMITS } from "@/lib/limits";
 import { ButtonGroup, ButtonGroupText } from "./ui/button-group";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "./ui/input-group";
 import {
@@ -244,16 +243,14 @@ export function CreateWorkspaceForm({ products }: { products: Product[] }) {
         selectedProduct.prices[0]) as any;
       const isFreePlan = price ? price.amountType === "free" : false;
 
-      // Enforce workspace limits for ALL plans
+      // Enforce global workspace limit (max 1 workspace per user)
       try {
         const currentWorkspaces = await fetchWorkspacesForOwner(owner_id, supabase);
-        const limit = isFreePlan ? FREE_PLAN_LIMITS.workspaces : PRO_PLAN_LIMITS.workspaces;
+        const limit = 1;
 
         if (currentWorkspaces.length >= limit) {
-          const planName = isFreePlan ? "Free" : "Pro";
-          const upgradeMessage = isFreePlan ? " Please upgrade to Pro for more workspaces." : "";
           setError(
-            `${planName} plan is limited to ${limit} workspace(s).${upgradeMessage}`,
+            `You can only create ${limit} workspace. Please delete an existing workspace to create a new one.`,
           );
           setLoading(false);
           return;
@@ -261,7 +258,7 @@ export function CreateWorkspaceForm({ products }: { products: Product[] }) {
       } catch (limitErr) {
         console.error("Error checking workspace limits:", limitErr);
         // Fail closed
-        setError("Failed to validate plan limits.");
+        setError("Failed to validate workspace limits.");
         setLoading(false);
         return;
       }
