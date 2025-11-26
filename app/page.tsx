@@ -136,7 +136,7 @@ export default function Home() {
           <Card
                     className="col-span-full md:hidden overflow-hidden rounded-none shadow-none pl-6">
                     <div className="mask-b-from-95% -ml-2 pl-2 pt-2">
-                        <div className="bg-background relative mx-auto h-96 overflow-hidden border-px border border-border border-t-0 border-b-0 border-r-0">
+                        <div className="bg-background relative mx-auto h-96 overflow-hidden border-px border border-border border-b-0 border-r-0">
                             <Image
                                 src="/demo-3.png"
                                 alt="app screen"
