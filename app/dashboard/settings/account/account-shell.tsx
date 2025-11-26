@@ -260,6 +260,38 @@ export default function AccountShell() {
       if (authError) throw authError;
       if (!user) throw new Error("Not authenticated");
 
+      const { data: ownedWorkspaces, error: workspacesErr } = await supabase
+        .from("workspaces")
+        .select("id")
+        .eq("owner_id", user.id);
+
+      if (workspacesErr) throw workspacesErr;
+
+      if (ownedWorkspaces && ownedWorkspaces.length > 0) {
+        const workspaceIds = ownedWorkspaces.map((w) => w.id);
+
+        const { error: docsErr } = await supabase
+          .from("documents")
+          .delete()
+          .in("workspace_id", workspaceIds);
+
+        if (docsErr) throw docsErr;
+      }
+
+      const { error: workspacesDeleteErr } = await supabase
+        .from("workspaces")
+        .delete()
+        .eq("owner_id", user.id);
+
+      if (workspacesDeleteErr) throw workspacesDeleteErr;
+
+      const { error: pendingErr } = await supabase
+        .from("pending_workspaces")
+        .delete()
+        .eq("owner_id", user.id);
+
+      if (pendingErr) throw pendingErr;
+
       const { error: deleteErr } = await supabase
         .from("users")
         .delete()

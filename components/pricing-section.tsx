@@ -194,7 +194,7 @@ export function PricingCard({
               <TooltipProvider>
                 <Tooltip delayDuration={0}>
                   <TooltipTrigger asChild>
-                    <p className={cn(tooltip && "cursor-pointer border-b")}>
+                    <p className={cn(tooltip && "cursor-default! border-b")}>
                       {text}
                     </p>
                   </TooltipTrigger>
