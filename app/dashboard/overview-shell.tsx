@@ -14,7 +14,6 @@ import {
 import { useWorkspace } from "@/context/workspace";
 import useWorkspaceLoader from "@/hooks/use-workspace-loader";
 import { fetchWorkspaceDocumentCounts } from "@/lib/documents";
-// Supabase client for fetching real stats
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import { FREE_PLAN_LIMITS, PRO_PLAN_LIMITS } from "@/lib/limits";
@@ -49,7 +48,6 @@ export default function OverviewShell(): React.ReactElement {
         if (res.ok) {
           const data = await res.json();
           setIsFreePlanState(data.isFree);
-          // Set the limit based on plan type
           const limit = data.isFree ? FREE_PLAN_LIMITS.documents : PRO_PLAN_LIMITS.documents;
           setPlanLimit(Number.isFinite(limit) ? limit : null);
         }

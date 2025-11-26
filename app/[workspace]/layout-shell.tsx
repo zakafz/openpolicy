@@ -48,9 +48,6 @@ export default function LayoutShell({
 }) {
   const wsName = workspace?.name ?? workspace?.slug ?? "OpenStatus";
 
-  // Client-side documents state: initialize from server-provided `documents` prop if available.
-  // Initialize with a minimal placeholder entry derived from the current URL (if present)
-  // so the selector can display the current document immediately on refresh.
   const pathname = usePathname();
   const router = useRouter();
   const deriveInitialDocs = () => {
@@ -70,8 +67,6 @@ export default function LayoutShell({
   const [clientDocs, setClientDocs] = useState<any[]>(deriveInitialDocs());
   const docCount = Array.isArray(clientDocs) ? clientDocs.length : 0;
 
-  // If the layout did not receive documents from the server, attempt a client-side fetch.
-  // This helps keep the header in sync if the server fetch was empty or transiently failed.
   useEffect(() => {
     if (
       (!documents || documents.length === 0) &&
@@ -81,9 +76,6 @@ export default function LayoutShell({
       let cancelled = false;
       (async () => {
         try {
-          // Use centralized helper to fetch published documents for a workspace.
-          // This keeps query logic consistent across the app and delegates
-          // Supabase interactions to `lib/documents`.
           const docs = await fetchPublishedDocumentsForWorkspace(
             workspace.id,
             createClient(),
@@ -280,7 +272,6 @@ function DocumentSelect({
     }
   }, [pathname, workspace?.slug, documents]);
 
-  // disable selector when there are no published documents
   const hasDocs = docList.length > 0;
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -314,7 +305,6 @@ function DocumentSelect({
               {hasDocs ? "No document found." : "No published documents."}
             </CommandEmpty>
             <CommandGroup>
-              {/* Top: All documents option navigates to workspace index */}
               <CommandItem
                 className="rounded-lg"
                 key="__all__"
@@ -323,7 +313,6 @@ function DocumentSelect({
                   setValue("__all__");
                   setSelectedName("All documents");
                   setOpen(false);
-                  // navigate to root (shows workspace index / list)
                   router.push(`/`);
                 }}
               >

@@ -30,7 +30,6 @@ export default function DocumentEditorShell() {
   const [docTitle, setDocTitle] = useState<string | null>(null);
   const [initialContent, setInitialContent] = useState<any>(null);
   const [initialIsJson, setInitialIsJson] = useState<boolean>(true);
-  // store the workspace_id of the loaded document and a blocked state
   const [docWorkspaceId, setDocWorkspaceId] = useState<string | null>(null);
   const [blocked, setBlocked] = useState<boolean>(false);
 
@@ -44,24 +43,18 @@ export default function DocumentEditorShell() {
       try {
         const supabase = createClient();
 
-        // Determine selected workspace from localStorage similar to other components.
-        // If a selected workspace exists, scope the document fetch to that workspace.
         let selectedWorkspaceId: string | null = null;
         try {
-          // Use centralized helper to parse persisted selected workspace.
           selectedWorkspaceId = readSelectedWorkspaceId();
         } catch {
           selectedWorkspaceId = null;
         }
 
-        // Use centralized helper to fetch the document by slug (scoped to workspace when provided).
-        // Wrap in try/catch to mirror previous pattern where `fetchErr` was available.
         let data: any = null;
         let fetchErr: any = null;
         try {
           data = await fetchDocumentBySlug(slug, selectedWorkspaceId, supabase);
         } catch (e: any) {
-          // Preserve previous behavior: downstream logic expects `fetchErr` when queries fail.
           fetchErr = e;
         }
 
@@ -78,11 +71,7 @@ export default function DocumentEditorShell() {
 
         if (!data) {
           if (selectedWorkspaceId) {
-            // Fallback: try fetching without workspace scoping to check if the document
-            // exists in a different workspace and should therefore be blocked.
             try {
-              // Fallback: try fetching without workspace scoping to check if the document
-              // exists in a different workspace and should therefore be blocked.
               let fallbackData: any = null;
               let fallbackErr: any = null;
               try {
@@ -107,7 +96,6 @@ export default function DocumentEditorShell() {
               }
 
               if (fallbackData) {
-                // Document exists but in a different workspace — block editing.
                 setBlocked(true);
                 setError(
                   "You cannot edit this document from the selected workspace. Switch to the document's workspace to edit it.",
@@ -118,7 +106,6 @@ export default function DocumentEditorShell() {
                 return;
               }
 
-              // Not found at all
               setError("Document not found");
               setDocId(null);
               setDocSlug(null);
@@ -141,62 +128,50 @@ export default function DocumentEditorShell() {
           }
         }
 
-        // Determine whether content is JSON (Tiptap JSON) or HTML/plain string.
         const content = data.content ?? "";
         if (typeof content === "string" && content.trim().length > 0) {
           try {
             const parsed = JSON.parse(content);
-            // If parse succeeds and looks like a Tiptap doc (has type/key) we treat as JSON
             setInitialContent(parsed);
             setInitialIsJson(true);
           } catch {
-            // not JSON — treat as HTML/string
             setInitialContent(content);
             setInitialIsJson(false);
           }
         } else if (typeof content === "object" && content !== null) {
-          // content already an object (JSON stored as JSONB or similar)
           setInitialContent(content);
           setInitialIsJson(true);
         } else {
-          // empty content
           setInitialContent("");
           setInitialIsJson(false);
         }
 
-        // set basic doc fields
         setDocSlug(String(data.slug));
         setDocId(String(data.id));
         setDocWorkspaceId(data.workspace_id ? String(data.workspace_id) : null);
 
-        // Capture document title so the editor can use it for the default heading
         setDocTitle(
           typeof data.title === "string"
             ? data.title
             : String(data.title ?? ""),
         );
 
-        // If we previously resolved a selected workspace, check it against the loaded document.
-        // Block editing if the selected workspace doesn't match the document's workspace.
         try {
           if (
             selectedWorkspaceId &&
             data.workspace_id &&
             String(selectedWorkspaceId) !== String(data.workspace_id)
           ) {
-            // The currently selected workspace is different from the document's workspace.
             setBlocked(true);
             setError(
               "You cannot edit this document from the selected workspace. Switch to the document's workspace to edit it.",
             );
-            // Clear any loaded content to be safe
             setInitialContent(null);
             return;
           } else {
             setBlocked(false);
           }
         } catch (e) {
-          // if any error occurs while checking localStorage, do not block by default
           setBlocked(false);
         }
       } catch (e: any) {
@@ -262,7 +237,6 @@ export default function DocumentEditorShell() {
     );
   }
 
-  // If blocked due to workspace mismatch, show an informative message and prevent editing
   if (blocked) {
     return (
       <div className="w-full justify-center flex items-center h-full">
@@ -289,8 +263,6 @@ export default function DocumentEditorShell() {
     );
   }
 
-  // Render the editor and pass docId + initial content.
-  // Editor performs a debounced autosave when docId is provided.
   return (
     <>
       <Editor

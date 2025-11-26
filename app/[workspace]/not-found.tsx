@@ -11,12 +11,6 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty";
 
-/**
- * Workspace-level not-found page
- *
- * This is rendered when a workspace segment (e.g. /{workspace}) cannot be resolved.
- * Keep this page lightweight and consistent with other Empty states in the app.
- */
 export default function NotFound() {
   return (
     <Empty className="bg-accent">

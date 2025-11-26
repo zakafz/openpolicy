@@ -85,48 +85,36 @@ export default function DocumentShell() {
   const [renamingInProgress, setRenamingInProgress] = useState(false);
   const [renameError, setRenameError] = useState<string | null>(null);
 
-  // Try to read selected workspace from localStorage (if not already set)
   useEffect(() => {
     if (workspaceId) return;
 
     try {
-      // Use centralized helper for parsing the persisted selected workspace.
       const id = readSelectedWorkspaceId();
       if (id) setWorkspaceId(id);
     } catch {
-      // ignore localStorage errors
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // If the selected workspace changes elsewhere (for example via the workspace
-  // switcher which persists selection to localStorage), redirect to the main
-  // dashboard so the user lands on the workspace homepage rather than staying
-  // on a document that belonged to the previous selection.
   useEffect(() => {
     const handleStorage = (e: StorageEvent) => {
       if (e.key === "selectedWorkspace") {
         try {
           router.push("/dashboard");
         } catch {
-          // ignore router failures
         }
       }
     };
 
     const handleWorkspaceChanged = (e: Event) => {
       try {
-        // Custom event dispatched by WorkspaceProvider — navigate to dashboard
         router.push("/dashboard");
       } catch {
-        // ignore router failures
       }
     };
 
     if (typeof window !== "undefined") {
       window.addEventListener("storage", handleStorage);
-      // listen for programmatic workspace changes dispatched as a CustomEvent
-      // from the WorkspaceProvider
       window.addEventListener(
         "workspace-changed",
         handleWorkspaceChanged as EventListener,
@@ -143,7 +131,6 @@ export default function DocumentShell() {
     };
   }, [router]);
 
-  // Load the document for the given slug (optionally scoped to workspace)
   useEffect(() => {
     if (!slug) return;
 
@@ -156,16 +143,11 @@ export default function DocumentShell() {
       try {
         const supabase = createClient();
 
-        // debug logging removed
-
-        // Use centralized helper to fetch the document by slug (scoped to workspace when provided).
-        // Wrap in try/catch to mirror previous pattern where `fetchErr` was available.
         let data: any = null;
         let fetchErr: any = null;
         try {
           data = await fetchDocumentBySlug(slug, workspaceId, supabase);
         } catch (e: any) {
-          // Preserve previous behavior: downstream logic expects `fetchErr` when queries fail.
           fetchErr = e;
         }
         if (cancelled) return;
@@ -175,11 +157,7 @@ export default function DocumentShell() {
           setError(fetchErr.message ?? "Failed to load document");
           setDoc(null);
         } else if (!data && workspaceId) {
-          // No document found with the workspace filter applied.
-          // Try a fallback: fetch the document by slug without workspace scoping.
           try {
-            // Fallback: try fetching without workspace scoping to check if the document
-            // exists in a different workspace and should therefore be blocked.
             let fallbackData: any = null;
             let fallbackErr: any = null;
             try {
@@ -199,8 +177,6 @@ export default function DocumentShell() {
               setError(fallbackErr.message ?? "Failed to load document");
               setDoc(null);
             } else if (fallbackData) {
-              // The document exists but belongs to a different workspace.
-              // Block access when the selected workspace does not match.
               setDoc(null);
               setBlocked(true);
               setError(
@@ -218,9 +194,6 @@ export default function DocumentShell() {
             setDoc(null);
           }
         } else {
-          // Found document (or no workspace scoping was requested)
-          // If a selected workspace exists and it doesn't match the document's
-          // workspace, block access. Use centralized helper to read the selected workspace.
           try {
             const selectedWorkspaceId = readSelectedWorkspaceId();
             if (
@@ -238,7 +211,6 @@ export default function DocumentShell() {
               setBlocked(false);
             }
           } catch (e) {
-            // If anything goes wrong reading localStorage, allow viewing by default.
             setDoc(data ?? null);
             setBlocked(false);
           }
@@ -279,7 +251,6 @@ export default function DocumentShell() {
     try {
       const supabase = createClient();
 
-      // Check for duplicate names in the same workspace
       const { data: existingDocs, error: checkError } = await supabase
         .from("documents")
         .select("id, title")
@@ -320,7 +291,6 @@ export default function DocumentShell() {
           type: "success",
         });
         setRenameDialogOpen(false);
-        // Dispatch event to update sidebar
         window.dispatchEvent(new CustomEvent("document-updated"));
       } else {
         setRenameError(payload?.error ?? "Failed to rename document");
@@ -362,9 +332,6 @@ export default function DocumentShell() {
     );
   }
 
-  // If we determined the user is not allowed to access this document because
-  // their selected workspace does not match the document's workspace, show a
-  // clear informational page and prevent viewing/editing.
   if (blocked) {
     return (
       <div className="w-full justify-center flex items-center h-full">
@@ -412,9 +379,6 @@ export default function DocumentShell() {
     );
   }
 
-  // Prepare initial content for the shared Editor: try to parse stored JSON,
-  // otherwise pass the raw string. This value will be provided as
-  // `initialContent` to the imported `TiptapEditor` component used below.
   let parsedInitialContent: any = null;
   if (doc && doc.content) {
     if (typeof doc.content === "string") {
@@ -748,7 +712,6 @@ export default function DocumentShell() {
                       if (res.ok && payload?.document) {
                         setDoc(payload.document);
                         setInfo("Document published");
-                        // Dispatch event to update sidebar counts
                         window.dispatchEvent(new CustomEvent("document-updated"));
                       } else {
                         setInfo(payload?.error ?? "Failed to publish document");
@@ -775,7 +738,6 @@ export default function DocumentShell() {
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({
                           id: doc.id,
-                          // restoring archived -> put back into draft (no published)
                           status: "draft",
                           published: false,
                         }),
@@ -784,7 +746,6 @@ export default function DocumentShell() {
                       if (res.ok && payload?.document) {
                         setDoc(payload.document);
                         setInfo("Document restored to draft");
-                        // Dispatch event to update sidebar counts
                         window.dispatchEvent(new CustomEvent("document-updated"));
                       } else {
                         setInfo(payload?.error ?? "Failed to restore document");
@@ -811,7 +772,6 @@ export default function DocumentShell() {
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({
                           id: doc.id,
-                          // unpublish -> leave as draft/unpublished
                           status: "draft",
                           published: false,
                         }),
@@ -820,7 +780,6 @@ export default function DocumentShell() {
                       if (res.ok && payload?.document) {
                         setDoc(payload.document);
                         setInfo("Document unpublished");
-                        // Dispatch event to update sidebar counts
                         window.dispatchEvent(new CustomEvent("document-updated"));
                       } else {
                         setInfo(

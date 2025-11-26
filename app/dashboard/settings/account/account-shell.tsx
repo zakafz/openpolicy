@@ -47,7 +47,6 @@ export default function AccountShell() {
   const [email, setEmail] = React.useState("");
   const [provider, setProvider] = React.useState<string | null>(null);
 
-  // Track initial values so we can disable save when nothing changed
   const [initialValues, setInitialValues] = React.useState({
     fullName: "",
     avatarUrl: "",
@@ -67,7 +66,6 @@ export default function AccountShell() {
   const [fieldError, setFieldError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
-    // Load current user profile from Supabase (browser client)
     const loadProfile = async () => {
       setFetching(true);
       setErrorMsg(null);
@@ -99,13 +97,11 @@ export default function AccountShell() {
           setAvatarUrl(profileData.avatar_url ?? "");
           setEmail(profileData.email ?? "");
           setProvider(profileData.provider ?? null);
-          // Set initial values after loading so we can detect changes
           setInitialValues({
             fullName: profileData.full_name ?? "",
             avatarUrl: profileData.avatar_url ?? "",
           });
         } else {
-          // No profile record yet, seed from auth info if possible
           setProfile(null);
           setFullName("");
           setAvatarUrl("");
@@ -157,7 +153,6 @@ export default function AccountShell() {
 
     if (!validate()) return;
 
-    // If nothing changed, don't call the API
     if (!isDirty) return;
 
     setSaving(true);
@@ -170,8 +165,6 @@ export default function AccountShell() {
       if (authError) throw authError;
       if (!user) throw new Error("Not authenticated");
 
-      // Update the auth user (email and user metadata) so Supabase Auth stays in sync.
-      // We only send the fields if they are present; updateUser expects undefined for unchanged fields.
       const updatePayload: {
         email?: string;
         password?: string;
@@ -188,12 +181,9 @@ export default function AccountShell() {
         await supabase.auth.updateUser(updatePayload);
 
       if (authUpdateErr) {
-        // If the auth update fails (e.g. email requires confirmation or other error),
-        // surface the error so the user can act on it.
         throw authUpdateErr;
       }
 
-      // Use upsert so we create a row in the users table if one doesn't exist yet.
       const upsertPayload: Partial<UsersRow> = {
         auth_id: user.id,
         full_name: fullName || null,
@@ -208,7 +198,6 @@ export default function AccountShell() {
 
       if (upsertErr) throw upsertErr;
 
-      // Refresh local profile
       const { data: refreshed, error: refreshErr } = await supabase
         .from("users")
         .select("*")
@@ -218,13 +207,11 @@ export default function AccountShell() {
       if (refreshErr) throw refreshErr;
       setProfile(refreshed ?? null);
 
-      // Update initial values to reflect saved state and clear dirty flag
       setInitialValues({
         fullName: fullName || "",
         avatarUrl: avatarUrl || "",
       });
 
-      // Dispatch a global event so other UI (e.g. NavUser) can update live
       try {
         window.dispatchEvent(
           new CustomEvent("user:updated", {
@@ -242,7 +229,6 @@ export default function AccountShell() {
         // ignore (safe-guard for non-browser environments)
       }
 
-      // Success toast
       toastManager.add({
         title: "Success!",
         description: "Your changes have been saved.",
@@ -251,7 +237,6 @@ export default function AccountShell() {
     } catch (err: any) {
       setErrorMsg(err?.message ?? String(err));
 
-      // Error toast
       toastManager.add({
         title: "Uh oh! Something went wrong.",
         description: err?.message ?? String(err),
@@ -263,8 +248,6 @@ export default function AccountShell() {
   };
 
   const handleDeleteAccount = async (e?: React.FormEvent) => {
-    // This handler is now intended to be called from an AlertDialog action button.
-    // It no longer prompts with window.confirm; the dialog handles confirmation.
     e?.preventDefault?.();
     setErrorMsg(null);
     setDeleting(true);
@@ -277,7 +260,6 @@ export default function AccountShell() {
       if (authError) throw authError;
       if (!user) throw new Error("Not authenticated");
 
-      // Delete DB profile row
       const { error: deleteErr } = await supabase
         .from("users")
         .delete()
@@ -285,11 +267,9 @@ export default function AccountShell() {
 
       if (deleteErr) throw deleteErr;
 
-      // Sign out the user
       const { error: signOutErr } = await supabase.auth.signOut();
       if (signOutErr) throw signOutErr;
 
-      // Redirect to homepage (or login)
       router.push("/");
     } catch (err: any) {
       setErrorMsg(err?.message ?? String(err));
@@ -388,7 +368,6 @@ export default function AccountShell() {
               </p>
             </div>
 
-            {/* Alert dialog for destructive confirmation */}
             <AlertDialog>
               <AlertDialogTrigger
                 render={<Button variant="destructive-outline" />}
@@ -413,7 +392,6 @@ export default function AccountShell() {
                       <Button
                         variant="destructive"
                         onClick={(e) => {
-                          // call the same delete handler; the dialog close will also be triggered
                           handleDeleteAccount();
                         }}
                         disabled={deleting}

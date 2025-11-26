@@ -52,7 +52,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'OpenPolicy - Modern Policy Documentation Platform',
     description: 'Create, manage, and publish policy documents with ease.',
-    images: ['/twitter-image.png'],
+    images: ['/og-image.png'],
     creator: '@openpolicyhq',
   },
   robots: {
@@ -65,12 +65,7 @@ export const metadata: Metadata = {
       'max-image-preview': 'large',
       'max-snippet': -1,
     },
-  },
-  verification: {
-    // Add your verification codes when ready
-    // google: 'your-google-verification-code',
-    // yandex: 'your-yandex-verification-code',
-  },
+  }
 };
 
 export default function RootLayout({

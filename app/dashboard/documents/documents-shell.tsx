@@ -69,7 +69,6 @@ export default function DocumentsShell(props: {
   const [error, setError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
-  // Reload documents function
   const reloadDocuments = async () => {
     if (!workspaceId) return;
     try {
@@ -84,7 +83,6 @@ export default function DocumentsShell(props: {
     }
   };
 
-  // On mount: if workspaceId wasn't provided in the url, attempt to read from localStorage
   useEffect(() => {
     if (workspaceId) return;
     try {
@@ -92,27 +90,23 @@ export default function DocumentsShell(props: {
       if (!id) return;
       setWorkspaceId(id);
     } catch {
-      // ignore
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Load documents ONLY when workspaceId is present
   useEffect(() => {
-    // Don't run query if workspaceId isn't loaded yet
     if (!workspaceId) {
-      setDocuments(null); // clear out old docs if switching workspace
+      setDocuments(null);
       setLoading(false);
       return;
     }
 
-    let cancelled = false; // in-flight fetch protection
+    let cancelled = false;
     setLoading(true);
     setError(null);
 
     async function load() {
       try {
-        // Use centralized helper for fetching documents to keep logic consistent.
         const docs = await fetchDocumentsForWorkspace(
           workspaceId,
           props.type,
@@ -141,7 +135,6 @@ export default function DocumentsShell(props: {
       ? "All Documents"
       : props.type.charAt(0).toUpperCase() + props.type.slice(1) + " Documents";
 
-  // Href for creating a new document
   const createHref = workspaceId
     ? `/dashboard/documents/new?workspaceId=${workspaceId}`
     : `/dashboard/documents/new`;

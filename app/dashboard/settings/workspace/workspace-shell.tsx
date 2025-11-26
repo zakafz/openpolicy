@@ -60,7 +60,6 @@ export default function WorkspaceShell() {
   const [fieldError, setFieldError] = React.useState<string | null>(null);
   const switchId = React.useId();
 
-  // initial values to detect dirty state
   const [initialValues, setInitialValues] = React.useState({
     name: "",
     logo: "",
@@ -72,8 +71,6 @@ export default function WorkspaceShell() {
   React.useEffect(() => {
     setName(workspace?.name ?? "");
     setLogo(workspace?.logo ?? "");
-    // read support email / disable icon / return url from dedicated columns if present,
-    // otherwise fallback to metadata keys for backward compatibility.
     setSupportEmail(
       workspace?.support_email ?? workspace?.metadata?.support_email ?? "",
     );
@@ -161,7 +158,6 @@ export default function WorkspaceShell() {
       const payload: any = {
         name,
         logo: logo || null,
-        // Persist new workspace settings:
         support_email: supportEmail || null,
         disable_icon: disableIcon,
         return_url: returnUrl || null,
@@ -175,12 +171,10 @@ export default function WorkspaceShell() {
 
       if (updateErr) throw updateErr;
 
-      // reload workspace data
       if (typeof reload === "function") {
         await reload();
       }
 
-      // update initial values
       setInitialValues({ name, logo, supportEmail, disableIcon, returnUrl });
 
       toastManager.add({
@@ -217,7 +211,6 @@ export default function WorkspaceShell() {
 
       if (deleteErr) throw deleteErr;
 
-      // Notify listeners that the workspace selection/listing may have changed (workspace removed)
       try {
         window.dispatchEvent(
           new CustomEvent("workspace-changed", {
@@ -234,7 +227,6 @@ export default function WorkspaceShell() {
         type: "success",
       });
 
-      // navigate away (to dashboard or create)
       router.push("/dashboard");
     } catch (err: any) {
       console.error(err);
@@ -247,7 +239,6 @@ export default function WorkspaceShell() {
     }
   };
 
-  // Upload handler for workspace logo - send file as base64 to server endpoint (/api/workspace/upload-logo)
   const handleLogoFileChange = async (
     e: React.ChangeEvent<HTMLInputElement>,
   ) => {
@@ -258,7 +249,6 @@ export default function WorkspaceShell() {
       const filename = file.name.replace(/\s+/g, "-");
       const contentType = file.type || undefined;
 
-      // helper: read file as data URL then extract base64 portion
       const toBase64 = (f: File) =>
         new Promise<string>((resolve, reject) => {
           const reader = new FileReader();
@@ -275,7 +265,6 @@ export default function WorkspaceShell() {
 
       const fileBase64 = await toBase64(file);
 
-      // Send base64 payload to server endpoint which will validate ownership and upload via service client
       const resp = await fetch("/api/workspace/upload-logo", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -295,7 +284,6 @@ export default function WorkspaceShell() {
       const data = await resp.json().catch(() => ({}));
       const publicURL = data?.publicURL ?? "";
 
-      // update local state & reload workspace data
       setLogo(publicURL ?? "");
       try {
         if (typeof reload === "function") await reload();
@@ -515,7 +503,6 @@ export default function WorkspaceShell() {
                       <Button
                         variant="destructive"
                         onClick={(e) => {
-                          // perform deletion; dialog will close automatically
                           performDelete();
                         }}
                         disabled={deleting}

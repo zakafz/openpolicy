@@ -20,13 +20,12 @@ type Props = {
 };
 
 export default async function Page({ params }: Props) {
-  // Next 16: `params` may be a Promise — unwrap it before accessing properties.
+  // Next 16: `params` may be a Promise, unwrap it before accessing properties.
   const { workspace, slug } = (await params) as unknown as {
     workspace: string;
     slug: string;
   };
 
-  // Create privileged server client
   const svc = createServiceClient();
 
   const { data: ws, error: wsErr } = await svc
@@ -37,7 +36,6 @@ export default async function Page({ params }: Props) {
 
   if (wsErr || !ws) return notFound();
 
-  // Fetch document by slug + workspace_id using centralized helper
   let doc = null;
   try {
     doc = await fetchDocumentBySlug(slug, ws.id, svc);
@@ -45,11 +43,8 @@ export default async function Page({ params }: Props) {
     return notFound();
   }
 
-  // Ensure the public page only serves published documents.
-  // Return 404 for unpublished or archived documents.
   if (!doc || doc.status !== "published" || !doc.published) return notFound();
 
-  // 3) Parse stored content. Stored content is usually a stringified Tiptap JSON.
   let parsedInitialContent: any = null;
   if (doc.content) {
     if (typeof doc.content === "string") {

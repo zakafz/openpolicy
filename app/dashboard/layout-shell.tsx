@@ -94,19 +94,16 @@ export default function LayoutShell({
 
         setProfile(profileData as UsersRow | null);
 
-        // Now check workspaces owned by this user using the centralized helper
         try {
           const ownerWorkspaces = await fetchWorkspacesForOwner(
             user.id,
             supabase,
           );
-          // store workspaces in local state for use elsewhere (e.g. links)
           setOwnerWorkspaces(ownerWorkspaces ?? []);
           const hasWorkspace =
             Array.isArray(ownerWorkspaces) && ownerWorkspaces.length > 0;
 
           if (hasWorkspace) {
-            // store first workspace id for convenience so UI can pre-fill workspaceId when creating documents
             try {
               const firstId = ownerWorkspaces[0]?.id ?? null;
               if (firstId) setFirstWorkspaceId(firstId);
@@ -114,14 +111,11 @@ export default function LayoutShell({
               // ignore unexpected shapes
             }
           } else {
-            // If the current path is already /create, do nothing to avoid redirect loop
             if (pathname !== "/create") {
               router.push("/create");
             }
-            // No need to render the app sidebar etc.
           }
         } catch (wError: any) {
-          // Preserve previous behavior of surfacing DB errors
           throw wError;
         }
       } catch (err: any) {

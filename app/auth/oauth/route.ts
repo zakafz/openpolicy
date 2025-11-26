@@ -67,9 +67,6 @@ export async function GET(request: Request) {
               });
             } catch (err: any) {
               if (err?.statusCode === 404 || err?.status === 404) {
-                // Try to create the Polar customer. If creation fails because a customer
-                // with this email already exists (422), attempt to look up the existing
-                // customer by email and patch its externalId (best-effort).
                 try {
                   await polar.customers.create({
                     email: user.email,
@@ -82,8 +79,6 @@ export async function GET(request: Request) {
                 } catch (createErr: any) {
                   const createStatus =
                     createErr?.statusCode ?? createErr?.status ?? null;
-                  // If email already exists, Polar may return 422. Try to find the
-                  // existing customer and set its externalId so future lookups work.
                   if (createStatus === 422 && user.email) {
                     try {
                       const listRes: any = await polar.customers.list({});
@@ -94,17 +89,11 @@ export async function GET(request: Request) {
                       );
                       if (found?.id) {
                         try {
-                          // Best-effort: set the externalId on the existing customer so
-                          // polar.customers.getExternal will work for this user in future.
-                          // The SDK types may not include `externalId` on update payload in some versions,
-                          // so cast `polar.customers` to `any` to avoid a TypeScript error while still
-                          // making the intended API call.
                           await (polar.customers as any).update({
                             id: found.id,
                             externalId: user.id,
                           });
                         } catch (updateErr) {
-                          // Don't block the login flow — just log the failure.
                           console.warn(
                             "Failed to update existing Polar customer externalId:",
                             updateErr,
@@ -118,7 +107,6 @@ export async function GET(request: Request) {
                       );
                     }
                   } else {
-                    // Other errors creating customer shouldn't block the login flow — log and continue.
                     console.warn(
                       "Failed to create Polar customer in OAuth flow:",
                       createErr,
