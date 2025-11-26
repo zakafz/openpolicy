@@ -41,7 +41,7 @@ export const metadata: Metadata = {
     description: 'Create, manage, and publish policy documents with ease. Collaborate on compliance and legal documentation.',
     images: [
       {
-        url: '/og-image.png',
+        url: '/opengraph-image.png',
         width: 1200,
         height: 630,
         alt: 'OpenPolicy - Policy Documentation Platform',
@@ -52,7 +52,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'OpenPolicy - Modern Policy Documentation Platform',
     description: 'Create, manage, and publish policy documents with ease.',
-    images: ['/og-image.png'],
+    images: ['/opengraph-image.png'],
     creator: '@openpolicyhq',
   },
   robots: {
