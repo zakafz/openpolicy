@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 import { Editor as TiptapEditor } from "@/components/tiptap/editor/editor";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -18,6 +19,67 @@ type Props = {
     slug: string;
   };
 };
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { workspace, slug } = (await params) as unknown as {
+    workspace: string;
+    slug: string;
+  };
+
+  const svc = createServiceClient();
+
+  const { data: ws } = await svc
+    .from("workspaces")
+    .select("id,name,slug")
+    .eq("slug", workspace)
+    .maybeSingle();
+
+  if (!ws) {
+    return {
+      title: "Document Not Found",
+    };
+  }
+
+  let doc = null;
+  try {
+    doc = await fetchDocumentBySlug(slug, ws.id, svc);
+  } catch {
+    return {
+      title: "Document Not Found",
+    };
+  }
+
+  if (!doc || doc.status !== "published" || !doc.published) {
+    return {
+      title: "Document Not Found",
+    };
+  }
+
+  const workspaceName = ws.name || ws.slug || "Document Repository";
+  const documentName = doc.title || doc.slug || "Document";
+  const title = `${documentName} | ${workspaceName}`;
+  const description = `View ${documentName} from ${workspaceName}. Last updated: ${doc.updated_at ? new Date(doc.updated_at).toLocaleDateString() : 'recently'}.`;
+
+  return {
+    title: {
+      absolute: title,
+    },
+    description,
+    openGraph: {
+      title,
+      description,
+      type: "article",
+      publishedTime: doc.published_at || doc.created_at,
+      modifiedTime: doc.updated_at,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+    },
+  };
+}
+
 
 export default async function Page({ params }: Props) {
   // Next 16: `params` may be a Promise, unwrap it before accessing properties.
