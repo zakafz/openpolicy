@@ -82,10 +82,14 @@ export default function Home() {
             Stop messing with PDF uploads and complex CMSs. OpenPolicy lets you write, host, and manage your public legal documents in minutes.
           </p>
           <div className="mx-auto flex gap-2 mt-5">
-            <Button size="lg">Get Started</Button>
-            <Button size="lg" variant={"outline"}>
-              Learn More
-            </Button>
+            <Link href="/auth/login">
+              <Button size="lg">Get Started</Button>
+            </Link> 
+            <Link href="/about">
+              <Button size="lg" variant={"outline"}>
+                Learn More
+              </Button>
+            </Link>
           </div>
         </div>
       </Section>
