@@ -40,6 +40,19 @@ export function LoadingWorkspace() {
 }
 
 export function ErrorWorkspace({ error }: { error: string }) {
+  const handleTryAgain = () => {
+    try {
+      // Clear all localStorage
+      localStorage.clear();
+      // Refresh the page
+      window.location.reload();
+    } catch (e) {
+      console.error('Failed to clear localStorage:', e);
+      // Still try to refresh even if clear fails
+      window.location.reload();
+    }
+  };
+
   return (
     <div className="w-full justify-center flex items-center h-full">
       <Empty>
@@ -50,6 +63,11 @@ export function ErrorWorkspace({ error }: { error: string }) {
           <EmptyTitle>Failed to load workspace</EmptyTitle>
           <EmptyDescription>{error}</EmptyDescription>
         </EmptyHeader>
+        <EmptyContent>
+          <Button onClick={handleTryAgain} variant="default" size="sm">
+            Try Again
+          </Button>
+        </EmptyContent>
       </Empty>
     </div>
   );

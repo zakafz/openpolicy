@@ -4,6 +4,7 @@ import "./globals.css";
 import { ToastProvider } from "@/components/ui/toast";
 import { WorkspaceProvider } from "@/context/workspace";
 import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/next"
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -85,6 +86,7 @@ export default function RootLayout({
         <ToastProvider timeout={2000}>
           <WorkspaceProvider>{children}</WorkspaceProvider>
           <Analytics />
+          <SpeedInsights />
         </ToastProvider>
       </body>
     </html>

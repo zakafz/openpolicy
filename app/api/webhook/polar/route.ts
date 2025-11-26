@@ -50,6 +50,12 @@ async function finalizePendingWorkspace({
   customerEmail?: string | null;
   customerId?: string | null;
 }) {
+  console.log('[FINALIZE] Starting finalizePendingWorkspace with:', {
+    pendingWorkspaceId,
+    customerExternalId,
+    customerEmail,
+    customerId,
+  });
   try {
     // Build candidate queries in priority order
     const candidateQueries = [];
@@ -202,8 +208,16 @@ async function finalizePendingWorkspace({
     }
 
     if (!pending) {
+      console.log('[FINALIZE] No pending workspace found with provided identifiers');
       return;
     }
+
+    console.log('[FINALIZE] Found pending workspace:', {
+      id: pending.id,
+      name: pending.name,
+      owner_id: pending.owner_id,
+      plan: pending.plan,
+    });
 
     // Prevent duplicates (fetch workspaces for owner)
     let duplicateFound = false;
@@ -230,9 +244,12 @@ async function finalizePendingWorkspace({
     }
 
     if (duplicateFound) {
+      console.log('[FINALIZE] Duplicate workspace found, deleting pending workspace');
       await svc.from("pending_workspaces").delete().eq("id", pending.id);
       return;
     }
+
+    console.log('[FINALIZE] No duplicate found, proceeding with workspace creation');
 
     // Pick a logo
     const logos: any = [
@@ -263,6 +280,13 @@ async function finalizePendingWorkspace({
         .single();
       workspace = data;
       createErr = error;
+      if (data) {
+        console.log('[FINALIZE] Workspace created successfully:', {
+          id: data.id,
+          name: data.name,
+          owner_id: data.owner_id,
+        });
+      }
     } catch (e) {
       createErr = e;
     }
@@ -325,7 +349,9 @@ async function finalizePendingWorkspace({
 
     // Delete pending row now that workspace is created
     try {
+      console.log('[FINALIZE] Deleting pending workspace:', pending.id);
       await svc.from("pending_workspaces").delete().eq("id", pending.id);
+      console.log('[FINALIZE] Successfully deleted pending workspace');
     } catch (delErr) {
       console.error(
         "Failed to delete pending_workspaces after workspace creation:",
@@ -344,10 +370,14 @@ async function finalizePendingWorkspace({
 }
 
 // POST webhook handler
+console.log('[POLAR WEBHOOK] Handler initialized, secret present:', !!process.env.POLAR_WEBHOOK_SECRET);
+
 export const POST = Webhooks({
   webhookSecret: process.env.POLAR_WEBHOOK_SECRET!,
 
   onSubscriptionCreated: async (payload: any) => {
+    console.log('[POLAR WEBHOOK] onSubscriptionCreated triggered');
+    console.log('[POLAR WEBHOOK] Full payload:', JSON.stringify(payload, null, 2));
     const svc = createServiceClient();
     const pendingWorkspaceId =
       payload?.data?.metadata?.pendingWorkspaceId ??
@@ -355,6 +385,12 @@ export const POST = Webhooks({
       null;
     const customer =
       payload?.data?.customer ?? payload?.data?.subscription?.customer ?? null;
+    console.log('[POLAR WEBHOOK] Extracted data:', {
+      pendingWorkspaceId,
+      customerExternalId: customer?.externalId ?? null,
+      customerEmail: customer?.email ?? null,
+      customerId: customer?.id ?? null,
+    });
     await finalizePendingWorkspace({
       svc,
       pendingWorkspaceId,
@@ -362,6 +398,7 @@ export const POST = Webhooks({
       customerEmail: customer?.email ?? null,
       customerId: customer?.id ?? null,
     });
+    console.log('[POLAR WEBHOOK] onSubscriptionCreated completed');
   },
 
   onSubscriptionUpdated: async (payload: any) => {
@@ -382,6 +419,8 @@ export const POST = Webhooks({
   },
 
   onSubscriptionActive: async (payload: any) => {
+    console.log('[POLAR WEBHOOK] onSubscriptionActive triggered');
+    console.log('[POLAR WEBHOOK] Full payload:', JSON.stringify(payload, null, 2));
     const svc = createServiceClient();
     const pendingWorkspaceId =
       payload?.data?.metadata?.pendingWorkspaceId ??
@@ -389,6 +428,12 @@ export const POST = Webhooks({
       null;
     const customer =
       payload?.data?.customer ?? payload?.data?.subscription?.customer ?? null;
+    console.log('[POLAR WEBHOOK] Extracted data:', {
+      pendingWorkspaceId,
+      customerExternalId: customer?.externalId ?? null,
+      customerEmail: customer?.email ?? null,
+      customerId: customer?.id ?? null,
+    });
     await finalizePendingWorkspace({
       svc,
       pendingWorkspaceId,
@@ -396,9 +441,12 @@ export const POST = Webhooks({
       customerEmail: customer?.email ?? null,
       customerId: customer?.id ?? null,
     });
+    console.log('[POLAR WEBHOOK] onSubscriptionActive completed');
   },
 
   onOrderCreated: async (payload: any) => {
+    console.log('[POLAR WEBHOOK] onOrderCreated triggered');
+    console.log('[POLAR WEBHOOK] Full payload:', JSON.stringify(payload, null, 2));
     const svc = createServiceClient();
     const pendingWorkspaceId =
       payload?.data?.order?.metadata?.pendingWorkspaceId ??
@@ -406,11 +454,20 @@ export const POST = Webhooks({
       null;
     const customer =
       payload?.data?.order?.customer ?? payload?.data?.customer ?? null;
+    const billingReason = payload?.data?.order?.billing_reason;
+    console.log('[POLAR WEBHOOK] Order details:', {
+      pendingWorkspaceId,
+      billingReason,
+      customerExternalId: customer?.externalId ?? null,
+      customerEmail: customer?.email ?? null,
+      customerId: customer?.id ?? null,
+    });
 
     if (
-      payload?.data?.order?.billing_reason === "subscription_create" ||
-      payload?.data?.order?.billing_reason === "purchase"
+      billingReason === "subscription_create" ||
+      billingReason === "purchase"
     ) {
+      console.log('[POLAR WEBHOOK] Billing reason matched, finalizing workspace');
       await finalizePendingWorkspace({
         svc,
         pendingWorkspaceId,
@@ -418,10 +475,15 @@ export const POST = Webhooks({
         customerEmail: customer?.email ?? null,
         customerId: customer?.id ?? null,
       });
+    } else {
+      console.log('[POLAR WEBHOOK] Billing reason did not match, skipping finalization');
     }
+    console.log('[POLAR WEBHOOK] onOrderCreated completed');
   },
 
   onOrderPaid: async (payload: any) => {
+    console.log('[POLAR WEBHOOK] onOrderPaid triggered');
+    console.log('[POLAR WEBHOOK] Full payload:', JSON.stringify(payload, null, 2));
     const svc = createServiceClient();
     const pendingWorkspaceId =
       payload?.data?.order?.metadata?.pendingWorkspaceId ??
@@ -463,6 +525,13 @@ export const POST = Webhooks({
       metaCustomerId ??
       null;
 
+    console.log('[POLAR WEBHOOK] Extracted data for finalization:', {
+      pendingWorkspaceId,
+      customerExternalId,
+      customerEmail,
+      customerId,
+    });
+
     await finalizePendingWorkspace({
       svc,
       pendingWorkspaceId,
@@ -470,6 +539,7 @@ export const POST = Webhooks({
       customerEmail,
       customerId,
     });
+    console.log('[POLAR WEBHOOK] onOrderPaid completed');
   },
 
   onSubscriptionCanceled: async (payload: any) => {

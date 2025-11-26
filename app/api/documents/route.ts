@@ -13,6 +13,7 @@ import {
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { fetchWorkspaceByIdServer } from "@/lib/workspace";
+import { FREE_PLAN_LIMITS, PRO_PLAN_LIMITS, isFreePlan } from "@/lib/limits";
 
 type Body = {
   title?: string;
@@ -86,6 +87,39 @@ export async function POST(req: Request) {
     }
 
     const svc = createServiceClient();
+
+    // Enforce document limits for ALL plans
+    const isFree = await isFreePlan(workspace.plan);
+    const limit = isFree ? FREE_PLAN_LIMITS.documents : PRO_PLAN_LIMITS.documents;
+
+    // Only check count if limit is finite (optimization)
+    if (Number.isFinite(limit)) {
+      const { count, error: countError } = await svc
+        .from("documents")
+        .select("*", { count: "exact", head: true })
+        .eq("workspace_id", workspace.id)
+        .neq("status", "archived"); // Don't count archived docs
+
+      if (countError) {
+        console.error("Error counting documents:", countError);
+        return NextResponse.json(
+          { error: "Failed to validate plan limits" },
+          { status: 500 },
+        );
+      }
+
+      if ((count ?? 0) >= limit) {
+        const planName = isFree ? "Free" : "Pro";
+        const upgradeMessage = isFree ? " Please upgrade to Pro for unlimited documents." : "";
+        return NextResponse.json(
+          {
+            error: "Plan limit reached",
+            message: `${planName} plan is limited to ${limit} documents.${upgradeMessage}`,
+          },
+          { status: 403 },
+        );
+      }
+    }
 
     // Slug handling: use provided slug or generate from title
     let finalSlug: string | null = null;

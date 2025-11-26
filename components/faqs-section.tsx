@@ -65,27 +65,27 @@ const questions = [
   },
   {
     id: "item-3",
-    title: "What features does OpenPolicy include?",
+    title: "What features do I get with OpenPolicy?",
     content:
-      "OpenPolicy offers a powerful rich text editor, instant publishing with SEO optimization, centralized document management, version control, and a secure hosting platform. Everything you need to create, manage, and publish your policies in one place.",
+      "OpenPolicy offers a powerful rich text editor, instant publishing with SEO optimization, centralized document management, and a secure hosting platform.",
   },
   {
     id: "item-4",
-    title: "Can I customize my documents in OpenPolicy?",
+    title: "Can I customize my documents?",
     content:
       "Yes. OpenPolicy provides a flexible text editor with formatting options, allowing you to create documents that match your brand and requirements. You have full control over the content and structure of your policies.",
   },
   {
     id: "item-5",
-    title: "Is my data secure with OpenPolicy?",
+    title: "Is my data secure?",
     content:
       "Yes. OpenPolicy uses industry-standard security practices to protect your documents. All data is stored securely, and you maintain full control over who can access and edit your policies.",
   },
   {
     id: "item-6",
-    title: "How do I get support while using OpenPolicy?",
+    title: "How do I get support?",
     content:
-      "You can reach out through our contact page, access our documentation, or connect with us on GitHub and LinkedIn. We're committed to helping you get the most out of OpenPolicy.",
+      "You can reach out through our contact page, or connect with us on GitHub and LinkedIn. We're committed to helping you get the most out of OpenPolicy.",
   },
   {
     id: "item-7",

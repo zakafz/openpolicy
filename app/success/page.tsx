@@ -5,6 +5,7 @@ import { Footer } from "@/components/footer";
 import { Header } from "@/components/header";
 import Section from "@/components/section";
 import { Button } from "@/components/ui/button";
+import { SuccessWorkspaceHandler } from "@/components/success-workspace-handler";
 
 export const metadata: Metadata = {
   title: 'Payment Successful',
@@ -38,6 +39,7 @@ export default async function Success({
             <p className="text-sm mb-5 bg p-1 rounded-lg bg-border/60 px-3 text-muted-foreground">
               Checkout ID: {checkoutId}
             </p>
+            <SuccessWorkspaceHandler />
             <Link href="/dashboard">
               <Button>Go to Dashboard</Button>
             </Link>

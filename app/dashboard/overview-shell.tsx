@@ -17,6 +17,9 @@ import { fetchWorkspaceDocumentCounts } from "@/lib/documents";
 // Supabase client for fetching real stats
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
+import { FREE_PLAN_LIMITS, PRO_PLAN_LIMITS } from "@/lib/limits";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 export default function OverviewShell(): React.ReactElement {
   const { selectedWorkspaceId } = useWorkspace();
@@ -28,6 +31,35 @@ export default function OverviewShell(): React.ReactElement {
     archived: 0,
   });
   const [statsLoading, setStatsLoading] = React.useState(true);
+  const [isFreePlanState, setIsFreePlanState] = React.useState(false);
+  const [planLimit, setPlanLimit] = React.useState<number | null>(null);
+
+  React.useEffect(() => {
+    if (!workspace?.plan) {
+      if (workspace) {
+        setIsFreePlanState(true);
+        setPlanLimit(FREE_PLAN_LIMITS.documents);
+      }
+      return;
+    }
+
+    async function checkPlan() {
+      try {
+        const res = await fetch(`/api/plans/check?planId=${workspace?.plan}`);
+        if (res.ok) {
+          const data = await res.json();
+          setIsFreePlanState(data.isFree);
+          // Set the limit based on plan type
+          const limit = data.isFree ? FREE_PLAN_LIMITS.documents : PRO_PLAN_LIMITS.documents;
+          setPlanLimit(Number.isFinite(limit) ? limit : null);
+        }
+      } catch (e) {
+        console.error("Failed to check plan status", e);
+      }
+    }
+
+    checkPlan();
+  }, [workspace?.plan]);
 
   React.useEffect(() => {
     let cancelled = false;
@@ -104,6 +136,53 @@ export default function OverviewShell(): React.ReactElement {
 
   return (
     <>
+      {planLimit !== null && (
+        <div className={cn("mb-8 rounded-xl p-6", stats.all >= planLimit ? "bg-destructive/5" : "bg-accent")}>
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="font-medium">
+                {isFreePlanState ? "Free" : "Pro"} Plan Usage
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                {isFreePlanState
+                  ? "You are on the Free plan. Upgrade to Pro for more documents."
+                  : `Your Pro plan is limited to ${planLimit} documents.`}
+              </p>
+            </div>
+            {isFreePlanState && (
+              <Link href="/portal">
+                <Button size="sm" variant="outline">
+                  Upgrade
+                </Button>
+              </Link>
+            )}
+          </div>
+          <div className="space-y-2">
+            <div className="flex justify-between text-sm">
+              <span>Documents</span>
+              <span>
+                {stats.all} / {planLimit}
+              </span>
+            </div>
+            <div className="h-2 w-full rounded-full bg-secondary">
+              <div
+                className={cn(
+                  "h-full rounded-full transition-all",
+                  stats.all >= planLimit
+                    ? "bg-destructive/90"
+                    : "bg-primary",
+                )}
+                style={{
+                  width: `${Math.min(
+                    100,
+                    (stats.all / planLimit) * 100,
+                  )}%`,
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
       <PageTitle
         title={workspace.name || "Workspace Name"}
         description="Here's an overview of your workspace."

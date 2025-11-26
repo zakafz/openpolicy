@@ -28,6 +28,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import type { UsersRow } from "@/types/supabase";
+import { useWorkspace } from "@/context/workspace";
 import { LogoutButton } from "./logout-button";
 
 /**
@@ -37,6 +38,8 @@ import { LogoutButton } from "./logout-button";
 
 export function NavUser({ user }: { user: UsersRow }) {
   const { isMobile } = useSidebar();
+  const { selectedWorkspaceId } = useWorkspace();
+  const [isFreePlan, setIsFreePlan] = React.useState(false);
 
   // Keep a local copy of the user so we can update the UI in real time.
   const [localUser, setLocalUser] = React.useState<UsersRow | null>(
@@ -47,6 +50,43 @@ export function NavUser({ user }: { user: UsersRow }) {
   React.useEffect(() => {
     setLocalUser(user ?? null);
   }, [user]);
+
+  // Check if current workspace is on free plan
+  React.useEffect(() => {
+    if (!selectedWorkspaceId) {
+      setIsFreePlan(false);
+      return;
+    }
+
+    async function checkPlan() {
+      try {
+        // Fetch workspace to get plan ID
+        const { createClient } = await import("@/lib/supabase/client");
+        const supabase = createClient();
+        const { data: workspace } = await supabase
+          .from("workspaces")
+          .select("plan")
+          .eq("id", selectedWorkspaceId)
+          .single();
+
+        if (!workspace?.plan) {
+          setIsFreePlan(true);
+          return;
+        }
+
+        // Check if plan is free via API
+        const res = await fetch(`/api/plans/check?planId=${workspace.plan}`);
+        if (res.ok) {
+          const data = await res.json();
+          setIsFreePlan(data.isFree);
+        }
+      } catch (e) {
+        console.error("Failed to check plan status", e);
+      }
+    }
+
+    checkPlan();
+  }, [selectedWorkspaceId]);
 
   // Listen for global 'user:updated' events and merge partial updates into localUser
   React.useEffect(() => {
@@ -151,14 +191,19 @@ export function NavUser({ user }: { user: UsersRow }) {
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <Sparkles />
-                Upgrade Workspace
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
+            {isFreePlan && (
+              <><DropdownMenuGroup>
+                <Link href="/portal">
+                  <DropdownMenuItem>
+                    <Sparkles />
+                    Upgrade Workspace
+                  </DropdownMenuItem>
+                </Link>
+              </DropdownMenuGroup>
+                <DropdownMenuSeparator />
+              </>
+            )}
 
-            <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <Link href={"/dashboard/settings/account"}>
                 <DropdownMenuItem>

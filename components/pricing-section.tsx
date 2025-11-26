@@ -11,6 +11,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { createClient } from "@/lib/supabase/client";
+import { fetchWorkspacesForOwner } from "@/lib/workspace";
 import { cn } from "@/lib/utils";
 
 interface PricingSectionProps extends React.ComponentProps<"div"> {
@@ -46,7 +47,7 @@ export function PricingSection({
         )}
       </div>
 
-      <div className="mx-auto grid w-full max-w-4xl mt-5 grid-cols-1 md:grid-cols-3">
+      <div className="mx-auto grid w-full max-w-4xl mt-5 gap-5 grid-cols-1 md:grid-cols-2">
         {plans.map((plan) => (
           <PricingCard frequency={frequency} key={plan.id} plan={plan} />
         ))}
@@ -67,6 +68,36 @@ export function PricingCard({
   ...props
 }: PricingCardProps) {
   const router = useRouter();
+  const [currentPlanId, setCurrentPlanId] = React.useState<string | null>(null);
+  const [hasWorkspace, setHasWorkspace] = React.useState(false);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    async function fetchUserWorkspace() {
+      try {
+        const supabase = createClient();
+        const { data, error } = await supabase.auth.getUser();
+        const user = data?.user;
+
+        if (error || !user) {
+          setLoading(false);
+          return;
+        }
+
+        const workspaces = await fetchWorkspacesForOwner(user.id, supabase);
+        if (workspaces && workspaces.length > 0) {
+          setHasWorkspace(true);
+          setCurrentPlanId(workspaces[0].plan);
+        }
+      } catch (err) {
+        console.error("Error fetching workspace:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchUserWorkspace();
+  }, []);
 
   // Determine if product should be visually highlighted from metadata (optional)
   const highlighted =
@@ -76,10 +107,30 @@ export function PricingCard({
   const buttonText =
     (plan.metadata && (plan.metadata["buttonText"] as string)) ?? "Choose";
 
+  // Determine if this is the current plan
+  const isCurrentPlan = hasWorkspace && currentPlanId === plan.id;
+
+  // Determine button text based on plan relationship
+  let displayButtonText = buttonText;
+  if (isCurrentPlan) {
+    displayButtonText = "Current Plan";
+  } else if (hasWorkspace && currentPlanId) {
+    // Simple heuristic: if the plan price is higher, it's an upgrade
+    // You could make this more sophisticated based on plan metadata
+    const currentPrice = plan.prices?.[0] as any;
+    const isFree = currentPrice?.amountType === "free";
+
+    if (isFree) {
+      displayButtonText = "Downgrade";
+    } else {
+      displayButtonText = "Upgrade";
+    }
+  }
+
   return (
     <div
       className={cn(
-        "relative flex w-full flex-col rounded-none border first:md:border-r-0 last:md:border-l-0",
+        "relative flex w-full flex-col rounded-none border",
         highlighted && "scale-105",
         className,
       )}
@@ -167,6 +218,7 @@ export function PricingCard({
         <Button
           className="w-full"
           variant={highlighted ? "default" : "outline"}
+          disabled={isCurrentPlan || loading}
           onClick={async () => {
             try {
               const supabase = createClient();
@@ -176,13 +228,19 @@ export function PricingCard({
                 router.push(`/auth/login`);
                 return;
               }
-              router.push(`/checkout?products=${plan.id}}`);
+
+              // If user has workspace, go to portal, otherwise go to create
+              if (hasWorkspace) {
+                router.push(`/portal`);
+              } else {
+                router.push(`/create`);
+              }
             } catch (err) {
               router.push(`/auth/login`);
             }
           }}
         >
-          {buttonText}
+          {displayButtonText}
         </Button>
       </div>
     </div>

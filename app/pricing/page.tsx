@@ -30,7 +30,7 @@ export default async function Pricing() {
           <PricingSection
             heading="Plans that Scale with You"
             description="All plans. Start free today, upgrade later."
-            plans={products.result.items}
+            plans={products.result.items} 
           />
         </div>
       </Section>
