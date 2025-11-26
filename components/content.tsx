@@ -7,6 +7,7 @@ export default function ContentSection() {
         <section className="py-16">
             <div className="mx-auto space-y-8 md:space-y-12">
                 <img
+                    className="grayscale"
                     src="/demo-4.png"
                     alt="team image"
                     height=""
