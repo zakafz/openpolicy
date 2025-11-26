@@ -162,7 +162,7 @@ export default function OverviewShell(): React.ReactElement {
                 {stats.all} / {planLimit}
               </span>
             </div>
-            <div className="h-2 w-full rounded-full bg-secondary">
+            <div className="h-2 w-full rounded-full bg-background">
               <div
                 className={cn(
                   "h-full rounded-full transition-all",
