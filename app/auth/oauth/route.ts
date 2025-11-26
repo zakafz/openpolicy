@@ -124,12 +124,39 @@ export async function GET(request: Request) {
       const forwardedHost = request.headers.get("x-forwarded-host");
       const isLocalEnv = process.env.NODE_ENV === "development";
 
+      // Check if user has any workspaces
+      let finalNext = next;
+      if (next === "/dashboard") {
+        try {
+          const {
+            data: { user },
+          } = await sessionClient.auth.getUser();
+
+          if (user) {
+            const svc = createServiceClient();
+            const { data: workspaces } = await svc
+              .from("workspaces")
+              .select("id")
+              .eq("owner_id", user.id)
+              .limit(1);
+
+            // If user has no workspaces, redirect to /create
+            if (!workspaces || workspaces.length === 0) {
+              finalNext = "/create";
+            }
+          }
+        } catch (err) {
+          console.error("Error checking workspaces:", err);
+          // On error, keep default redirect
+        }
+      }
+
       if (isLocalEnv) {
-        return NextResponse.redirect(`${origin}${next}`);
+        return NextResponse.redirect(`${origin}${finalNext}`);
       } else if (forwardedHost) {
-        return NextResponse.redirect(`https://${forwardedHost}${next}`);
+        return NextResponse.redirect(`https://${forwardedHost}${finalNext}`);
       } else {
-        return NextResponse.redirect(`${origin}${next}`);
+        return NextResponse.redirect(`${origin}${finalNext}`);
       }
     }
   }
