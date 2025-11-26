@@ -12,7 +12,7 @@ export default function FeaturesSection() {
                             className="col-span-full overflow-hidden rounded-none shadow-none pl-6 pt-6">
                             <div className="flex items-center justify-center p-2 bg-accent w-fit border"><Layout className="text-primary size-5" /></div>
                             <h3 className="text-foreground mt-5 text-lg font-semibold">Simple & Fast</h3>
-                            <p className="text-muted-foreground mt-3 max-w-xl text-balance">Our dashboard is designed to be simple and fast to use. You can manage all your documents in one place. Our team is always working on new features to make your experience even better.</p>
+                            <p className="text-muted-foreground mt-3 max-w-xl text-balance pr-6 w-full">Our dashboard is designed to be simple and fast to use. You can manage all your documents in one place. Our team is always working on new features to make your experience even better.</p>
                             <div className="mask-b-from-95% -ml-2 -mt-2 mr-0.5 pl-2 pt-2">
                                 <div className="bg-background ring-foreground/5 relative mx-auto mt-8 h-96 overflow-hidden border border-transparent shadow ring-1">
                                     <Image

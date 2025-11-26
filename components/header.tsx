@@ -52,14 +52,14 @@ export function Header() {
               alt="Logo"
               width={32}
               height={32}
-              className="h-7 w-fit"
+              className="h-7 min-h-7 max-h-7 w-full"
             />
             <Image
               src="/logo.svg"
               alt="Logo"
               width={32}
               height={32}
-              className="h-6 w-fit"
+              className="h-6 min-h-6 max-h-6 w-full"
             />
           </div>
         </Link>

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { ArrowUpRightIcon } from "lucide-react";
+import { ArrowUpRightIcon, Text } from "lucide-react";
 import { FeatureCard } from "@/components/feature-card";
 import { Footer } from "@/components/footer";
 import { Header } from "@/components/header";
@@ -15,6 +15,8 @@ import { Safari } from "@/components/ui/safari";
 import { EditorShowcase } from "@/components/tiptap/editor/editor-showcase";
 import FeaturesSection from "@/components/features";
 import Link from "next/link";
+import { Card } from "@/components/ui/card";
+import Image from "next/image";
 
 export const metadata: Metadata = {
   title: 'OpenPolicy - The Better Way to Handle Your Policies',
@@ -66,14 +68,10 @@ export default function Home() {
 
       <Section className="p-4">
         <div className="flex flex-col items-center justify-center max-w-[800px] mx-auto pt-32 pb-32">
-          <Announcement className="mb-3 cursor-pointer">
+          <Announcement className="mb-3 pointer-events-none">
             <AnnouncementTag>Latest update</AnnouncementTag>
             <AnnouncementTitle>
               OpenPolicy 1.0 is now live
-              <ArrowUpRightIcon
-                className="shrink-0 text-muted-foreground"
-                size={16}
-              />
             </AnnouncementTitle>
           </Announcement>
 
@@ -135,6 +133,20 @@ export default function Home() {
           Focus on the content, not the formatting. Our intuitive text editor provides all the tools you need to write comprehensive, easy-to-read document.
         </p>
         <div className="mx-auto w-full flex items-center justify-center">
+          <Card
+                    className="col-span-full md:hidden overflow-hidden rounded-none shadow-none pl-6">
+                    <div className="mask-b-from-95% -ml-2 pl-2 pt-2">
+                        <div className="bg-background relative mx-auto h-96 overflow-hidden border-px border border-border border-t-0 border-b-0 border-r-0">
+                            <Image
+                                src="/demo-3.png"
+                                alt="app screen"
+                                width={2880}
+                                height={1842}
+                                className="object-top-left h-full object-cover"
+                            />
+                        </div>
+                    </div>
+                </Card>
           <EditorShowcase
             initialContent={{
               type: "doc",
