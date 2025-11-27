@@ -43,7 +43,7 @@ import { useWorkspace } from "@/context/workspace";
 import useWorkspaceLoader from "@/hooks/use-workspace-loader";
 import { createClient } from "@/lib/supabase/client";
 import { isFreePlan } from "@/lib/limits";
-import { Check, Copy, Globe, InfoIcon } from "lucide-react";
+import { Check, Copy, Globe, InfoIcon, Sparkle, Sparkles } from "lucide-react";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group-coss";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
@@ -585,15 +585,13 @@ export default function WorkspaceShell() {
           <FramePanel>
             <div className="flex flex-col gap-4">
               {isFree ? (
-                <div className="rounded-lg border border-amber-500/20 bg-amber-500/10 p-4">
-                  <div className="flex items-center gap-2 text-amber-600 font-medium">
-                    <Globe className="h-4 w-4" />
-                    Upgrade to Pro
-                  </div>
-                  <p className="mt-1 text-sm text-amber-600/80">
-                    Custom domains are available on the Pro plan. Upgrade your workspace to connect your own domain.
-                  </p>
-                </div>
+                <Alert variant={'default'}>
+                  <AlertTitle className="flex gap-1 items-center"><Sparkles className="size-4" />Custom domains are available on the Pro plan.</AlertTitle>
+                  <AlertDescription>
+                    Upgrade your workspace to connect your own domain.
+                  </AlertDescription>
+                </Alert>
+
               ) : (
                 <div className="rounded-lg border bg-muted/50 p-4">
                   <h4 className="text-sm font-medium mb-2">DNS Configuration</h4>
