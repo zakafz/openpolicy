@@ -280,6 +280,13 @@ export default function WorkspaceShell() {
 
         setInitialValues({ ...initialValues, customDomain });
 
+        // Dispatch workspace-changed event to update sidebar
+        window.dispatchEvent(
+          new CustomEvent("workspace-changed", {
+            detail: { workspaceId: workspace.id },
+          })
+        );
+
         toastManager.add({
           title: "Success!",
           description: "Custom domain updated. It may take a few minutes to propagate.",
@@ -643,6 +650,7 @@ export default function WorkspaceShell() {
                       )}
                     </Button>
                   </div>
+                  <div className="mt-2 text-muted-foreground text-xs">Note that that the process can take up to 24 hours to take effect.</div>
                 </div>
               )}
 

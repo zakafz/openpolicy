@@ -17,7 +17,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Workspace ID is required" }, { status: 400 });
     }
 
-    // Verify user owns this workspace
     const { data: workspace, error: workspaceError } = await supabase
       .from("workspaces")
       .select("*")
@@ -29,42 +28,78 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Workspace not found or unauthorized" }, { status: 404 });
     }
 
-    // If there's an old domain that's different from the new one, remove it from Vercel
+    if (domain && domain !== oldDomain) {
+      const { data: existingDomain, error: checkError } = await supabase
+        .from("workspaces")
+        .select("id, name")
+        .eq("custom_domain", domain)
+        .neq("id", workspaceId)
+        .maybeSingle();
+
+      if (checkError) {
+        return NextResponse.json(
+          { error: "Failed to check domain availability" },
+          { status: 500 }
+        );
+      }
+
+      if (existingDomain) {
+        return NextResponse.json(
+          { error: `This domain is already in use by another workspace` },
+          { status: 409 }
+        );
+      }
+    }
+
     if (oldDomain && oldDomain !== domain) {
       try {
         await removeDomainFromVercel(oldDomain);
       } catch (e) {
-        // Continue anyway - the old domain might not exist in Vercel
       }
     }
 
-    // Add new domain to Vercel if provided
     if (domain) {
       try {
         const vercelResponse = await addDomainToVercel(domain);
         
         if (vercelResponse.error) {
+          const errorMsg = vercelResponse.error.message || "Unknown Vercel error";
+          
+          if (errorMsg.includes("already exists") || errorMsg.includes("in use")) {
+            return NextResponse.json(
+              { error: "This domain is already registered with Vercel. Please remove it from other projects first." },
+              { status: 409 }
+            );
+          } else if (errorMsg.includes("invalid") || errorMsg.includes("domain")) {
+            return NextResponse.json(
+              { error: "Invalid domain format. Please enter a valid domain (e.g., docs.example.com)" },
+              { status: 400 }
+            );
+          } else if (errorMsg.includes("forbidden") || errorMsg.includes("not authorized")) {
+            return NextResponse.json(
+              { error: "Vercel authorization failed. Please check your Vercel API configuration." },
+              { status: 403 }
+            );
+          }
+          
           return NextResponse.json(
-            { error: `Vercel error: ${vercelResponse.error.message}` },
+            { error: `Vercel error: ${errorMsg}` },
             { status: 400 }
           );
         }
       } catch (e: any) {
         return NextResponse.json(
-          { error: "Failed to add domain to Vercel" },
+          { error: e.message || "Failed to add domain to Vercel" },
           { status: 500 }
         );
       }
     } else if (!domain && oldDomain) {
-      // Removing domain entirely
       try {
         await removeDomainFromVercel(oldDomain);
       } catch (e) {
-        // Silently fail
       }
     }
 
-    // Update database
     const { error: updateError } = await supabase
       .from("workspaces")
       .update({
@@ -74,6 +109,13 @@ export async function POST(req: NextRequest) {
       .eq("id", workspaceId);
 
     if (updateError) {
+      if (updateError.code === "23505") {
+        return NextResponse.json(
+          { error: "This domain is already in use by another workspace" },
+          { status: 409 }
+        );
+      }
+      
       return NextResponse.json(
         { error: "Failed to update workspace" },
         { status: 500 }

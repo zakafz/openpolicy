@@ -10,7 +10,6 @@ import {
   Folder,
   Globe,
   Handshake,
-  RefreshCw,
   Shield
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -127,7 +126,6 @@ export function AppSidebar(props: {
   });
   const [countsLoading, setCountsLoading] = useState(false);
   const [isFree, setIsFree] = useState(true);
-  const [hasChanges, setHasChanges] = useState(false);
 
   // Sync internal state with prop updates (e.g. if parent refetches)
   useEffect(() => {
@@ -206,20 +204,6 @@ export function AppSidebar(props: {
     }
     checkPlan();
   }, [selectedWorkspaceId, workspaces]);
-
-  // Listen for changes that require republishing
-  useEffect(() => {
-    function handleChange() {
-      setHasChanges(true);
-    }
-    window.addEventListener("document-updated", handleChange);
-    window.addEventListener("workspace-changed", handleChange);
-
-    return () => {
-      window.removeEventListener("document-updated", handleChange);
-      window.removeEventListener("workspace-changed", handleChange);
-    };
-  }, []);
 
   // memoized counts map for passing to NavMain
   const navCounts = useMemo(
@@ -311,88 +295,55 @@ export function AppSidebar(props: {
     return `https://${customDomain}`;
   }, [selectedWorkspaceId, workspaces]);
 
-  const handleRepublish = async () => {
-    if (!selectedWorkspaceId) return;
-
-    try {
-      const response = await fetch("/api/workspace/republish", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ workspaceId: selectedWorkspaceId }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to trigger republish");
-      }
-
-      // Reset the change flag
-      setHasChanges(false);
-
-      // Show success message (you might want to add a toast notification here)
-      window.dispatchEvent(new CustomEvent("republish-success"));
-    } catch (error: any) {
-      // Show error message (you might want to add a toast notification here)
-      window.dispatchEvent(new CustomEvent("republish-error", {
-        detail: { message: error.message }
-      }));
-    }
-  };
-
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader>
         <WorkspaceSwitcher workspaces={workspaces} products={props.products} />
       </SidebarHeader>
-      <Tooltip delayDuration={500}>
-        <TooltipTrigger asChild>
-          <div className="w-full px-2 group-data-[collapsible=icon]:hidden flex gap-2">
-            {/* Conditional button rendering based on plan and custom domain */}
-            {!isFree && customDomainHref ? (
-              // Premium with custom domain
-              <>
-                {hasChanges ? (
-                  // Show Republish button when there are changes
-                  <Button
-                    variant="outline"
-                    size={"sm"}
-                    className="flex-1"
-                    onClick={handleRepublish}
-                  >
-                    <RefreshCw />
-                    Republish
+      <div className="w-full px-2 group-data-[collapsible=icon]:hidden flex gap-2">
+        {customDomainHref ? (
+          <>
+            <Tooltip delayDuration={500}>
+              <TooltipTrigger asChild>
+                <a
+                  href={customDomainHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1"
+                >
+                  <Button variant="outline" size={"sm"} className="w-full">
+                    <Globe />
+                    Published Domain
                   </Button>
-                ) : (
-                  // Show Published Domain button when no changes
-                  <a
-                    href={customDomainHref}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex-1"
-                  >
-                    <Button variant="outline" size={"sm"} className="w-full">
-                      <Globe />
-                      Published Domain
-                    </Button>
-                  </a>
-                )}
-                {/* OpenPolicy hosted button */}
-                {previewHref && previewHref !== "#" && (
+                </a>
+              </TooltipTrigger>
+              <TooltipContent className="text-xs" side="bottom">
+                <>View your published domain</>
+              </TooltipContent>
+            </Tooltip>
+            {previewHref && previewHref !== "#" && (
+              <Tooltip delayDuration={500}>
+                <TooltipTrigger asChild>
                   <a
                     href={previewHref}
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    <Button variant="ghost" size={"sm"} className="px-2">
+                    <Button variant="outline" size={"icon-sm"} className="px-2">
                       <Eye />
                     </Button>
                   </a>
-                )}
-              </>
-            ) : (
-              // Free plan or Premium without custom domain - show View Workspace
-              previewHref && previewHref !== "#" ? (
+                </TooltipTrigger>
+                <TooltipContent className="text-xs" side="bottom">
+                  <>View OpenPolicy hosted workspace</>
+                </TooltipContent>
+              </Tooltip>
+            )}
+          </>
+        ) : (
+          <Tooltip delayDuration={500}>
+            <TooltipTrigger asChild>
+              {previewHref && previewHref !== "#" ? (
                 <a
                   href={previewHref}
                   target="_blank"
@@ -405,33 +356,29 @@ export function AppSidebar(props: {
                   </Button>
                 </a>
               ) : (
-                <Button
-                  variant="outline"
-                  size={"sm"}
-                  className="w-full"
-                  disabled
-                >
-                  <EyeClosed />
-                  View Workspace
-                </Button>
-              )
-            )}
-          </div>
-        </TooltipTrigger>
-        <TooltipContent className="text-xs" side="bottom">
-          {!isFree && customDomainHref ? (
-            hasChanges ? (
-              <>Republish your custom domain</>
-            ) : (
-              <>View your published domain</>
-            )
-          ) : previewHref && previewHref !== "#" ? (
-            <>View Your Workspace</>
-          ) : (
-            <>No Workspace Available</>
-          )}
-        </TooltipContent>
-      </Tooltip>
+                <div className="flex-1">
+                  <Button
+                    variant="outline"
+                    size={"sm"}
+                    className="w-full"
+                    disabled
+                  >
+                    <EyeClosed />
+                    View Workspace
+                  </Button>
+                </div>
+              )}
+            </TooltipTrigger>
+            <TooltipContent className="text-xs" side="bottom">
+              {previewHref && previewHref !== "#" ? (
+                <>View Your Workspace</>
+              ) : (
+                <>No Workspace Available</>
+              )}
+            </TooltipContent>
+          </Tooltip>
+        )}
+      </div>
       <SidebarContent>
         <NavMain items={data.navMain} counts={navCounts} />
         <NavDocuments />
