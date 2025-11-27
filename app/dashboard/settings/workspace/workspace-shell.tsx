@@ -108,7 +108,25 @@ export default function WorkspaceShell() {
       customDomain: workspace?.custom_domain ?? "",
     });
 
-    isFreePlan(workspace?.plan ?? null).then(setIsFree);
+    // Check if workspace is on free plan using the same API as overview
+    const checkPlan = async () => {
+      if (!workspace?.plan) {
+        setIsFree(true);
+        return;
+      }
+      try {
+        const res = await fetch(`/api/plans/check?planId=${workspace.plan}`);
+        if (res.ok) {
+          const data = await res.json();
+          setIsFree(data.isFree);
+        } else {
+          setIsFree(true);
+        }
+      } catch (error) {
+        setIsFree(true);
+      }
+    };
+    checkPlan();
 
     setFetching(false);
   }, [workspace]);
