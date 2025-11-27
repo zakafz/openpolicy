@@ -99,7 +99,6 @@ export function PricingCard({
     fetchUserWorkspace();
   }, []);
 
-  // Determine if product should be visually highlighted from metadata (optional)
   const highlighted =
     plan.metadata?.["highlighted"] === true ||
     plan.metadata?.["highlighted"] === "true";
@@ -107,16 +106,12 @@ export function PricingCard({
   const buttonText =
     (plan.metadata && (plan.metadata["buttonText"] as string)) ?? "Choose";
 
-  // Determine if this is the current plan
   const isCurrentPlan = hasWorkspace && currentPlanId === plan.id;
 
-  // Determine button text based on plan relationship
   let displayButtonText = buttonText;
   if (isCurrentPlan) {
     displayButtonText = "Current Plan";
   } else if (hasWorkspace && currentPlanId) {
-    // Simple heuristic: if the plan price is higher, it's an upgrade
-    // You could make this more sophisticated based on plan metadata
     const currentPrice = plan.prices?.[0] as any;
     const isFree = currentPrice?.amountType === "free";
 
@@ -131,7 +126,7 @@ export function PricingCard({
     <div
       className={cn(
         "relative flex w-full flex-col rounded-none border",
-        highlighted && "scale-105",
+        highlighted && "scale-105 bg-accent/60",
         className,
       )}
       key={plan.id}
@@ -140,7 +135,7 @@ export function PricingCard({
       <div
         className={cn(
           "rounded-t-lg border-b p-4",
-          highlighted && "bg-card dark:bg-card/80",
+          highlighted && "bg-accent/80",
         )}
       >
         <div className="absolute top-2 right-2 z-10 flex items-center gap-2">
@@ -212,7 +207,7 @@ export function PricingCard({
       <div
         className={cn(
           "mt-auto w-full rounded-b-lg border-t p-3",
-          highlighted && "bg-card dark:bg-card/80",
+          highlighted && "bg-accent/80",
         )}
       >
         <Button
@@ -229,7 +224,6 @@ export function PricingCard({
                 return;
               }
 
-              // If user has workspace, go to portal, otherwise go to create
               if (hasWorkspace) {
                 router.push(`/portal`);
               } else {
