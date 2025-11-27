@@ -8,7 +8,9 @@ import {
   Eye,
   EyeClosed,
   Folder,
+  Globe,
   Handshake,
+  RefreshCw,
   Shield
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -32,6 +34,7 @@ import { fetchWorkspaceDocumentCounts } from "@/lib/documents";
 import { createClient } from "@/lib/supabase/client";
 import { fetchWorkspaceById, readSelectedWorkspaceId } from "@/lib/workspace";
 import type { WorkspaceRow } from "@/types/supabase";
+import { isFreePlan } from "@/lib/limits";
 import { Button } from "./ui/button";
 import { WorkspaceSwitcher } from "./workspace-switcher";
 
@@ -123,6 +126,8 @@ export function AppSidebar(props: {
     archived: 0,
   });
   const [countsLoading, setCountsLoading] = useState(false);
+  const [isFree, setIsFree] = useState(true);
+  const [hasChanges, setHasChanges] = useState(false);
 
   // Sync internal state with prop updates (e.g. if parent refetches)
   useEffect(() => {
@@ -183,6 +188,39 @@ export function AppSidebar(props: {
     };
   }, [selectedWorkspaceId]);
 
+  // Check if workspace is on free plan
+  useEffect(() => {
+    async function checkPlan() {
+      const ws = workspaces.find((w) => String(w.id) === String(selectedWorkspaceId));
+      if (!ws) {
+        setIsFree(true);
+        return;
+      }
+      try {
+        const result = await isFreePlan(ws.plan ?? null);
+        setIsFree(result);
+      } catch (e) {
+        // On error, default to free to be safe
+        setIsFree(true);
+      }
+    }
+    checkPlan();
+  }, [selectedWorkspaceId, workspaces]);
+
+  // Listen for changes that require republishing
+  useEffect(() => {
+    function handleChange() {
+      setHasChanges(true);
+    }
+    window.addEventListener("document-updated", handleChange);
+    window.addEventListener("workspace-changed", handleChange);
+
+    return () => {
+      window.removeEventListener("document-updated", handleChange);
+      window.removeEventListener("workspace-changed", handleChange);
+    };
+  }, []);
+
   // memoized counts map for passing to NavMain
   const navCounts = useMemo(
     () => ({
@@ -226,6 +264,7 @@ export function AppSidebar(props: {
               logo: (ws as any).logo ?? "",
               plan: (ws as any).plan ?? "Free",
               slug: (ws as any).slug ?? null,
+              custom_domain: (ws as any).custom_domain ?? null,
             } as WorkspaceRow; // cast to match type
             if (found) {
               // update existing entry with any missing slug field
@@ -264,6 +303,43 @@ export function AppSidebar(props: {
     return `http://${workspaceSlug}.localhost:3000/`;
   }, [selectedWorkspaceId, workspaces]);
 
+  const customDomainHref = useMemo(() => {
+    if (!selectedWorkspaceId) return null;
+    const ws = workspaces.find((w) => String(w.id) === String(selectedWorkspaceId));
+    const customDomain = (ws as any)?.custom_domain;
+    if (!customDomain) return null;
+    return `https://${customDomain}`;
+  }, [selectedWorkspaceId, workspaces]);
+
+  const handleRepublish = async () => {
+    if (!selectedWorkspaceId) return;
+
+    try {
+      const response = await fetch("/api/workspace/republish", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ workspaceId: selectedWorkspaceId }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to trigger republish");
+      }
+
+      // Reset the change flag
+      setHasChanges(false);
+
+      // Show success message (you might want to add a toast notification here)
+      window.dispatchEvent(new CustomEvent("republish-success"));
+    } catch (error: any) {
+      // Show error message (you might want to add a toast notification here)
+      window.dispatchEvent(new CustomEvent("republish-error", {
+        detail: { message: error.message }
+      }));
+    }
+  };
+
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader>
@@ -271,35 +347,85 @@ export function AppSidebar(props: {
       </SidebarHeader>
       <Tooltip delayDuration={500}>
         <TooltipTrigger asChild>
-          {/* If previewHref is not available we render a non-link wrapper so the trigger still works */}
-          {previewHref && previewHref !== "#" ? (
-            <a
-              href={previewHref}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-full px-2 group-data-[collapsible=icon]:hidden"
-            >
-              <Button variant="outline" size={"sm"} className="w-full">
-                <Eye />
-                View Workspace
-              </Button>
-            </a>
-          ) : (
-            <div className="w-full px-2">
-              <Button
-                variant="outline"
-                size={"sm"}
-                className="w-full group-data-[collapsible=icon]:hidden"
-                disabled
-              >
-                <EyeClosed />
-                View Workspace
-              </Button>
-            </div>
-          )}
+          <div className="w-full px-2 group-data-[collapsible=icon]:hidden flex gap-2">
+            {/* Conditional button rendering based on plan and custom domain */}
+            {!isFree && customDomainHref ? (
+              // Premium with custom domain
+              <>
+                {hasChanges ? (
+                  // Show Republish button when there are changes
+                  <Button
+                    variant="outline"
+                    size={"sm"}
+                    className="flex-1"
+                    onClick={handleRepublish}
+                  >
+                    <RefreshCw />
+                    Republish
+                  </Button>
+                ) : (
+                  // Show Published Domain button when no changes
+                  <a
+                    href={customDomainHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-1"
+                  >
+                    <Button variant="outline" size={"sm"} className="w-full">
+                      <Globe />
+                      Published Domain
+                    </Button>
+                  </a>
+                )}
+                {/* OpenPolicy hosted button */}
+                {previewHref && previewHref !== "#" && (
+                  <a
+                    href={previewHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <Button variant="ghost" size={"sm"} className="px-2">
+                      <Eye />
+                    </Button>
+                  </a>
+                )}
+              </>
+            ) : (
+              // Free plan or Premium without custom domain - show View Workspace
+              previewHref && previewHref !== "#" ? (
+                <a
+                  href={previewHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1"
+                >
+                  <Button variant="outline" size={"sm"} className="w-full">
+                    <Eye />
+                    View Workspace
+                  </Button>
+                </a>
+              ) : (
+                <Button
+                  variant="outline"
+                  size={"sm"}
+                  className="w-full"
+                  disabled
+                >
+                  <EyeClosed />
+                  View Workspace
+                </Button>
+              )
+            )}
+          </div>
         </TooltipTrigger>
         <TooltipContent className="text-xs" side="bottom">
-          {previewHref && previewHref !== "#" ? (
+          {!isFree && customDomainHref ? (
+            hasChanges ? (
+              <>Republish your custom domain</>
+            ) : (
+              <>View your published domain</>
+            )
+          ) : previewHref && previewHref !== "#" ? (
             <>View Your Workspace</>
           ) : (
             <>No Workspace Available</>

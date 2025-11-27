@@ -16,7 +16,7 @@ export async function isFreePlan(planId: string | null): Promise<boolean> {
     const isFree = product.prices.some(price => price.amountType === 'free');
     return isFree;
   } catch (e) {
-    console.error("Error fetching plan details:", e);
-    return false;
+    // On error, default to free plan to be safe
+    return true;
   }
 }
