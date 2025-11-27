@@ -2,7 +2,7 @@
 
 OpenPolicy is a modern, open-source platform designed to simplify the creation, management, and publishing of legal and policy documents. Whether you're a startup needing a Privacy Policy or an enterprise managing complex compliance documentation, OpenPolicy provides a solution that is both simple and secure.
 
-![OpenPolicy Dashboard](https://openpolicyhq.com/opengraph-image.png)
+![OpenPolicy Dashboard](https://openpolicyhq.com/demo-1.png)
 
 ## Features
 
