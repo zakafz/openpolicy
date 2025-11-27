@@ -124,7 +124,7 @@ export default function Home() {
           <Button className="mb-10">View demo</Button>
         </Link>
         <Safari
-          url="more.openpolicyhq.com"
+          url="yourapp.openpolicyhq.com"
           imageSrc="/demo-2.png"
         />
       </Section>

@@ -17,8 +17,12 @@ export function Footer() {
       href: "/contact",
     },
     {
+      title: "Changelog",
+      href: "https://more.openpolicyhq.com/changelog",
+    },
+    {
       title: "What's OpenPolicy?",
-      href: "https://docs.openpolicyhq.com/whats-openpolicy",
+      href: "https://more.openpolicyhq.com/whats-openpolicy",
     }
 
   ];
@@ -26,11 +30,11 @@ export function Footer() {
   const legal = [
     {
       title: "Privacy Policy",
-      href: "https://docs.openpolicyhq.com/privacy-policy",
+      href: "https://more.openpolicyhq.com/privacy-policy",
     },
     {
       title: "Terms of Service",
-      href: "https://docs.openpolicyhq.com/terms-of-service",
+      href: "https://more.openpolicyhq.com/terms-of-service",
     }
   ];
 
