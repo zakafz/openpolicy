@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
+import { createClient } from "@supabase/supabase-js";
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 import { updateSession } from "@/lib/supabase/proxy";
@@ -65,6 +66,52 @@ export default async function middleware(request: NextRequest) {
           // try last label as root
           potentialRoot = parts.slice(-1).join(".");
           subdomain = parts.slice(0, -1).join(".") || null;
+        }
+
+        // Custom Domain Handling
+        if (!rootDomains.includes(potentialRoot) && !rootDomains.includes(hostname)) {
+          let workspaceSlug: string | null = null;
+          const cacheKey = `custom_domain:${hostname}`;
+
+          // 1. Try Redis Cache
+          if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
+            try {
+              workspaceSlug = await redis.get(cacheKey);
+            } catch (e) {
+              console.warn("Redis error:", e);
+            }
+          }
+
+          // 2. Try Supabase
+          if (!workspaceSlug) {
+            try {
+              const supabase = createClient(
+                process.env.NEXT_PUBLIC_SUPABASE_URL!,
+                process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+              );
+              const { data } = await supabase
+                .from("workspaces")
+                .select("slug")
+                .eq("custom_domain", hostname)
+                .single();
+
+              if (data?.slug) {
+                workspaceSlug = data.slug;
+                // Cache for 1 hour
+                if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
+                   await redis.set(cacheKey, workspaceSlug, { ex: 3600 });
+                }
+              }
+            } catch (e) {
+              console.warn("Supabase lookup error:", e);
+            }
+          }
+
+          if (workspaceSlug) {
+            const url = request.nextUrl.clone();
+            url.pathname = `/${workspaceSlug}${url.pathname}`;
+            return NextResponse.rewrite(url);
+          }
         }
 
         const pathname = request.nextUrl.pathname;

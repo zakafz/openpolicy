@@ -55,9 +55,7 @@ export function CreateWorkspaceForm({ products }: { products: Product[] }) {
     return (freePlan ?? products[0])?.id ?? undefined;
   });
 
-  // Validate slug format and check availability (debounced).
   useEffect(() => {
-    // If empty, reset state
     if (!slug || slug.length === 0) {
       setSlugValid(false);
       setSlugAvailable(null);
@@ -72,7 +70,6 @@ export function CreateWorkspaceForm({ products }: { products: Product[] }) {
     setSlugValid(isValid);
 
     if (!isValid) {
-      // mark unavailable if invalid (prevents showing green)
       setSlugAvailable(false);
       setSlugErrorMessage(
         "Only lowercase letters, numbers and dashes allowed (start with a letter/number).",
@@ -82,7 +79,6 @@ export function CreateWorkspaceForm({ products }: { products: Product[] }) {
       setSlugErrorMessage(null);
     }
 
-    // Debounce availability check
     if (slugCheckRef.current) {
       clearTimeout(slugCheckRef.current);
     }
@@ -151,14 +147,11 @@ export function CreateWorkspaceForm({ products }: { products: Product[] }) {
       const nameTrim = name.trim();
 
       try {
-        // Use centralized helper to fetch the owner's workspaces (keeps logic in one place).
-        // The helper may throw on error, so let the catch below handle logging.
         const ownerWorkspaces = await fetchWorkspacesForOwner(
           owner_id,
           supabase,
         );
 
-        // Check case-insensitively whether a workspace with the same name already exists.
         const existingWsFound = ownerWorkspaces.find(
           (w: any) =>
             typeof w?.name === "string" &&
@@ -171,7 +164,6 @@ export function CreateWorkspaceForm({ products }: { products: Product[] }) {
           return;
         }
 
-        // Still check pending_workspaces as before (pending rows are separate)
         const { data: existingPending } = await supabase
           .from("pending_workspaces")
           .select("id")
@@ -187,7 +179,6 @@ export function CreateWorkspaceForm({ products }: { products: Product[] }) {
           return;
         }
       } catch (dbCheckErr: any) {
-        // If the check fails for any reason, log and continue to avoid blocking the user
         console.error(
           "Error checking for existing workspace names:",
           dbCheckErr,
@@ -217,13 +208,11 @@ export function CreateWorkspaceForm({ products }: { products: Product[] }) {
       } catch (fetchErr) {
         console.error("Error fetching Polar customer info:", fetchErr);
       }
-      // Determine if the selected product is a free plan before creating any pending row
       const selectedProduct = products.find((p) => p.id === planId);
       const price = (selectedProduct?.prices &&
         selectedProduct.prices[0]) as any;
       const isFreePlan = price ? price.amountType === "free" : false;
 
-      // Enforce global workspace limit (max 1 workspace per user)
       try {
         const currentWorkspaces = await fetchWorkspacesForOwner(owner_id, supabase);
         const limit = 1;
@@ -237,16 +226,13 @@ export function CreateWorkspaceForm({ products }: { products: Product[] }) {
         }
       } catch (limitErr) {
         console.error("Error checking workspace limits:", limitErr);
-        // Fail closed
         setError("Failed to validate workspace limits.");
         setLoading(false);
         return;
       }
 
       if (isFreePlan) {
-        // Create free workspace + subscription directly on the server and DO NOT create a pending_workspaces row.
         try {
-          // include slug in the request body so server can persist/validate
           const normalizedSlugForFree = String(slug ?? "")
             .toLowerCase()
             .replace(/-+/g, "-")
@@ -263,7 +249,6 @@ export function CreateWorkspaceForm({ products }: { products: Product[] }) {
           });
 
           if (!resp.ok) {
-            // Try to parse JSON body for a helpful message, otherwise fall back to text.
             let body: any = null;
             try {
               body = await resp.json();
@@ -283,9 +268,6 @@ export function CreateWorkspaceForm({ products }: { products: Product[] }) {
             return;
           }
 
-          // Success: workspace and free subscription were created server-side.
-          // Parse response and persist the new workspace id so the workspace
-          // switcher will select it as the current workspace.
           let respBody: any = null;
           try {
             respBody = await resp.json().catch(() => null);
@@ -320,8 +302,6 @@ export function CreateWorkspaceForm({ products }: { products: Product[] }) {
         }
       }
 
-      // Not a free plan: create pending_workspaces and proceed to checkout as before.
-      // Ensure we send a normalized slug (collapse consecutive dashes and trim edges)
       const normalizedSlugForInsert = String(slug ?? "")
         .toLowerCase()
         .replace(/-+/g, "-")
@@ -340,13 +320,11 @@ export function CreateWorkspaceForm({ products }: { products: Product[] }) {
         })
         .select()
         .single();
-      // If DB returns a uniqueness constraint violation, surface that message to the user
       if (pendingError) {
         const msg =
           pendingError?.message ??
           (pendingError?.details ? String(pendingError.details) : null) ??
           "Failed to create pending workspace.";
-        // If it's a unique violation on slug, give a clearer message
         if (
           String(msg).toLowerCase().includes("unique") &&
           String(msg).toLowerCase().includes("slug")
@@ -371,7 +349,6 @@ export function CreateWorkspaceForm({ products }: { products: Product[] }) {
       if (customerId) {
         url += `&customerId=${encodeURIComponent(customerId)}`;
       }
-      // include pending workspace id for correlation in the webhook handler
       url += `&pendingWorkspaceId=${encodeURIComponent(pending.id)}`;
       if (customerEmail) {
         url += `&customerEmail=${encodeURIComponent(customerEmail)}`;
@@ -386,7 +363,7 @@ export function CreateWorkspaceForm({ products }: { products: Product[] }) {
   return (
     <form
       onSubmit={handleSubmit}
-      className="w-full max-w-md rounded-xl border bg-card"
+      className="w-full max-w-md rounded-xl border bg-accent"
     >
       <div className="flex flex-col items-center justify-center gap-6 rounded-t-xl border-b bg-background/60 py-12">
         <div className="flex gap-1 items-center">
@@ -453,23 +430,18 @@ export function CreateWorkspaceForm({ products }: { products: Product[] }) {
                 )}
               </InputGroupAddon>
               <InputGroupInput
-                className="ring-0!"
+                className="ring-0! rounded-none!"
                 id="slug"
-                placeholder="e.g., acme"
+                placeholder="e.g. acme"
                 value={slug}
                 onChange={(e) => {
                   const raw = String(e.target.value ?? "");
-                  // Convert to lowercase and replace whitespace with dashes immediately,
-                  // allow user to type dashes freely (do not trim on input).
                   const lower = raw.toLowerCase();
                   const withSpacesToDashes = lower.replace(/\s+/g, "-");
-                  // Remove characters except a-z, 0-9 and dash.
                   const cleaned = withSpacesToDashes.replace(/[^a-z0-9-]/g, "");
                   setSlug(cleaned);
                 }}
                 onBlur={() => {
-                  // On blur, collapse consecutive dashes but do NOT trim leading/trailing dashes,
-                  // so ending with a dash is allowed.
                   const normalized = String(slug ?? "")
                     .toLowerCase()
                     .replace(/\s+/g, "-")

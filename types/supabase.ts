@@ -27,4 +27,5 @@ export interface WorkspaceRow {
   support_email: string | null;
   disable_icon: boolean;
   return_url: string | null;
+  custom_domain: string | null;
 }

@@ -42,6 +42,10 @@ import {
 import { useWorkspace } from "@/context/workspace";
 import useWorkspaceLoader from "@/hooks/use-workspace-loader";
 import { createClient } from "@/lib/supabase/client";
+import { isFreePlan } from "@/lib/limits";
+import { Check, Copy, Globe, InfoIcon } from "lucide-react";
+import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group-coss";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export default function WorkspaceShell() {
   const { selectedWorkspaceId } = useWorkspace();
@@ -54,10 +58,18 @@ export default function WorkspaceShell() {
   const [supportEmail, setSupportEmail] = React.useState("");
   const [disableIcon, setDisableIcon] = React.useState(false);
   const [returnUrl, setReturnUrl] = React.useState("");
+  const [customDomain, setCustomDomain] = React.useState("");
   const [fetching, setFetching] = React.useState(true);
-  const [saving, setSaving] = React.useState(false);
+  const [savingMap, setSavingMap] = React.useState<Record<string, boolean>>({});
   const [deleting, setDeleting] = React.useState(false);
   const [fieldError, setFieldError] = React.useState<string | null>(null);
+  const [isFree, setIsFree] = React.useState(true);
+  const [copied, setCopied] = React.useState(false);
+  const [verifying, setVerifying] = React.useState(false);
+  const [verificationResult, setVerificationResult] = React.useState<{
+    valid: boolean;
+    message: string;
+  } | null>(null);
   const switchId = React.useId();
 
   const [initialValues, setInitialValues] = React.useState({
@@ -66,6 +78,7 @@ export default function WorkspaceShell() {
     supportEmail: "",
     disableIcon: false,
     returnUrl: "",
+    customDomain: "",
   });
 
   React.useEffect(() => {
@@ -82,6 +95,7 @@ export default function WorkspaceShell() {
     setReturnUrl(
       workspace?.return_url ?? workspace?.metadata?.return_url ?? "",
     );
+    setCustomDomain(workspace?.custom_domain ?? "");
     setInitialValues({
       name: workspace?.name ?? "",
       logo: workspace?.logo ?? "",
@@ -91,19 +105,85 @@ export default function WorkspaceShell() {
         workspace?.disable_icon ?? workspace?.metadata?.disable_icon ?? false,
       ),
       returnUrl: workspace?.return_url ?? workspace?.metadata?.return_url ?? "",
+      customDomain: workspace?.custom_domain ?? "",
     });
+
+    isFreePlan(workspace?.plan ?? null).then(setIsFree);
+
     setFetching(false);
   }, [workspace]);
 
-  const isDirty = React.useMemo(() => {
+  const handleCopy = () => {
+    navigator.clipboard.writeText("cname.openpolicyhq.com");
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+    toastManager.add({
+      title: "Copied!",
+      description: "CNAME record copied to clipboard.",
+      type: "success",
+    });
+  };
+
+  const handleVerify = async () => {
+    if (!customDomain) return;
+    setVerifying(true);
+    setVerificationResult(null);
+    try {
+      const res = await fetch("/api/workspace/verify-domain", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ domain: customDomain }),
+      });
+      const data = await res.json();
+      setVerificationResult(data);
+      if (data.valid) {
+        toastManager.add({
+          title: "Success!",
+          description: "Domain is correctly configured.",
+          type: "success",
+        });
+      } else {
+        toastManager.add({
+          title: "Verification Failed",
+          description: data.message,
+          type: "error",
+        });
+      }
+    } catch (error) {
+      console.error("Verification error:", error);
+      toastManager.add({
+        title: "Error",
+        description: "Failed to verify domain.",
+        type: "error",
+      });
+    } finally {
+      setVerifying(false);
+    }
+  };
+
+  const getDnsHost = (domain: string) => {
+    if (!domain) return "@";
+    const parts = domain.split(".");
+    if (parts.length <= 2) return "@";
+    return parts.slice(0, -2).join(".");
+  };
+
+  const isGeneralDirty = React.useMemo(() => {
+    return name !== (initialValues.name ?? "");
+  }, [name, initialValues.name]);
+
+  const isBrandingDirty = React.useMemo(() => {
     return (
-      name !== (initialValues.name ?? "") ||
       logo !== (initialValues.logo ?? "") ||
       supportEmail !== (initialValues.supportEmail ?? "") ||
       disableIcon !== (initialValues.disableIcon ?? false) ||
       returnUrl !== (initialValues.returnUrl ?? "")
     );
-  }, [name, logo, supportEmail, disableIcon, returnUrl, initialValues]);
+  }, [logo, supportEmail, disableIcon, returnUrl, initialValues]);
+
+  const isDomainDirty = React.useMemo(() => {
+    return customDomain !== (initialValues.customDomain ?? "");
+  }, [customDomain, initialValues.customDomain]);
 
   if (!selectedWorkspaceId) {
     return <NoSelectedWorkspace />;
@@ -131,12 +211,16 @@ export default function WorkspaceShell() {
     return true;
   };
 
-  const handleSave = async (e?: React.FormEvent) => {
+  const handleSave = async (section: string, e?: React.FormEvent) => {
     e?.preventDefault();
     setFieldError(null);
 
-    if (!validate()) return;
-    if (!isDirty) {
+    let isSectionDirty = false;
+    if (section === "general") isSectionDirty = isGeneralDirty;
+    if (section === "branding") isSectionDirty = isBrandingDirty;
+    if (section === "domain") isSectionDirty = isDomainDirty;
+
+    if (!isSectionDirty) {
       // nothing to do
       toastManager.add({
         title: "No changes",
@@ -146,7 +230,7 @@ export default function WorkspaceShell() {
       return;
     }
 
-    setSaving(true);
+    setSavingMap((prev) => ({ ...prev, [section]: true }));
     try {
       const {
         data: { user },
@@ -155,33 +239,65 @@ export default function WorkspaceShell() {
       if (authError) throw authError;
       if (!user) throw new Error("Not authenticated");
 
-      const payload: any = {
-        name,
-        logo: logo || null,
-        support_email: supportEmail || null,
-        disable_icon: disableIcon,
-        return_url: returnUrl || null,
-        updated_at: new Date().toISOString(),
-      };
+      // Special handling for domain section - use dedicated API
+      if (section === "domain") {
+        const response = await fetch("/api/workspace/domain", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            workspaceId: workspace.id,
+            domain: customDomain || null,
+            oldDomain: initialValues.customDomain || null,
+          }),
+        });
 
-      const { error: updateErr } = await supabase
-        .from("workspaces")
-        .update(payload)
-        .eq("id", workspace.id);
+        const data = await response.json();
 
-      if (updateErr) throw updateErr;
+        if (!response.ok) {
+          throw new Error(data.error || "Failed to update domain");
+        }
 
-      if (typeof reload === "function") {
-        await reload();
+        if (typeof reload === "function") {
+          await reload();
+        }
+
+        setInitialValues({ ...initialValues, customDomain });
+
+        toastManager.add({
+          title: "Success!",
+          description: "Custom domain updated. It may take a few minutes to propagate.",
+          type: "success",
+        });
+      } else {
+        // Standard handling for other sections
+        const payload: any = {
+          name,
+          logo: logo || null,
+          support_email: supportEmail || null,
+          disable_icon: disableIcon,
+          return_url: returnUrl || null,
+          updated_at: new Date().toISOString(),
+        };
+
+        const { error: updateErr } = await supabase
+          .from("workspaces")
+          .update(payload)
+          .eq("id", workspace.id);
+
+        if (updateErr) throw updateErr;
+
+        if (typeof reload === "function") {
+          await reload();
+        }
+
+        setInitialValues({ name, logo, supportEmail, disableIcon, returnUrl, customDomain });
+
+        toastManager.add({
+          title: "Success!",
+          description: "Workspace settings saved.",
+          type: "success",
+        });
       }
-
-      setInitialValues({ name, logo, supportEmail, disableIcon, returnUrl });
-
-      toastManager.add({
-        title: "Success!",
-        description: "Workspace settings saved.",
-        type: "success",
-      });
     } catch (err: any) {
       console.error(err);
       toastManager.add({
@@ -190,7 +306,7 @@ export default function WorkspaceShell() {
         type: "error",
       });
     } finally {
-      setSaving(false);
+      setSavingMap((prev) => ({ ...prev, [section]: false }));
     }
   };
 
@@ -244,7 +360,7 @@ export default function WorkspaceShell() {
   ) => {
     const file = e.target.files?.[0];
     if (!file || !workspace?.id) return;
-    setSaving(true);
+    setSavingMap((prev) => ({ ...prev, branding: true }));
     try {
       const filename = file.name.replace(/\s+/g, "-");
       const contentType = file.type || undefined;
@@ -304,7 +420,7 @@ export default function WorkspaceShell() {
         type: "error",
       });
     } finally {
-      setSaving(false);
+      setSavingMap((prev) => ({ ...prev, branding: false }));
     }
   };
 
@@ -315,7 +431,7 @@ export default function WorkspaceShell() {
         description="Manage your workspace settings."
       />
       {/*Workspace name*/}
-      <form onSubmit={handleSave}>
+      <form onSubmit={(e) => handleSave("general", e)}>
         <Frame>
           <FrameHeader className="flex justify-between flex-row items-center">
             <div>
@@ -326,9 +442,9 @@ export default function WorkspaceShell() {
               type="submit"
               size={"sm"}
               className="w-fit ml-auto"
-              disabled={!isDirty || saving || fetching}
+              disabled={!isGeneralDirty || savingMap.general || fetching}
             >
-              {saving ? "Saving..." : "Save"}
+              {savingMap.general ? "Saving..." : "Save"}
             </Button>
           </FrameHeader>
           <FramePanel>
@@ -339,22 +455,11 @@ export default function WorkspaceShell() {
                 placeholder="Workspace name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                disabled={saving || fetching}
+                disabled={savingMap.general || fetching}
                 required
               />
               {fieldError && <FieldError>{fieldError}</FieldError>}
             </Field>
-            {/*<Field className={"mt-4"}>
-              <FieldLabel>Logo URL</FieldLabel>
-              <Input
-                type="url"
-                placeholder="Logo URL"
-                value={logo}
-                onChange={(e) => setLogo(e.target.value)}
-                disabled={saving || fetching}
-                required
-              />
-            </Field>*/}
             <Field className={"mt-4"}>
               <FieldLabel>Slug</FieldLabel>
               <Input
@@ -378,7 +483,7 @@ export default function WorkspaceShell() {
         </Frame>
       </form>
       {/*Workspace branding*/}
-      <form className="mt-5" onSubmit={handleSave}>
+      <form className="mt-5" onSubmit={(e) => handleSave("branding", e)}>
         <Frame>
           <FrameHeader className="flex justify-between flex-row items-center">
             <div>
@@ -392,9 +497,9 @@ export default function WorkspaceShell() {
               type="submit"
               size={"sm"}
               className="w-fit ml-auto"
-              disabled={!isDirty || saving || fetching}
+              disabled={!isBrandingDirty || savingMap.branding || fetching}
             >
-              {saving ? "Saving..." : "Save"}
+              {savingMap.branding ? "Saving..." : "Save"}
             </Button>
           </FrameHeader>
           <FramePanel>
@@ -409,7 +514,7 @@ export default function WorkspaceShell() {
                   type="file"
                   placeholder="Logo File"
                   accept="image/*"
-                  disabled={saving || fetching}
+                  disabled={savingMap.branding || fetching}
                   onChange={handleLogoFileChange}
                 />
               </div>
@@ -460,8 +565,130 @@ export default function WorkspaceShell() {
           </FramePanel>
         </Frame>
       </form>
+
+      {/*Custom Domain*/}
+      <form className="mt-5" onSubmit={(e) => handleSave("domain", e)}>
+        <Frame>
+          <FrameHeader className="flex justify-between flex-row items-center">
+            <div>
+              <FrameTitle>Custom Domain</FrameTitle>
+              <FrameDescription>
+                Connect your own domain to your workspace.
+              </FrameDescription>
+            </div>
+            <Button
+              type={isFree ? "button" : "submit"}
+              size={"sm"}
+              className="w-fit ml-auto"
+              disabled={(!isDomainDirty && !isFree) || savingMap.domain || fetching}
+              onClick={isFree ? () => router.push("/pricing") : undefined}
+            >
+              {isFree ? "Upgrade" : savingMap.domain ? "Saving..." : "Save"}
+            </Button>
+          </FrameHeader>
+          <FramePanel>
+            <div className="flex flex-col gap-4">
+              {isFree ? (
+                <div className="rounded-lg border border-amber-500/20 bg-amber-500/10 p-4">
+                  <div className="flex items-center gap-2 text-amber-600 font-medium">
+                    <Globe className="h-4 w-4" />
+                    Upgrade to Pro
+                  </div>
+                  <p className="mt-1 text-sm text-amber-600/80">
+                    Custom domains are available on the Pro plan. Upgrade your workspace to connect your own domain.
+                  </p>
+                </div>
+              ) : (
+                <div className="rounded-lg border bg-muted/50 p-4">
+                  <h4 className="text-sm font-medium mb-2">DNS Configuration</h4>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    To use a custom domain, you need to add a CNAME record to your DNS provider.
+                  </p>
+                  <div className="flex flex-col gap-4 rounded-md border bg-background relative p-3">
+                    <div className="flex flex-col gap-1">
+                      <span className="text-xs font-medium text-muted-foreground">Type</span>
+                      <code className="text-sm font-mono">CNAME</code>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <span className="text-xs font-medium text-muted-foreground">Host</span>
+                      <code className="text-sm font-mono">{getDnsHost(customDomain)}</code>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <span className="text-xs font-medium text-muted-foreground">Value</span>
+                      <code className="text-sm font-mono">cname.openpolicyhq.com</code>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-8 w-8 p-0 absolute top-2 right-2"
+                      onClick={handleCopy}
+                    >
+                      {copied ? (
+                        <Check className="h-4 w-4 text-green-500" />
+                      ) : (
+                        <Copy className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              <Field>
+                <FieldLabel>Domain Name</FieldLabel>
+                <InputGroup>
+                  <InputGroupInput
+                    type="text"
+                    placeholder="docs.example.com"
+                    value={customDomain}
+                    onChange={(e) => {
+                      setCustomDomain(e.target.value);
+                      setVerificationResult(null);
+                    }}
+                    disabled={savingMap.domain || fetching || isFree}
+                    className="font-mono"
+                  />
+                  <InputGroupAddon>https://</InputGroupAddon>
+                </InputGroup>
+                <FieldDescription>
+                  Enter the domain you want to use (e.g. docs.example.com).
+                </FieldDescription>
+              </Field>
+
+              <div className="flex justify-end">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleVerify}
+                  disabled={verifying || !customDomain || isFree}
+                >
+                  {verifying ? "Verifying..." : "Verify Connection"}
+                </Button>
+              </div>
+
+              {verificationResult && customDomain && (
+                <Alert variant={verificationResult.valid ? "success" : "error"}>
+                  {verificationResult.valid ? (
+                    <Check className="h-4 w-4" />
+                  ) : (
+                    <InfoIcon className="h-4 w-4" />
+                  )}
+                  <AlertTitle>
+                    {verificationResult.valid ? "Domain is active" : "Verification failed"}
+                  </AlertTitle>
+                  {!verificationResult.valid && (
+                    <AlertDescription>{verificationResult.message}</AlertDescription>
+                  )}
+                </Alert>
+              )}
+            </div>
+          </FramePanel>
+        </Frame>
+      </form>
+
       {/*Workspace delete*/}
-      <div className="mt-5">
+      < div className="mt-5" >
         <Frame className="bg-destructive/10">
           <FrameHeader>
             <FrameTitle className="text-destructive">Danger Zone</FrameTitle>
@@ -516,7 +743,7 @@ export default function WorkspaceShell() {
             </AlertDialog>
           </FramePanel>
         </Frame>
-      </div>
+      </div >
     </>
   );
 }
