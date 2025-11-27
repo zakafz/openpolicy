@@ -2,9 +2,9 @@
 
 OpenPolicy is a modern, open-source platform designed to simplify the creation, management, and publishing of legal and policy documents. Whether you're a startup needing a Privacy Policy or an enterprise managing complex compliance documentation, OpenPolicy provides a solution that is both simple and secure.
 
-![OpenPolicy Dashboard](/opengraph-image.png)
+![OpenPolicy Dashboard](https://openpolicyhq.com/opengraph-image.png)
 
-## 🚀 Features
+## Features
 
 - **Multi-Workspace Support**: Organize documents by team, project, or client with isolated workspaces. (Coming soon)
 - **Rich Text Editor**: Powerful editor for creating and managing documents.
@@ -13,7 +13,7 @@ OpenPolicy is a modern, open-source platform designed to simplify the creation, 
   - **SEO Optimized**: Automatic dynamic metadata generation for better discoverability.
 - **Custom Branding**: Workspaces get unique slugs (e.g., `acme.openpolicy.com` support ready).
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 - **Framework**: [Next.js 15](https://nextjs.org/) (App Router)
 - **Language**: [TypeScript](https://www.typescriptlang.org/)
@@ -24,7 +24,7 @@ OpenPolicy is a modern, open-source platform designed to simplify the creation, 
 - **Editor**: [Tiptap](https://tiptap.dev/)
 - **Monitoring**: [Sentry](https://sentry.io/)
 
-## 🏁 Getting Started
+## Getting Started
 
 ### Prerequisites
 
@@ -89,7 +89,7 @@ openpolicy/
 └── public/             # Static assets
 ```
 
-## 🤝 Contributing
+## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
@@ -99,6 +99,6 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 4. Push to the branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
-## 📄 License
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
