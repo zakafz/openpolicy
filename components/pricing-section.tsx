@@ -126,7 +126,7 @@ export function PricingCard({
     <div
       className={cn(
         "relative flex w-full flex-col rounded-none border",
-        highlighted && "scale-105 bg-accent/60",
+        highlighted && "scale-105 bg-accent/40",
         className,
       )}
       key={plan.id}
