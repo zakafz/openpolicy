@@ -90,32 +90,12 @@ export function CreateWorkspaceForm({ products }: { products: Product[] }) {
     slugCheckRef.current = window.setTimeout(async () => {
       setCheckingSlug(true);
       try {
-        // Check existing workspaces
-        const { data: wsData, error: wsErr } = await supabase
-          .from("workspaces")
-          .select("id")
-          .ilike("slug", slug)
-          .limit(1);
-
-        if (wsErr) {
-          console.error("Error checking workspaces slug:", wsErr);
+        const res = await fetch(`/api/workspaces/check-slug?slug=${encodeURIComponent(slug)}`);
+        if (!res.ok) {
+          throw new Error("Failed to check slug availability");
         }
-        const wsConflict = (wsData && (wsData as any).length > 0) ?? false;
+        const { available } = await res.json();
 
-        // Check pending workspaces
-        const { data: pendingData, error: pendingErr } = await supabase
-          .from("pending_workspaces")
-          .select("id")
-          .ilike("slug", slug)
-          .limit(1);
-
-        if (pendingErr) {
-          console.error("Error checking pending_workspaces slug:", pendingErr);
-        }
-        const pendingConflict =
-          (pendingData && (pendingData as any).length > 0) ?? false;
-
-        const available = !wsConflict && !pendingConflict;
         setSlugAvailable(available);
         if (!available) {
           setSlugErrorMessage("Slug already in use");
@@ -520,9 +500,9 @@ export function CreateWorkspaceForm({ products }: { products: Product[] }) {
               </>
             ) : null}
             {slugErrorMessage ? (
-              <div className="text-sm text-rose-500 mt-1" role="alert">
+              <span className="text-sm text-rose-500 mt-1 block" role="alert">
                 {slugErrorMessage}
-              </div>
+              </span>
             ) : null}
           </FieldDescription>
         </Field>
