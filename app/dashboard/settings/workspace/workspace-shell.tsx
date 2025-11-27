@@ -150,7 +150,6 @@ export default function WorkspaceShell() {
         });
       }
     } catch (error) {
-      console.error("Verification error:", error);
       toastManager.add({
         title: "Error",
         description: "Failed to verify domain.",
@@ -299,7 +298,6 @@ export default function WorkspaceShell() {
         });
       }
     } catch (err: any) {
-      console.error(err);
       toastManager.add({
         title: "Uh oh! Something went wrong.",
         description: err?.message ?? String(err),
@@ -345,7 +343,6 @@ export default function WorkspaceShell() {
 
       router.push("/dashboard");
     } catch (err: any) {
-      console.error(err);
       toastManager.add({
         title: "Uh oh! Could not delete workspace",
         description: err?.message ?? String(err),
@@ -413,7 +410,6 @@ export default function WorkspaceShell() {
         type: "success",
       });
     } catch (err: any) {
-      console.error("Logo upload failed", err);
       toastManager.add({
         title: "Upload failed",
         description: err?.message ?? String(err),
@@ -636,36 +632,55 @@ export default function WorkspaceShell() {
 
               <Field>
                 <FieldLabel>Domain Name</FieldLabel>
-                <InputGroup>
-                  <InputGroupInput
-                    type="text"
-                    placeholder="docs.example.com"
-                    value={customDomain}
-                    onChange={(e) => {
-                      setCustomDomain(e.target.value);
-                      setVerificationResult(null);
-                    }}
-                    disabled={savingMap.domain || fetching || isFree}
-                    className="font-mono"
-                  />
-                  <InputGroupAddon>https://</InputGroupAddon>
-                </InputGroup>
+                <div className="flex gap-2 w-full">
+                  <InputGroup className="flex-1">
+                    <InputGroupInput
+                      type="text"
+                      placeholder="docs.example.com"
+                      value={customDomain}
+                      onChange={(e) => {
+                        setCustomDomain(e.target.value);
+                        setVerificationResult(null);
+                      }}
+                      disabled={savingMap.domain || fetching || isFree}
+                      className="font-mono"
+                    />
+                    <InputGroupAddon>https://</InputGroupAddon>
+                  </InputGroup>
+                  {customDomain && !isFree && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setCustomDomain("");
+                        setVerificationResult(null);
+                      }}
+                      disabled={savingMap.domain || fetching}
+                    >
+                      Clear
+                    </Button>
+                  )}
+                </div>
                 <FieldDescription>
                   Enter the domain you want to use (e.g. docs.example.com).
                 </FieldDescription>
               </Field>
 
-              <div className="flex justify-end">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={handleVerify}
-                  disabled={verifying || !customDomain || isFree}
-                >
-                  {verifying ? "Verifying..." : "Verify Connection"}
-                </Button>
-              </div>
+              {/* Only show Verify button if domain is saved to database */}
+              {initialValues.customDomain && customDomain === initialValues.customDomain && !isFree && (
+                <div className="flex justify-end">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleVerify}
+                    disabled={verifying || !customDomain}
+                  >
+                    {verifying ? "Verifying..." : "Verify Connection"}
+                  </Button>
+                </div>
+              )}
 
               {verificationResult && customDomain && (
                 <Alert variant={verificationResult.valid ? "success" : "error"}>

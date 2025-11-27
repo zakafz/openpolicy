@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
       .from("workspaces")
       .select("*")
       .eq("id", workspaceId)
-      .eq("owner", user.id)
+      .eq("owner_id", user.id)
       .single();
 
     if (workspaceError || !workspace) {
@@ -34,7 +34,6 @@ export async function POST(req: NextRequest) {
       try {
         await removeDomainFromVercel(oldDomain);
       } catch (e) {
-        console.warn("Failed to remove old domain from Vercel:", e);
         // Continue anyway - the old domain might not exist in Vercel
       }
     }
@@ -51,7 +50,6 @@ export async function POST(req: NextRequest) {
           );
         }
       } catch (e: any) {
-        console.error("Failed to add domain to Vercel:", e);
         return NextResponse.json(
           { error: "Failed to add domain to Vercel" },
           { status: 500 }
@@ -62,7 +60,7 @@ export async function POST(req: NextRequest) {
       try {
         await removeDomainFromVercel(oldDomain);
       } catch (e) {
-        console.warn("Failed to remove domain from Vercel:", e);
+        // Silently fail
       }
     }
 
@@ -84,7 +82,6 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
-    console.error("Domain management error:", error);
     return NextResponse.json(
       { error: error.message || "Internal server error" },
       { status: 500 }

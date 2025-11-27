@@ -1,6 +1,18 @@
 export const addDomainToVercel = async (domain: string) => {
-  return await fetch(
-    `https://api.vercel.com/v10/projects/${process.env.VERCEL_PROJECT_ID}/domains?teamId=${process.env.VERCEL_TEAM_ID}`,
+  // Validate required environment variables
+  if (!process.env.VERCEL_PROJECT_ID) {
+    throw new Error("VERCEL_PROJECT_ID environment variable is not set");
+  }
+  if (!process.env.VERCEL_API_TOKEN) {
+    throw new Error("VERCEL_API_TOKEN environment variable is not set");
+  }
+
+  const teamIdParam = process.env.VERCEL_TEAM_ID 
+    ? `?teamId=${process.env.VERCEL_TEAM_ID}` 
+    : '';
+
+  const response = await fetch(
+    `https://api.vercel.com/v10/projects/${process.env.VERCEL_PROJECT_ID}/domains${teamIdParam}`,
     {
       method: "POST",
       headers: {
@@ -9,23 +21,46 @@ export const addDomainToVercel = async (domain: string) => {
       },
       body: JSON.stringify({
         name: domain,
-        // Optional: Redirect to www.domain.com if domain is domain.com
-        // redirect: null, 
       }),
     }
-  ).then((res) => res.json());
+  );
+
+  const data = await response.json();
+  
+  if (!response.ok) {
+    throw new Error(data.error?.message || `Vercel API error: ${response.status}`);
+  }
+
+  return data;
 };
 
+
 export const removeDomainFromVercel = async (domain: string) => {
-  return await fetch(
-    `https://api.vercel.com/v9/projects/${process.env.VERCEL_PROJECT_ID}/domains/${domain}?teamId=${process.env.VERCEL_TEAM_ID}`,
+  if (!process.env.VERCEL_PROJECT_ID || !process.env.VERCEL_API_TOKEN) {
+    return;
+  }
+
+  const teamIdParam = process.env.VERCEL_TEAM_ID 
+    ? `?teamId=${process.env.VERCEL_TEAM_ID}` 
+    : '';
+
+  const response = await fetch(
+    `https://api.vercel.com/v9/projects/${process.env.VERCEL_PROJECT_ID}/domains/${domain}${teamIdParam}`,
     {
       method: "DELETE",
       headers: {
         Authorization: `Bearer ${process.env.VERCEL_API_TOKEN}`,
       },
     }
-  ).then((res) => res.json());
+  );
+
+  const data = await response.json();
+  
+  if (!response.ok) {
+    // Silently fail - domain might not exist
+  }
+
+  return data;
 };
 
 export const getDomainResponse = async (domain: string) => {
