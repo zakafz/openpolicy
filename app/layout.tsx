@@ -22,7 +22,7 @@ export const metadata: Metadata = {
     default: 'OpenPolicy - Modern Policy Documentation Platform',
     template: '%s | OpenPolicy'
   },
-  description: 'Create, manage, and publish policy documents with ease. OpenPolicy is a modern platform for teams to collaborate on compliance, legal, and internal documentation.',
+  description: 'Create, manage, and publish policy documents with ease. OpenPolicy is a modern platform to work on compliance, legal, and internal documentation.',
   keywords: ['policy documentation', 'compliance', 'legal documents', 'team collaboration', 'document management', 'policy management'],
   authors: [{ name: 'OpenPolicy' }],
   creator: 'OpenPolicy',
@@ -38,7 +38,7 @@ export const metadata: Metadata = {
     url: 'https://openpolicyhq.com',
     siteName: 'OpenPolicy',
     title: 'OpenPolicy - Modern Policy Documentation Platform',
-    description: 'Create, manage, and publish policy documents with ease. Collaborate on compliance and legal documentation.',
+    description: 'Create, manage, and publish policy documents with ease. Work on compliance and legal documentation.',
   },
   twitter: {
     card: 'summary_large_image',

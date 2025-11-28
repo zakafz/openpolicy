@@ -384,7 +384,7 @@ export function CreateWorkspaceForm({ products }: { products: Product[] }) {
         <div className="flex flex-col items-center space-y-1">
           <h2 className="font-medium text-2xl">Create a workspace</h2>
           <p className="text-muted-foreground text-sm max-w-[80%] text-center">
-            A workspace is a place where you can collaborate with your team.
+            A workspace is a place where you can work on compliance, legal, and internal documentation (etc...).
           </p>
         </div>
       </div>
