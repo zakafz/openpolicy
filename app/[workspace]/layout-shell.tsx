@@ -4,14 +4,14 @@ import {
   Check,
   ChevronsUpDown,
   MessageCircleMore,
-  MessageCircleQuestionMark,
 } from "lucide-react";
+import { MenuToggleIcon } from "@/components/menu-toggle-icon";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Button as ButtonShadcn } from "@/components/ui/button-shadcn";
 import {
   Command,
@@ -27,7 +27,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Separator } from "@/components/ui/separator";
 import {
   Tooltip,
   TooltipContent,
@@ -36,6 +35,8 @@ import {
 import { fetchPublishedDocumentsForWorkspace } from "@/lib/documents";
 import { createClient } from "@/lib/supabase/client";
 import { cn, resolveWorkspaceFromRequest } from "@/lib/utils";
+import { createPortal } from "react-dom";
+import Link from "next/link";
 
 export default function LayoutShell({
   children,
@@ -61,11 +62,12 @@ export default function LayoutShell({
       });
       const slug = res.documentSlug;
       if (slug) return [{ id: `__placeholder__:${slug}`, title: slug, slug }];
-    } catch {}
+    } catch { }
     return [];
   };
   const [clientDocs, setClientDocs] = useState<any[]>(deriveInitialDocs());
   const docCount = Array.isArray(clientDocs) ? clientDocs.length : 0;
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     if (
@@ -95,9 +97,22 @@ export default function LayoutShell({
     }
   }, [workspace?.id, documents]);
 
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [mobileMenuOpen]);
+
   return (
-    <div className="bg-card min-h-screen pt-5">
-      <header className="w-[95%] max-w-4xl mx-auto bg-accent h-12 rounded-2xl flex flex-row justify-between p-1 items-center">
+    <div className="bg-card min-h-screen">
+      <div className="w-screen bg-background h-11 fixed z-40 top-0 left-0" />
+      <div className="h-12" />
+      <header className="w-[95%] z-50 top-5 left-1/2 -translate-x-1/2 fixed max-w-4xl mx-auto bg-accent backdrop-blur-lg supports-backdrop-filter:bg-accent/80 border h-12 rounded-2xl flex flex-row justify-between p-1 items-center">
         <a
           href={workspace?.return_url ? workspace.return_url : "/"}
           className="flex items-center"
@@ -112,24 +127,57 @@ export default function LayoutShell({
             <div className="tracking-tight text-lg font-medium">{wsName}</div>
           </div>
         </a>
-        <div className="flex flex-row gap-1 items-center">
-          <Tooltip delayDuration={500}>
-            <TooltipTrigger asChild>
-              <a href={`/`}>
-                <Button
-                  onClick={() => router.push("/")}
-                  variant={"ghost"}
-                  className="text-muted-foreground hover:text-primary"
-                >
-                  Home
-                </Button>
+        <div className="md:hidden">
+          <Button
+            aria-controls="mobile-menu"
+            aria-expanded={mobileMenuOpen}
+            aria-label="Toggle menu"
+            variant="ghost"
+            className="size-10 rounded-xl"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          >
+            <MenuToggleIcon className="size-5" duration={300} open={mobileMenuOpen} />
+          </Button>
+        </div>
+        <MobileMenu
+          className="flex flex-col justify-between gap-2"
+          open={mobileMenuOpen}
+        >
+          <div className="grid gap-y-2 overflow-y-auto max-h-[calc(100vh-8rem)]">
+            <a
+              className={buttonVariants({
+                variant: "ghost",
+                className: "justify-start",
+              })}
+              href="/"
+            >
+              Home
+            </a>
+            <div className="text-muted-foreground text-xs font-medium ml-3">Documents</div>
+            {clientDocs.map((doc) => (
+              <a
+                className={buttonVariants({
+                  variant: "ghost",
+                  className: "justify-start",
+                })}
+                href={`/${doc.slug}`}
+                key={doc.slug}
+              >
+                {doc.title ?? doc.slug}
               </a>
-            </TooltipTrigger>
-            <TooltipContent className="text-xs font-mono rounded p-1 px-2">
-              See all documents
-            </TooltipContent>
-          </Tooltip>
-
+            ))}
+          </div>
+        </MobileMenu>
+        <div className="flex-row gap-1 items-center hidden md:flex">
+          <a href={`/`}>
+            <Button
+              onClick={() => router.push("/")}
+              variant={"ghost"}
+              className="text-muted-foreground hover:text-primary"
+            >
+              Home
+            </Button>
+          </a>
           <DocumentSelect workspace={workspace} documents={clientDocs} />
           {workspace?.support_email ? (
             <Tooltip delayDuration={500}>
@@ -363,5 +411,38 @@ function DocumentSelect({
         </Command>
       </PopoverContent>
     </Popover>
+  );
+}
+
+type MobileMenuProps = React.ComponentProps<"div"> & {
+  open: boolean;
+};
+
+function MobileMenu({ open, children, className, ...props }: MobileMenuProps) {
+  if (!open || typeof window === "undefined") {
+    return null;
+  }
+
+  return createPortal(
+    <div
+      className={cn(
+        "bg-background backdrop-blur-lg supports-[backdrop-filter]:bg-background/50",
+        "fixed top-18 w-[95%] max-w-4xl mb-5 mx-auto right-0 bottom-0 left-0 z-40 flex flex-col overflow-hidden border rounded-xl md:hidden",
+      )}
+      id="mobile-menu"
+    >
+      <div
+        className={cn(
+          "data-[slot=open]:zoom-in-97 ease-out data-[slot=open]:animate-in",
+          "size-full p-4",
+          className,
+        )}
+        data-slot={open ? "open" : "closed"}
+        {...props}
+      >
+        {children}
+      </div>
+    </div>,
+    document.body,
   );
 }

@@ -122,7 +122,7 @@ export default async function Page({ params }: Props) {
 
   return (
     <>
-      <Frame className="w-full">
+      <Frame className="w-full border">
         <FrameHeader className="flex flex-row max-md:flex-col md:items-center justify-between">
           <FrameTitle className="text-md font-mono">{doc.title}</FrameTitle>
           <FrameDescription>
@@ -131,7 +131,7 @@ export default async function Page({ params }: Props) {
             </Badge>
           </FrameDescription>
         </FrameHeader>
-        <FramePanel className="py-20!">
+        <FramePanel className="py-5 md:py-20!">
           <TiptapEditor
             docId={doc.id}
             initialContent={parsedInitialContent}

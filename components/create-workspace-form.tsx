@@ -25,8 +25,7 @@ import {
 } from "@/components/ui/tooltip";
 import { createClient } from "@/lib/supabase/client";
 import { fetchWorkspacesForOwner } from "@/lib/workspace";
-import { ButtonGroup, ButtonGroupText } from "./ui/button-group";
-import { InputGroup, InputGroupAddon, InputGroupInput } from "./ui/input-group";
+import { InputGroup, InputGroupAddon, InputGroupInput } from "./ui/input-group-coss";
 import {
   Select,
   SelectItem,
@@ -407,75 +406,58 @@ export function CreateWorkspaceForm({ products }: { products: Product[] }) {
 
         <Field className="gap-2">
           <FieldLabel htmlFor="slug">Workspace Slug</FieldLabel>
-          <ButtonGroup>
-            <InputGroup>
-              <InputGroupAddon align="inline-start">
-                {checkingSlug ? (
-                  <LoaderCircleIcon className="animate-spin" />
-                ) : slugValid && slugAvailable ? (
-                  <CircleCheckIcon className="text-green-500" />
-                ) : !slugValid && slug.length > 0 ? (
-                  <CircleAlertIcon className="text-rose-500" />
-                ) : slugValid && slugAvailable === false ? (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span className="inline-flex">
-                        <CircleAlertIcon className="text-rose-500" />
-                      </span>
-                    </TooltipTrigger>
-                    <TooltipContent>Slug already in use</TooltipContent>
-                  </Tooltip>
-                ) : (
-                  <CircleCheckIcon className="text-muted-foreground" />
-                )}
-              </InputGroupAddon>
-              <InputGroupInput
-                className="ring-0! rounded-none!"
-                id="slug"
-                placeholder="e.g. acme"
-                value={slug}
-                onChange={(e) => {
-                  const raw = String(e.target.value ?? "");
-                  const lower = raw.toLowerCase();
-                  const withSpacesToDashes = lower.replace(/\s+/g, "-");
-                  const cleaned = withSpacesToDashes.replace(/[^a-z0-9-]/g, "");
-                  setSlug(cleaned);
-                }}
-                onBlur={() => {
-                  const normalized = String(slug ?? "")
-                    .toLowerCase()
-                    .replace(/\s+/g, "-")
-                    .replace(/[^a-z0-9-]/g, "")
-                    .replace(/-+/g, "-");
-                  if (normalized !== slug) setSlug(normalized);
-                }}
-                aria-invalid={!slugValid && slug.length > 0}
-                aria-describedby="slug-desc"
-              />
-            </InputGroup>
-            <ButtonGroupText asChild>
-              <Label htmlFor="slug">.openpolicyhq.com</Label>
-            </ButtonGroupText>
-          </ButtonGroup>
+          <InputGroup className="flex-1">
+            <InputGroupInput
+              type="text"
+              id="slug"
+              placeholder="e.g. acme"
+              value={slug}
+              onChange={(e) => {
+                const raw = String(e.target.value ?? "");
+                const lower = raw.toLowerCase();
+                const withSpacesToDashes = lower.replace(/\s+/g, "-");
+                const cleaned = withSpacesToDashes.replace(/[^a-z0-9-]/g, "");
+                setSlug(cleaned);
+              }}
+              onBlur={() => {
+                const normalized = String(slug ?? "")
+                  .toLowerCase()
+                  .replace(/\s+/g, "-")
+                  .replace(/[^a-z0-9-]/g, "")
+                  .replace(/-+/g, "-");
+                if (normalized !== slug) setSlug(normalized);
+              }}
+              aria-describedby="slug-desc"
+            />
+            <InputGroupAddon align={'inline-end'}>.openpolicyhq.com</InputGroupAddon>
+            <InputGroupAddon align="inline-start">
+              {checkingSlug ? (
+                <LoaderCircleIcon className="animate-spin size-4" />
+              ) : slugValid && slugAvailable ? (
+                <CircleCheckIcon className="text-green-500 size-4" />
+              ) : !slugValid && slug.length > 0 ? (
+                <CircleAlertIcon className="text-rose-500 size-4" />
+              ) : slugValid && slugAvailable === false ? (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="inline-flex">
+                      <CircleAlertIcon className="text-rose-500 size-4" />
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent>Slug already in use</TooltipContent>
+                </Tooltip>
+              ) : (
+                <CircleCheckIcon className="text-muted-foreground size-4" />
+              )}
+            </InputGroupAddon>
+          </InputGroup>
           <FieldDescription id="slug-desc">
-            This is your workspace's unique slug on OpenPolicy.
-            {slug && slug.length > 0 ? (
-              <>
-                {" "}
-                {!slugValid
-                  ? " Only lowercase letters, numbers and hyphens are allowed."
-                  : slugAvailable === false
-                    ? " That slug is already taken."
-                    : slugAvailable === true
-                      ? " That slug is available."
-                      : ""}
-              </>
-            ) : null}
-            {slugErrorMessage ? (
-              <span className="text-sm text-rose-500 mt-1 block" role="alert">
+             {slugErrorMessage ? (
+              <span className="text-sm mb-1 text-rose-500 block" role="alert">
                 {slugErrorMessage}
               </span>
             ) : null}
+            This is your workspace's unique slug on OpenPolicy.
           </FieldDescription>
         </Field>
 
