@@ -64,7 +64,7 @@ export default function MonitorsShell({ stats }: MonitorsShellProps): React.Reac
 
     const workspaceChartData = [
         { type: "Paid", count: stats.workspaces.paid, fill: "var(--color-info)" },
-        { type: "Free", count: stats.workspaces.free, fill: "var(--color-border)" },
+        { type: "Free", count: stats.workspaces.free, fill: "var(--color-ring)" },
     ];
     const workspaceChartConfig = {
         count: {
