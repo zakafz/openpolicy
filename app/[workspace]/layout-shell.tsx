@@ -167,7 +167,13 @@ export default function LayoutShell({
               </a>
             ))}
           </div>
-          <Button className="mt-auto w-full">Contact Us</Button>
+          {
+            workspace?.support_email && (
+              <Link href={`mailto:${workspace.support_email}`}>
+                <Button className="mt-auto w-full">Contact Us</Button>
+              </Link>
+            )
+          }
         </MobileMenu>
         <div className="flex-row gap-1 items-center hidden md:flex">
           <a href={`/`}>

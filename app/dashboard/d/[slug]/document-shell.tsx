@@ -421,9 +421,9 @@ export default function DocumentShell() {
       ) : null}
       <Frame className="w-full">
         <Collapsible defaultOpen>
-          <FrameHeader className="flex-row md:items-center justify-between px-2 py-2 max-md:flex-col">
-            <div className="flex items-center gap-2 justify-between">
-              <div className="items-center flex gap-2">
+          <FrameHeader className="flex-row lg:items-center justify-between px-2 py-2 max-lg:flex-col">
+            <div className="flex items-center gap-2 justify-between w-full">
+              <div className="items-center flex  gap-2">
                 <CollapsibleTrigger
                   className="data-panel-open:[&_svg]:rotate-180 capitalize"
                   render={<Button variant="ghost" />}
@@ -440,7 +440,7 @@ export default function DocumentShell() {
                         ? "secondary"
                         : "warning"
                   }
-                  className="capitalize max-md:hidden"
+                  className="capitalize max-lg:hidden"
                   size={"lg"}
                 >
                   <span
@@ -454,7 +454,7 @@ export default function DocumentShell() {
                   />
                   {doc.status}
                 </BadgeCoss>
-                <BadgeCoss variant={"outline"} size={"lg"} className="max-md:hidden">
+                <BadgeCoss variant={"outline"} size={"lg"} className="max-lg:hidden">
                   Slug: <span className="font-semibold">{doc.slug ?? "—"}</span>
                 </BadgeCoss>
               </div>
@@ -792,7 +792,7 @@ export default function DocumentShell() {
                 )}
               </div>
             </div>
-            <div className="flex items-center gap-2 mt-2">
+            <div className="flex items-center gap-2 mt-2 lg:hidden">
               <BadgeCoss
                 variant={
                   doc.status === "published"
@@ -839,7 +839,7 @@ export default function DocumentShell() {
             </FramePanel>
           </CollapsiblePanel>
         </Collapsible>
-        <FrameFooter className="flex flex-row justify-between max-md:flex-col">
+        <FrameFooter className="flex flex-row justify-between max-lg:flex-col">
           <div className="text-xs font-mono text-muted-foreground">
             Last updated:{" "}
             <Badge variant={"secondary"}>{timeAgo(doc.updated_at)}</Badge>
