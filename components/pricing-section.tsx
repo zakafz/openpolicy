@@ -186,20 +186,9 @@ export function PricingCard({
           return (
             <div className="flex items-center gap-2" key={index}>
               <CheckCircleIcon className="h-4 w-4 text-foreground" />
-              <TooltipProvider>
-                <Tooltip delayDuration={0}>
-                  <TooltipTrigger asChild>
-                    <p className={cn(tooltip && "cursor-default! border-b")}>
-                      {text}
-                    </p>
-                  </TooltipTrigger>
-                  {tooltip && (
-                    <TooltipContent>
-                      <p>{tooltip}</p>
-                    </TooltipContent>
-                  )}
-                </Tooltip>
-              </TooltipProvider>
+              <p className={cn(tooltip && "cursor-default!")}>
+                {text}
+              </p>
             </div>
           );
         })}
