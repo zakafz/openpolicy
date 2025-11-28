@@ -56,7 +56,10 @@ export const metadata: Metadata = {
       'max-image-preview': 'large',
       'max-snippet': -1,
     },
-  }
+  },
+  other: {
+    'og:logo': 'https://openpolicyhq.com/logo.svg',
+  },
 };
 
 export default function RootLayout({
