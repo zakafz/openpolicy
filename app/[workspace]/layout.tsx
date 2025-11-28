@@ -39,6 +39,10 @@ export async function generateMetadata({ params }: any): Promise<Metadata> {
       title,
       description,
     },
+    robots: {
+      index: false,
+      follow: false,
+    },
   };
 }
 

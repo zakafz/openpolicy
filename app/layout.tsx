@@ -39,20 +39,11 @@ export const metadata: Metadata = {
     siteName: 'OpenPolicy',
     title: 'OpenPolicy - Modern Policy Documentation Platform',
     description: 'Create, manage, and publish policy documents with ease. Collaborate on compliance and legal documentation.',
-    images: [
-      {
-        url: '/opengraph-image.png',
-        width: 1200,
-        height: 630,
-        alt: 'OpenPolicy - Policy Documentation Platform',
-      },
-    ],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'OpenPolicy - Modern Policy Documentation Platform',
     description: 'Create, manage, and publish policy documents with ease.',
-    images: ['/opengraph-image.png'],
     creator: '@openpolicyhq',
   },
   robots: {

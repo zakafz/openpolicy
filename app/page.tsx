@@ -21,11 +21,6 @@ import Image from "next/image";
 export const metadata: Metadata = {
   title: 'OpenPolicy - The Better Way to Handle Your Policies',
   description: 'The better way to handle your policies and documents. Effortlessly host, manage, and update your policies in one secure platform.',
-  openGraph: {
-    title: 'OpenPolicy - The Better Way to Handle Your Policies',
-    description: 'Effortlessly host, manage, and update your policies and documents. All in one secure platform.',
-    url: '/',
-  },
   twitter: {
     title: 'OpenPolicy - Modern Policy Documentation Platform',
     description: 'The better way to handle your policies and documents.',
