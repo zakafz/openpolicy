@@ -31,19 +31,11 @@ import {
   EmptyTitle,
 } from "./ui/empty";
 
-/**
- * RecentDocumentsTable
- * - Loads the top 5 most recently updated documents (ordered by updated_at desc)
- * - Shows icon, title, type label, last edited (relative) and status
- */
 export default function RecentDocumentsTable({
   workspaceId,
 }: {
   workspaceId?: string;
 }) {
-  // Scope the recent documents to the provided workspaceId prop, or fall back
-  // to the currently-selected workspace from context to ensure the recent
-  // lists only show documents belonging to the active workspace.
   const { selectedWorkspaceId } = useWorkspace();
   const effectiveWorkspaceId = workspaceId ?? selectedWorkspaceId;
 
@@ -54,7 +46,6 @@ export default function RecentDocumentsTable({
   useEffect(() => {
     let cancelled = false;
 
-    // If there's no effective workspace to scope to, don't fetch unscoped data.
     if (!effectiveWorkspaceId) {
       setDocs([]);
       setLoading(false);
@@ -68,8 +59,6 @@ export default function RecentDocumentsTable({
       setLoading(true);
       setError(null);
       try {
-        // Use centralized helper to fetch recent documents for the selected workspace.
-        // Request the top 5 most-recent documents; the helper keeps query logic consistent.
         const docs = await fetchDocumentsForWorkspace(
           effectiveWorkspaceId,
           "all",
@@ -158,10 +147,10 @@ export default function RecentDocumentsTable({
                         <span
                           className={`size-1.5 rounded-full ${
                             d.status === "published"
-                              ? "bg-emerald-500"
+                              ? "bg-info"
                               : d.status === "archived"
                                 ? "bg-muted-foreground/60"
-                                : "bg-amber-500"
+                                : "bg-warning"
                           }`}
                           aria-hidden="true"
                         />

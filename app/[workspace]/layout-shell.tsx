@@ -109,7 +109,7 @@ export default function LayoutShell({
   }, [mobileMenuOpen]);
 
   return (
-    <div className="bg-card min-h-screen">
+    <div className="bg-card ">
       <div className="w-screen bg-background h-11 fixed z-40 top-0 left-0" />
       <div className="h-12" />
       <header className="w-[95%] z-50 top-5 left-1/2 -translate-x-1/2 fixed max-w-4xl mx-auto bg-accent backdrop-blur-lg supports-backdrop-filter:bg-accent/80 border h-12 rounded-2xl flex flex-row justify-between p-1 items-center">
@@ -167,6 +167,7 @@ export default function LayoutShell({
               </a>
             ))}
           </div>
+          <Button className="mt-auto w-full">Contact Us</Button>
         </MobileMenu>
         <div className="flex-row gap-1 items-center hidden md:flex">
           <a href={`/`}>
@@ -198,7 +199,7 @@ export default function LayoutShell({
           ) : null}
         </div>
       </header>
-      <div className="w-[95%] max-w-4xl mx-auto mt-10 pb-10 min-h-[calc(100vh-48px-60px)]">
+      <div className="w-[95%] max-w-4xl mx-auto mt-10 pb-10 min-h-[calc(100vh-60px)]">
         {children}
         {docCount > 1 && pathname !== "/" && (
           <div className="flex justify-end mt-5">
