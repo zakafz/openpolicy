@@ -13,16 +13,14 @@ export function EditorShowcase({
     initialIsJson = true
 }: EditorShowcaseProps) {
     return (
-        <>
-            <SidebarProvider className="flex items-center justify-center max-md:hidden">
-                <Editor
-                    className="w-full h-fit! min-h-none! max-h-none!"
-                    documentSlug={null}
-                    initialContent={initialContent}
-                    initialIsJson={initialIsJson}
-                    hideActions={true}
-                />
-            </SidebarProvider>
-        </>
+        <SidebarProvider className="flex items-center justify-center max-md:hidden">
+            <Editor
+                className="w-full h-fit! min-h-none! max-h-none!"
+                documentSlug={null}
+                initialContent={initialContent}
+                initialIsJson={initialIsJson}
+                hideActions={true}
+            />
+        </SidebarProvider>
     );
 }
