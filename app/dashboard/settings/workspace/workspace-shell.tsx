@@ -650,7 +650,7 @@ export default function WorkspaceShell() {
                       )}
                     </Button>
                   </div>
-                  <div className="mt-2 text-muted-foreground text-xs">Note that that the process can take up to 24 hours to take effect.</div>
+                  <div className="mt-2 text-muted-foreground text-xs">Note that the process can take up to 24 hours to take effect.</div>
                 </div>
               )}
 
