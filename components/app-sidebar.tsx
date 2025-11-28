@@ -10,6 +10,7 @@ import {
   Folder,
   Globe,
   Handshake,
+  Monitor,
   Shield
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -111,11 +112,30 @@ export function AppSidebar(props: {
   user: any;
   products: Product[];
   workspaces: WorkspaceRow[];
+  isAdmin?: boolean;
 }) {
   const { selectedWorkspaceId } = useWorkspace();
   const [workspaces, setWorkspaces] = useState<WorkspaceRow[]>(
     props.workspaces ?? [],
   );
+
+  const navMainItems = useMemo(() => {
+    const items = [...data.navMain];
+    if (props.isAdmin) {
+      // Check if Monitors is already there to avoid duplicates if re-rendering (though useMemo handles deps)
+      // Actually, since we clone data.navMain which is static, we can just unshift.
+      // But let's be safe and create a new array.
+      return [
+        {
+          title: "Monitors",
+          url: "/dashboard/monitors",
+          icon: Monitor,
+        },
+        ...items,
+      ];
+    }
+    return items;
+  }, [props.isAdmin]);
 
   // document counts for sidebar (scoped to selected workspace)
   const [docCounts, setDocCounts] = useState({
@@ -380,7 +400,7 @@ export function AppSidebar(props: {
         )}
       </div>
       <SidebarContent>
-        <NavMain items={data.navMain} counts={navCounts} />
+        <NavMain items={navMainItems} counts={navCounts} />
         <NavDocuments />
       </SidebarContent>
       <SidebarFooter>

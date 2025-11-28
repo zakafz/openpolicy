@@ -25,9 +25,11 @@ import type { UsersRow } from "@/types/supabase";
 export default function LayoutShell({
   children,
   products,
+  isAdmin,
 }: {
   children: React.ReactNode;
   products: Product[];
+  isAdmin?: boolean;
 }) {
   const [profile, setProfile] = useState<UsersRow | null>(null);
   const [loading, setLoading] = useState(true);
@@ -138,6 +140,7 @@ export default function LayoutShell({
         user={profile}
         products={products}
         workspaces={ownerWorkspaces ?? []}
+        isAdmin={isAdmin}
       />
       <SidebarInset className="bg-card">
         {!isDocumentEdit && (

@@ -19,5 +19,11 @@ export default async function Layout({ children }: any) {
   if (error || !data?.claims) {
     redirect("/auth/login");
   }
-  return <LayoutShell products={products.result.items}>{children}</LayoutShell>;
+  const isAdmin = process.env.ADMIN_USER_ID === data.claims.sub;
+
+  return (
+    <LayoutShell products={products.result.items} isAdmin={isAdmin}>
+      {children}
+    </LayoutShell>
+  );
 }
