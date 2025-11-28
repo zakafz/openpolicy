@@ -35,7 +35,7 @@ export const metadata: Metadata = {
 export default function Home() {
   const features = [
     {
-      title: "1. Create",
+      title: "Create",
       icon: (
         <div className="w-fit size-7! justify-center flex items-center border bg-border/60">
           1
@@ -44,7 +44,7 @@ export default function Home() {
       description: "Create a new document in seconds.",
     },
     {
-      title: "2. Write",
+      title: "Write",
       icon: (
         <div className="w-fit size-7! justify-center flex items-center border bg-border/60">
           2
@@ -53,7 +53,7 @@ export default function Home() {
       description: "Write your document in a easy to use text editor.",
     },
     {
-      title: "3. Publish",
+      title: "Publish",
       icon: (
         <div className="w-fit size-7! justify-center flex items-center border bg-border/60">
           3
