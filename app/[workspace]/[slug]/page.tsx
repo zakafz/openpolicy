@@ -131,7 +131,7 @@ export default async function Page({ params }: Props) {
             </Badge>
           </FrameDescription>
         </FrameHeader>
-        <FramePanel className="py-5 md:py-20!">
+        <FramePanel className="py-10! md:py-20!">
           <TiptapEditor
             docId={doc.id}
             initialContent={parsedInitialContent}
