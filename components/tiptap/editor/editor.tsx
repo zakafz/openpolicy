@@ -550,7 +550,7 @@ export function Editor({
             <EditorContent
               editor={editor}
               role="presentation"
-              className={cn("py-20!", hideActions ? "simple-editor-content" : "simple-editor-content-edit ")}
+              className={cn("md:py-20! py-5!", hideActions ? "simple-editor-content" : "simple-editor-content-edit ")}
             />
           </FramePanel>
         </Frame>

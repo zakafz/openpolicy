@@ -255,7 +255,7 @@ export default function LayoutShell({
         )}
       </div>
 
-      <div className="w-full border-t py-8 bg-background">
+      <div className="w-full border-t py-8 bg-accent">
         <div className="mx-auto w-[95%] max-w-4xl text-muted-foreground flex gap-1 text-sm">
           Powered by{" "}
           <a

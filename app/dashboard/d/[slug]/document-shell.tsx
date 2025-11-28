@@ -421,16 +421,378 @@ export default function DocumentShell() {
       ) : null}
       <Frame className="w-full">
         <Collapsible defaultOpen>
-          <FrameHeader className="flex-row items-center justify-between px-2 py-2">
-            <div className="items-center flex gap-2">
-              <CollapsibleTrigger
-                className="data-panel-open:[&_svg]:rotate-180 capitalize"
-                render={<Button variant="ghost" />}
-              >
-                <ChevronDownIcon className="size-4" />
-                {doc.title}
-              </CollapsibleTrigger>
+          <FrameHeader className="flex-row md:items-center justify-between px-2 py-2 max-md:flex-col">
+            <div className="flex items-center gap-2 justify-between">
+              <div className="items-center flex gap-2">
+                <CollapsibleTrigger
+                  className="data-panel-open:[&_svg]:rotate-180 capitalize"
+                  render={<Button variant="ghost" />}
+                >
+                  <ChevronDownIcon className="size-4" />
+                  {doc.title}
+                </CollapsibleTrigger>
 
+                <BadgeCoss
+                  variant={
+                    doc.status === "published"
+                      ? "info"
+                      : doc.status === "archived"
+                        ? "secondary"
+                        : "warning"
+                  }
+                  className="capitalize max-md:hidden"
+                  size={"lg"}
+                >
+                  <span
+                    className={`size-1.5 rounded-full ${doc.status === "published"
+                      ? "bg-info"
+                      : doc.status === "archived"
+                        ? "bg-muted-foreground/60"
+                        : "bg-warning"
+                      }`}
+                    aria-hidden="true"
+                  />
+                  {doc.status}
+                </BadgeCoss>
+                <BadgeCoss variant={"outline"} size={"lg"} className="max-md:hidden">
+                  Slug: <span className="font-semibold">{doc.slug ?? "—"}</span>
+                </BadgeCoss>
+              </div>
+              <div className="flex items-center gap-2">
+                <AlertDialog>
+                  <Menu openOnHover>
+                    <MenuTrigger
+                      render={<Button size="icon-sm" variant="ghost" />}
+                    >
+                      <MoreVertical />
+                    </MenuTrigger>
+                    <MenuPopup>
+                      {/*<MenuItem>
+                      <Eye /> Preview
+                    </MenuItem>*/}
+                      {blocked ? (
+                        <MenuItem aria-label="Edit" disabled>
+                          <Edit />
+                          Edit
+                        </MenuItem>
+                      ) : (
+                        <Link href={`/dashboard/edit/${doc.slug}`}>
+                          <MenuItem aria-label="Edit">
+                            <Edit />
+                            Edit
+                          </MenuItem>
+                        </Link>
+                      )}
+                      {doc.status !== "archived" && (
+                        <MenuItem
+                          onClick={() => {
+                            setNewTitle(doc.title);
+                            setRenameError(null);
+                            setRenameDialogOpen(true);
+                          }}
+                        >
+                          <FileEdit />
+                          Rename
+                        </MenuItem>
+                      )}
+                      {doc.status === "published" && workspace?.slug && (
+                        <MenuItem
+                          onClick={() => {
+                            const workspaceSlug = workspace.slug;
+                            let url: string;
+
+                            if (process.env.NODE_ENV === "production") {
+                              url = `https://${workspaceSlug}.openpolicyhq.com/${doc.slug}`;
+                            } else {
+                              url = `http://${workspaceSlug}.localhost:3000/${doc.slug}`;
+                            }
+
+                            window.open(url, "_blank");
+                          }}
+                        >
+                          <ExternalLink />
+                          Open
+                        </MenuItem>
+                      )}
+                      <MenuSeparator />
+                      <AlertDialogTrigger
+                        nativeButton={false}
+                        render={<MenuItem variant="destructive" />}
+                      >
+                        {doc.status === "archived" ? (
+                          <div className="flex gap-2 items-center">
+                            <Trash />
+                            Delete
+                          </div>
+                        ) : (
+                          <div className="flex gap-2 items-center">
+                            <Archive />
+                            Archive
+                          </div>
+                        )}
+                      </AlertDialogTrigger>
+                    </MenuPopup>
+                  </Menu>
+
+                  <AlertDialogPopup>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>
+                        {doc.status === "archived" ? "Delete" : "Archive"} "
+                        {doc.title}"
+                      </AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This will{" "}
+                        {doc.status === "archived" ? "delete" : "archive"} "
+                        {doc.title}"{" "}
+                        {doc.status === "archived"
+                          ? "and delete it permanently from this workspace"
+                          : "and remove it from your drafts"}
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogClose render={<Button variant="ghost" />}>
+                        Cancel
+                      </AlertDialogClose>
+                      {doc.status === "archived" ? (
+                        <AlertDialogClose
+                          render={
+                            <Button
+                              variant="destructive-outline"
+                              onClick={async () => {
+                                setLoading(true);
+                                try {
+                                  const res = await fetch("/api/documents", {
+                                    method: "DELETE",
+                                    headers: {
+                                      "Content-Type": "application/json",
+                                    },
+                                    body: JSON.stringify({ id: doc.id }),
+                                  });
+                                  const payload = await res.json();
+                                  if (res.ok && payload?.ok) {
+                                    // Dispatch event to update sidebar counts
+                                    window.dispatchEvent(new CustomEvent("document-updated"));
+                                    // navigate back to documents list after deletion
+                                    try {
+                                      router.push("/dashboard/documents/all");
+                                    } catch {
+                                      // fallback: clear local doc state
+                                      setDoc(null);
+                                    }
+                                  } else {
+                                    setInfo(
+                                      payload?.error ??
+                                      "Failed to delete document",
+                                    );
+                                  }
+                                } catch (e: any) {
+                                  setInfo(String(e?.message ?? e));
+                                } finally {
+                                  setLoading(false);
+                                }
+                              }}
+                            />
+                          }
+                        >
+                          Delete
+                        </AlertDialogClose>
+                      ) : (
+                        <AlertDialogClose
+                          render={
+                            <Button
+                              variant="destructive-outline"
+                              onClick={async () => {
+                                setLoading(true);
+                                try {
+                                  const res = await fetch("/api/documents", {
+                                    method: "PUT",
+                                    headers: {
+                                      "Content-Type": "application/json",
+                                    },
+                                    body: JSON.stringify({
+                                      id: doc.id,
+                                      status: "archived",
+                                      published: false,
+                                    }),
+                                  });
+                                  const payload = await res.json();
+                                  if (res.ok && payload?.document) {
+                                    setDoc(payload.document);
+                                    setInfo("Document archived");
+                                    // Dispatch event to update sidebar counts
+                                    window.dispatchEvent(new CustomEvent("document-updated"));
+                                  } else {
+                                    setInfo(
+                                      payload?.error ??
+                                      "Failed to archive document",
+                                    );
+                                  }
+                                } catch (e: any) {
+                                  setInfo(String(e?.message ?? e));
+                                } finally {
+                                  setLoading(false);
+                                }
+                              }}
+                            />
+                          }
+                        >
+                          Archive
+                        </AlertDialogClose>
+                      )}
+                    </AlertDialogFooter>
+                  </AlertDialogPopup>
+                </AlertDialog>
+
+                {/* Rename Dialog */}
+                <AlertDialog open={renameDialogOpen} onOpenChange={setRenameDialogOpen}>
+                  <AlertDialogPopup>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Rename Document</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Enter a new name for "{doc.title}". Document names must be unique within the workspace.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <Input
+                      type="text"
+                      value={newTitle}
+                      onChange={(e) => {
+                        setNewTitle(e.target.value);
+                        setRenameError(null);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && !renamingInProgress) {
+                          e.preventDefault();
+                          handleRename();
+                        }
+                      }}
+                      placeholder={doc.title}
+                      autoFocus
+                    />
+                    {renameError && (
+                      <p className="text-sm text-destructive mt-2">{renameError}</p>
+                    )}
+                    <AlertDialogFooter>
+                      <AlertDialogClose render={<Button variant="ghost" />}>
+                        Cancel
+                      </AlertDialogClose>
+                      <Button
+                        onClick={handleRename}
+                        disabled={renamingInProgress || !newTitle.trim()}
+                      >
+                        {renamingInProgress ? "Renaming..." : "Rename"}
+                      </Button>
+                    </AlertDialogFooter>
+                  </AlertDialogPopup>
+                </AlertDialog>
+
+                {doc.status === "draft" ? (
+                  <Button
+                    aria-label="Publish"
+                    className="mr-2"
+                    size={"sm"}
+                    onClick={async () => {
+                      setLoading(true);
+                      try {
+                        const res = await fetch("/api/documents", {
+                          method: "PUT",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({
+                            id: doc.id,
+                            status: "published",
+                            published: true,
+                          }),
+                        });
+                        const payload = await res.json();
+                        if (res.ok && payload?.document) {
+                          setDoc(payload.document);
+                          setInfo("Document published");
+                          window.dispatchEvent(new CustomEvent("document-updated"));
+                        } else {
+                          setInfo(payload?.error ?? "Failed to publish document");
+                        }
+                      } catch (e: any) {
+                        setInfo(String(e?.message ?? e));
+                      } finally {
+                        setLoading(false);
+                      }
+                    }}
+                  >
+                    Publish
+                  </Button>
+                ) : doc.status === "archived" ? (
+                  <Button
+                    aria-label="Restore"
+                    className="mr-2"
+                    size={"sm"}
+                    onClick={async () => {
+                      setLoading(true);
+                      try {
+                        const res = await fetch("/api/documents", {
+                          method: "PUT",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({
+                            id: doc.id,
+                            status: "draft",
+                            published: false,
+                          }),
+                        });
+                        const payload = await res.json();
+                        if (res.ok && payload?.document) {
+                          setDoc(payload.document);
+                          setInfo("Document restored to draft");
+                          window.dispatchEvent(new CustomEvent("document-updated"));
+                        } else {
+                          setInfo(payload?.error ?? "Failed to restore document");
+                        }
+                      } catch (e: any) {
+                        setInfo(String(e?.message ?? e));
+                      } finally {
+                        setLoading(false);
+                      }
+                    }}
+                  >
+                    Restore
+                  </Button>
+                ) : (
+                  <Button
+                    aria-label="Unpublish"
+                    className="mr-2"
+                    size={"sm"}
+                    onClick={async () => {
+                      setLoading(true);
+                      try {
+                        const res = await fetch("/api/documents", {
+                          method: "PUT",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({
+                            id: doc.id,
+                            status: "draft",
+                            published: false,
+                          }),
+                        });
+                        const payload = await res.json();
+                        if (res.ok && payload?.document) {
+                          setDoc(payload.document);
+                          setInfo("Document unpublished");
+                          window.dispatchEvent(new CustomEvent("document-updated"));
+                        } else {
+                          setInfo(
+                            payload?.error ?? "Failed to unpublish document",
+                          );
+                        }
+                      } catch (e: any) {
+                        setInfo(String(e?.message ?? e));
+                      } finally {
+                        setLoading(false);
+                      }
+                    }}
+                  >
+                    Unpublish
+                  </Button>
+                )}
+              </div>
+            </div>
+            <div className="flex items-center gap-2 mt-2">
               <BadgeCoss
                 variant={
                   doc.status === "published"
@@ -456,346 +818,6 @@ export default function DocumentShell() {
               <BadgeCoss variant={"outline"} size={"lg"}>
                 Slug: <span className="font-semibold">{doc.slug ?? "—"}</span>
               </BadgeCoss>
-
-              {/* <BadgeCoss variant={"outline"} size={"lg"}>
-                Version:{" "}
-                <span className="font-semibold">
-                  {String(doc.version ?? "1")}
-                </span>
-              </BadgeCoss> */}
-            </div>
-            <div className="flex items-center gap-2">
-              <AlertDialog>
-                <Menu openOnHover>
-                  <MenuTrigger
-                    render={<Button size="icon-sm" variant="ghost" />}
-                  >
-                    <MoreVertical />
-                  </MenuTrigger>
-                  <MenuPopup>
-                    {/*<MenuItem>
-                      <Eye /> Preview
-                    </MenuItem>*/}
-                    {blocked ? (
-                      <MenuItem aria-label="Edit" disabled>
-                        <Edit />
-                        Edit
-                      </MenuItem>
-                    ) : (
-                      <Link href={`/dashboard/edit/${doc.slug}`}>
-                        <MenuItem aria-label="Edit">
-                          <Edit />
-                          Edit
-                        </MenuItem>
-                      </Link>
-                    )}
-                    {doc.status !== "archived" && (
-                      <MenuItem
-                        onClick={() => {
-                          setNewTitle(doc.title);
-                          setRenameError(null);
-                          setRenameDialogOpen(true);
-                        }}
-                      >
-                        <FileEdit />
-                        Rename
-                      </MenuItem>
-                    )}
-                    {doc.status === "published" && workspace?.slug && (
-                      <MenuItem
-                        onClick={() => {
-                          const workspaceSlug = workspace.slug;
-                          let url: string;
-
-                          if (process.env.NODE_ENV === "production") {
-                            url = `https://${workspaceSlug}.openpolicyhq.com/${doc.slug}`;
-                          } else {
-                            url = `http://${workspaceSlug}.localhost:3000/${doc.slug}`;
-                          }
-
-                          window.open(url, "_blank");
-                        }}
-                      >
-                        <ExternalLink />
-                        Open
-                      </MenuItem>
-                    )}
-                    <MenuSeparator />
-                    <AlertDialogTrigger
-                      nativeButton={false}
-                      render={<MenuItem variant="destructive" />}
-                    >
-                      {doc.status === "archived" ? (
-                        <div className="flex gap-2 items-center">
-                          <Trash />
-                          Delete
-                        </div>
-                      ) : (
-                        <div className="flex gap-2 items-center">
-                          <Archive />
-                          Archive
-                        </div>
-                      )}
-                    </AlertDialogTrigger>
-                  </MenuPopup>
-                </Menu>
-
-                <AlertDialogPopup>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>
-                      {doc.status === "archived" ? "Delete" : "Archive"} "
-                      {doc.title}"
-                    </AlertDialogTitle>
-                    <AlertDialogDescription>
-                      This will{" "}
-                      {doc.status === "archived" ? "delete" : "archive"} "
-                      {doc.title}"{" "}
-                      {doc.status === "archived"
-                        ? "and delete it permanently from this workspace"
-                        : "and remove it from your drafts"}
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogClose render={<Button variant="ghost" />}>
-                      Cancel
-                    </AlertDialogClose>
-                    {doc.status === "archived" ? (
-                      <AlertDialogClose
-                        render={
-                          <Button
-                            variant="destructive-outline"
-                            onClick={async () => {
-                              setLoading(true);
-                              try {
-                                const res = await fetch("/api/documents", {
-                                  method: "DELETE",
-                                  headers: {
-                                    "Content-Type": "application/json",
-                                  },
-                                  body: JSON.stringify({ id: doc.id }),
-                                });
-                                const payload = await res.json();
-                                if (res.ok && payload?.ok) {
-                                  // Dispatch event to update sidebar counts
-                                  window.dispatchEvent(new CustomEvent("document-updated"));
-                                  // navigate back to documents list after deletion
-                                  try {
-                                    router.push("/dashboard/documents/all");
-                                  } catch {
-                                    // fallback: clear local doc state
-                                    setDoc(null);
-                                  }
-                                } else {
-                                  setInfo(
-                                    payload?.error ??
-                                    "Failed to delete document",
-                                  );
-                                }
-                              } catch (e: any) {
-                                setInfo(String(e?.message ?? e));
-                              } finally {
-                                setLoading(false);
-                              }
-                            }}
-                          />
-                        }
-                      >
-                        Delete
-                      </AlertDialogClose>
-                    ) : (
-                      <AlertDialogClose
-                        render={
-                          <Button
-                            variant="destructive-outline"
-                            onClick={async () => {
-                              setLoading(true);
-                              try {
-                                const res = await fetch("/api/documents", {
-                                  method: "PUT",
-                                  headers: {
-                                    "Content-Type": "application/json",
-                                  },
-                                  body: JSON.stringify({
-                                    id: doc.id,
-                                    status: "archived",
-                                    published: false,
-                                  }),
-                                });
-                                const payload = await res.json();
-                                if (res.ok && payload?.document) {
-                                  setDoc(payload.document);
-                                  setInfo("Document archived");
-                                  // Dispatch event to update sidebar counts
-                                  window.dispatchEvent(new CustomEvent("document-updated"));
-                                } else {
-                                  setInfo(
-                                    payload?.error ??
-                                    "Failed to archive document",
-                                  );
-                                }
-                              } catch (e: any) {
-                                setInfo(String(e?.message ?? e));
-                              } finally {
-                                setLoading(false);
-                              }
-                            }}
-                          />
-                        }
-                      >
-                        Archive
-                      </AlertDialogClose>
-                    )}
-                  </AlertDialogFooter>
-                </AlertDialogPopup>
-              </AlertDialog>
-
-              {/* Rename Dialog */}
-              <AlertDialog open={renameDialogOpen} onOpenChange={setRenameDialogOpen}>
-                <AlertDialogPopup>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Rename Document</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Enter a new name for "{doc.title}". Document names must be unique within the workspace.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <Input
-                    type="text"
-                    value={newTitle}
-                    onChange={(e) => {
-                      setNewTitle(e.target.value);
-                      setRenameError(null);
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" && !renamingInProgress) {
-                        e.preventDefault();
-                        handleRename();
-                      }
-                    }}
-                    placeholder={doc.title}
-                    autoFocus
-                  />
-                  {renameError && (
-                    <p className="text-sm text-destructive mt-2">{renameError}</p>
-                  )}
-                  <AlertDialogFooter>
-                    <AlertDialogClose render={<Button variant="ghost" />}>
-                      Cancel
-                    </AlertDialogClose>
-                    <Button
-                      onClick={handleRename}
-                      disabled={renamingInProgress || !newTitle.trim()}
-                    >
-                      {renamingInProgress ? "Renaming..." : "Rename"}
-                    </Button>
-                  </AlertDialogFooter>
-                </AlertDialogPopup>
-              </AlertDialog>
-
-              {doc.status === "draft" ? (
-                <Button
-                  aria-label="Publish"
-                  className="mr-2"
-                  size={"sm"}
-                  onClick={async () => {
-                    setLoading(true);
-                    try {
-                      const res = await fetch("/api/documents", {
-                        method: "PUT",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                          id: doc.id,
-                          status: "published",
-                          published: true,
-                        }),
-                      });
-                      const payload = await res.json();
-                      if (res.ok && payload?.document) {
-                        setDoc(payload.document);
-                        setInfo("Document published");
-                        window.dispatchEvent(new CustomEvent("document-updated"));
-                      } else {
-                        setInfo(payload?.error ?? "Failed to publish document");
-                      }
-                    } catch (e: any) {
-                      setInfo(String(e?.message ?? e));
-                    } finally {
-                      setLoading(false);
-                    }
-                  }}
-                >
-                  Publish
-                </Button>
-              ) : doc.status === "archived" ? (
-                <Button
-                  aria-label="Restore"
-                  className="mr-2"
-                  size={"sm"}
-                  onClick={async () => {
-                    setLoading(true);
-                    try {
-                      const res = await fetch("/api/documents", {
-                        method: "PUT",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                          id: doc.id,
-                          status: "draft",
-                          published: false,
-                        }),
-                      });
-                      const payload = await res.json();
-                      if (res.ok && payload?.document) {
-                        setDoc(payload.document);
-                        setInfo("Document restored to draft");
-                        window.dispatchEvent(new CustomEvent("document-updated"));
-                      } else {
-                        setInfo(payload?.error ?? "Failed to restore document");
-                      }
-                    } catch (e: any) {
-                      setInfo(String(e?.message ?? e));
-                    } finally {
-                      setLoading(false);
-                    }
-                  }}
-                >
-                  Restore
-                </Button>
-              ) : (
-                <Button
-                  aria-label="Unpublish"
-                  className="mr-2"
-                  size={"sm"}
-                  onClick={async () => {
-                    setLoading(true);
-                    try {
-                      const res = await fetch("/api/documents", {
-                        method: "PUT",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                          id: doc.id,
-                          status: "draft",
-                          published: false,
-                        }),
-                      });
-                      const payload = await res.json();
-                      if (res.ok && payload?.document) {
-                        setDoc(payload.document);
-                        setInfo("Document unpublished");
-                        window.dispatchEvent(new CustomEvent("document-updated"));
-                      } else {
-                        setInfo(
-                          payload?.error ?? "Failed to unpublish document",
-                        );
-                      }
-                    } catch (e: any) {
-                      setInfo(String(e?.message ?? e));
-                    } finally {
-                      setLoading(false);
-                    }
-                  }}
-                >
-                  Unpublish
-                </Button>
-              )}
             </div>
           </FrameHeader>
           <CollapsiblePanel>
@@ -817,7 +839,7 @@ export default function DocumentShell() {
             </FramePanel>
           </CollapsiblePanel>
         </Collapsible>
-        <FrameFooter className="flex flex-row justify-between">
+        <FrameFooter className="flex flex-row justify-between max-md:flex-col">
           <div className="text-xs font-mono text-muted-foreground">
             Last updated:{" "}
             <Badge variant={"secondary"}>{timeAgo(doc.updated_at)}</Badge>
