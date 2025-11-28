@@ -4,15 +4,6 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
-/**
- * SuccessWorkspaceHandler - Client component that handles workspace selection after payment
- * 
- * After a successful payment, this component:
- * 1. Waits for the webhook to create the workspace (polls for a few seconds)
- * 2. Finds the newly created workspace
- * 3. Sets it as the selected workspace in localStorage
- * 4. Redirects to dashboard
- */
 export function SuccessWorkspaceHandler() {
     const router = useRouter();
     const [status, setStatus] = useState<"checking" | "found" | "timeout">("checking");
@@ -20,7 +11,7 @@ export function SuccessWorkspaceHandler() {
     useEffect(() => {
         let mounted = true;
         let attempts = 0;
-        const maxAttempts = 10; // Poll for up to 10 seconds
+        const maxAttempts = 10;
 
         async function checkForNewWorkspace() {
             try {
@@ -29,7 +20,6 @@ export function SuccessWorkspaceHandler() {
 
                 if (!user || !mounted) return;
 
-                // Fetch all workspaces for the user
                 const { data: workspaces, error } = await supabase
                     .from("workspaces")
                     .select("*")
@@ -39,7 +29,6 @@ export function SuccessWorkspaceHandler() {
                 if (error || !workspaces || workspaces.length === 0) {
                     attempts++;
                     if (attempts < maxAttempts && mounted) {
-                        // Try again in 1 second
                         setTimeout(checkForNewWorkspace, 1000);
                     } else if (mounted) {
                         setStatus("timeout");
@@ -47,15 +36,12 @@ export function SuccessWorkspaceHandler() {
                     return;
                 }
 
-                // Get the most recently created workspace
                 const newestWorkspace = workspaces[0];
 
-                // Set it as selected in localStorage
                 try {
                     localStorage.setItem("selectedWorkspace", String(newestWorkspace.id));
                     if (mounted) {
                         setStatus("found");
-                        // Small delay before redirect to ensure localStorage is persisted
                         setTimeout(() => {
                             if (mounted) {
                                 router.push("/dashboard");
@@ -79,7 +65,6 @@ export function SuccessWorkspaceHandler() {
             }
         }
 
-        // Start checking after a short delay to give webhook time to process
         const initialDelay = setTimeout(checkForNewWorkspace, 1000);
 
         return () => {
@@ -89,7 +74,7 @@ export function SuccessWorkspaceHandler() {
     }, [router]);
 
     return (
-        <div className="text-sm text-muted-foreground mt-2">
+        <div className="text-sm text-muted-foreground mt-2 mb-5">
             {status === "checking" && "Setting up your workspace..."}
             {status === "found" && "Workspace ready! Redirecting..."}
             {status === "timeout" && "Taking longer than expected. Click the button above to continue."}
