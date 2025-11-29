@@ -9,7 +9,7 @@ export default function Section({
 }) {
   return (
     <section className="flex w-full">
-      <div className="h-[full] min-w-4 flex-grow border-b" />
+      <div className="h-[full] min-w-4 grow border-b" />
       <div
         className={`border border-t-0 w-full max-w-6xl h-full p-4 relative ${className || ""}`}
       >
@@ -23,7 +23,7 @@ export default function Section({
           <Plus className="size-5" />
         </div>
       </div>
-      <div className="h-[full] min-w-4 flex-grow border-b" />
+      <div className="h-[full] min-w-4 grow border-b" />
     </section>
   );
 }

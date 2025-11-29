@@ -150,9 +150,9 @@ export default function PricingComparator({ plans }: { plans: Product[] }) {
 
     return (
         <>
-            <div className="mx-auto px-5">
+            <div className="mx-auto">
                 <div className="w-full overflow-auto lg:overflow-visible">
-                    <table className="w-[200vw] border-separate border-spacing-x-3 md:w-full dark:[--color-muted:var(--color-zinc-900)]">
+                    <table className="w-[200vw] border-separate border-spacing-x-3 md:w-full">
                         <thead className="bg-background sticky top-12">
                             <tr className="*:py-5 *:text-left *:font-medium">
                                 <th className="lg:w-2/5"></th>

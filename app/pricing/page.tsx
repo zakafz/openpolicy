@@ -35,9 +35,11 @@ export default async function Pricing() {
           />
         </div>
       </Section>
-      <Section className="p-0!">
-        <PricingComparator plans={products.result.items} />
-      </Section>
+      <div className="max-md:hidden">
+        <Section className="p-0!">
+          <PricingComparator plans={products.result.items} />
+        </Section>
+      </div>
       <Section>
         <FaqsSection />
       </Section>
