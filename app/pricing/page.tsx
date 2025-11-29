@@ -5,6 +5,7 @@ import { Header } from "@/components/header";
 import { PricingSection } from "@/components/pricing-section";
 import Section from "@/components/section";
 import { api } from "@/lib/polar";
+import PricingComparator from "@/components/pricing-comparator";
 
 export const metadata: Metadata = {
   title: 'Pricing',
@@ -33,6 +34,9 @@ export default async function Pricing() {
             plans={products.result.items} 
           />
         </div>
+      </Section>
+      <Section className="p-0!">
+        <PricingComparator plans={products.result.items} />
       </Section>
       <Section>
         <FaqsSection />
