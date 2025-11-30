@@ -110,7 +110,7 @@ export default function LayoutShell({
               const firstId = ownerWorkspaces[0]?.id ?? null;
               if (firstId) setFirstWorkspaceId(firstId);
             } catch {
-              // ignore unexpected shapes
+              // ignore
             }
           } else {
             if (pathname !== "/create") {
@@ -157,18 +157,18 @@ export default function LayoutShell({
               </Breadcrumb>
             </div>
             {pathname ===
-              "/dashboard/documents/new" ? null : isDocumentDetail ? null : (
-                <Link
-                  href={
-                    firstWorkspaceId
-                      ? `/dashboard/documents/new?workspaceId=${firstWorkspaceId}`
-                      : "/dashboard/documents/new"
-                  }
-                  className="ml-auto mr-4"
-                >
-                  <Button size={"sm"}>Create Document</Button>
-                </Link>
-              )}
+            "/dashboard/documents/new" ? null : isDocumentDetail ? null : (
+              <Link
+                href={
+                  firstWorkspaceId
+                    ? `/dashboard/documents/new?workspaceId=${firstWorkspaceId}`
+                    : "/dashboard/documents/new"
+                }
+                className="ml-auto mr-4"
+              >
+                <Button size={"sm"}>Create Document</Button>
+              </Link>
+            )}
           </header>
         )}
         <div className="flex flex-1 flex-col gap-4 px-4 overflow-scroll h-full">

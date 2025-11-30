@@ -4,12 +4,6 @@ import { CheckCircleIcon, StarIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React from "react";
 import { Button } from "@/components/ui/button";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { createClient } from "@/lib/supabase/client";
 import { fetchWorkspacesForOwner } from "@/lib/workspace";
 import { cn } from "@/lib/utils";
@@ -186,9 +180,7 @@ export function PricingCard({
           return (
             <div className="flex items-center gap-2" key={index}>
               <CheckCircleIcon className="h-4 w-4 text-foreground" />
-              <p className={cn(tooltip && "cursor-default!")}>
-                {text}
-              </p>
+              <p className={cn(tooltip && "cursor-default!")}>{text}</p>
             </div>
           );
         })}

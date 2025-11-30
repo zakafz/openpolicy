@@ -42,13 +42,10 @@ export function LoadingWorkspace() {
 export function ErrorWorkspace({ error }: { error: string }) {
   const handleTryAgain = () => {
     try {
-      // Clear all localStorage
       localStorage.clear();
-      // Refresh the page
       window.location.reload();
     } catch (e) {
-      console.error('Failed to clear localStorage:', e);
-      // Still try to refresh even if clear fails
+      console.error("Failed to clear localStorage:", e);
       window.location.reload();
     }
   };

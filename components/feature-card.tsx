@@ -1,6 +1,5 @@
 import type React from "react";
 import type { ReactNode } from "react";
-// https://magicui.design/docs/components/grid-pattern
 import { GridPattern } from "@/components/ui/grid-pattern";
 import { cn } from "@/lib/utils";
 
@@ -21,7 +20,7 @@ export function FeatureCard({
 }: FeatureCardPorps) {
   return (
     <div className={cn("relative overflow-hidden p-6", className)} {...props}>
-      <div className="-mt-2 -ml-20 pointer-events-none absolute top-0 left-1/2 size-full [mask-image:radial-gradient(farthest-side_at_top,white,transparent)]">
+      <div className="-mt-2 -ml-20 pointer-events-none absolute top-0 left-1/2 size-full mask-[radial-gradient(farthest-side_at_top,white,transparent)]">
         <GridPattern
           className="absolute inset-0 size-full stroke-foreground/20"
           height={40}

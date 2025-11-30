@@ -196,7 +196,6 @@ export function findNodePosition(props: {
     let foundNode: TiptapNode | null = null;
 
     editor.state.doc.descendants((currentNode, pos) => {
-
       if (currentNode === node) {
         foundPos = pos;
         foundNode = currentNode;
@@ -291,7 +290,6 @@ export const handleImageUpload = async (
   onProgress?: (event: { progress: number }) => void,
   abortSignal?: AbortSignal,
 ): Promise<string> => {
-
   if (!file) {
     throw new Error("No file provided");
   }

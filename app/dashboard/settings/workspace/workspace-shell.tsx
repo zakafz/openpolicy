@@ -1,8 +1,10 @@
 "use client";
 
+import { Check, Copy, Globe, InfoIcon, Sparkle, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 import PageTitle from "@/components/dashboard-page-title";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   AlertDialog,
   AlertDialogClose,
@@ -30,6 +32,11 @@ import {
   FrameTitle,
 } from "@/components/ui/frame";
 import { Input } from "@/components/ui/input";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@/components/ui/input-group-coss";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { toastManager } from "@/components/ui/toast";
@@ -41,11 +48,8 @@ import {
 } from "@/components/workspace-states";
 import { useWorkspace } from "@/context/workspace";
 import useWorkspaceLoader from "@/hooks/use-workspace-loader";
-import { createClient } from "@/lib/supabase/client";
 import { isFreePlan } from "@/lib/limits";
-import { Check, Copy, Globe, InfoIcon, Sparkle, Sparkles } from "lucide-react";
-import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group-coss";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { createClient } from "@/lib/supabase/client";
 
 export default function WorkspaceShell() {
   const { selectedWorkspaceId } = useWorkspace();
@@ -108,7 +112,6 @@ export default function WorkspaceShell() {
       customDomain: workspace?.custom_domain ?? "",
     });
 
-    // Check if workspace is on free plan using the same API as overview
     const checkPlan = async () => {
       if (!workspace?.plan) {
         setIsFree(true);
@@ -238,7 +241,6 @@ export default function WorkspaceShell() {
     if (section === "domain") isSectionDirty = isDomainDirty;
 
     if (!isSectionDirty) {
-      // nothing to do
       toastManager.add({
         title: "No changes",
         description: "There are no changes to save.",
@@ -256,7 +258,6 @@ export default function WorkspaceShell() {
       if (authError) throw authError;
       if (!user) throw new Error("Not authenticated");
 
-      // Special handling for domain section - use dedicated API
       if (section === "domain") {
         const response = await fetch("/api/workspace/domain", {
           method: "POST",
@@ -280,20 +281,19 @@ export default function WorkspaceShell() {
 
         setInitialValues({ ...initialValues, customDomain });
 
-        // Dispatch workspace-changed event to update sidebar
         window.dispatchEvent(
           new CustomEvent("workspace-changed", {
             detail: { workspaceId: workspace.id },
-          })
+          }),
         );
 
         toastManager.add({
           title: "Success!",
-          description: "Custom domain updated. It may take a few minutes to propagate.",
+          description:
+            "Custom domain updated. It may take a few minutes to propagate.",
           type: "success",
         });
       } else {
-        // Standard handling for other sections
         const payload: any = {
           name,
           logo: logo || null,
@@ -314,7 +314,14 @@ export default function WorkspaceShell() {
           await reload();
         }
 
-        setInitialValues({ name, logo, supportEmail, disableIcon, returnUrl, customDomain });
+        setInitialValues({
+          name,
+          logo,
+          supportEmail,
+          disableIcon,
+          returnUrl,
+          customDomain,
+        });
 
         toastManager.add({
           title: "Success!",
@@ -426,7 +433,7 @@ export default function WorkspaceShell() {
       try {
         if (typeof reload === "function") await reload();
       } catch (e) {
-        // ignore reload errors
+        // ignore
       }
 
       toastManager.add({
@@ -601,7 +608,9 @@ export default function WorkspaceShell() {
               type={isFree ? "button" : "submit"}
               size={"sm"}
               className="w-fit ml-auto"
-              disabled={(!isDomainDirty && !isFree) || savingMap.domain || fetching}
+              disabled={
+                (!isDomainDirty && !isFree) || savingMap.domain || fetching
+              }
               onClick={isFree ? () => router.push("/pricing") : undefined}
             >
               {isFree ? "Upgrade" : savingMap.domain ? "Saving..." : "Save"}
@@ -610,31 +619,46 @@ export default function WorkspaceShell() {
           <FramePanel>
             <div className="flex flex-col gap-4">
               {isFree ? (
-                <Alert variant={'default'}>
-                  <AlertTitle className="flex gap-1 items-center"><Sparkles className="size-4" />Custom domains are available on the Pro plan.</AlertTitle>
+                <Alert variant={"default"}>
+                  <AlertTitle className="flex gap-1 items-center">
+                    <Sparkles className="size-4" />
+                    Custom domains are available on the Pro plan.
+                  </AlertTitle>
                   <AlertDescription>
                     Upgrade your workspace to connect your own domain.
                   </AlertDescription>
                 </Alert>
-
               ) : (
                 <div className="rounded-lg border bg-muted/50 p-4">
-                  <h4 className="text-sm font-medium mb-2">DNS Configuration</h4>
+                  <h4 className="text-sm font-medium mb-2">
+                    DNS Configuration
+                  </h4>
                   <p className="text-sm text-muted-foreground mb-4">
-                    To use a custom domain, you need to add a CNAME record to your DNS provider.
+                    To use a custom domain, you need to add a CNAME record to
+                    your DNS provider.
                   </p>
                   <div className="flex flex-col gap-4 rounded-md border bg-background relative p-3">
                     <div className="flex flex-col gap-1">
-                      <span className="text-xs font-medium text-muted-foreground">Type</span>
+                      <span className="text-xs font-medium text-muted-foreground">
+                        Type
+                      </span>
                       <code className="text-sm font-mono">CNAME</code>
                     </div>
                     <div className="flex flex-col gap-1">
-                      <span className="text-xs font-medium text-muted-foreground">Host</span>
-                      <code className="text-sm font-mono">{getDnsHost(customDomain)}</code>
+                      <span className="text-xs font-medium text-muted-foreground">
+                        Host
+                      </span>
+                      <code className="text-sm font-mono">
+                        {getDnsHost(customDomain)}
+                      </code>
                     </div>
                     <div className="flex flex-col gap-1">
-                      <span className="text-xs font-medium text-muted-foreground">Value</span>
-                      <code className="text-sm font-mono">cname.openpolicyhq.com</code>
+                      <span className="text-xs font-medium text-muted-foreground">
+                        Value
+                      </span>
+                      <code className="text-sm font-mono">
+                        cname.openpolicyhq.com
+                      </code>
                     </div>
                     <Button
                       type="button"
@@ -650,7 +674,10 @@ export default function WorkspaceShell() {
                       )}
                     </Button>
                   </div>
-                  <div className="mt-2 text-muted-foreground text-xs">Note that the process can take up to 24 hours to take effect.</div>
+                  <div className="mt-2 text-muted-foreground text-xs">
+                    Note that the process can take up to 24 hours to take
+                    effect.
+                  </div>
                 </div>
               )}
 
@@ -691,20 +718,21 @@ export default function WorkspaceShell() {
                 </FieldDescription>
               </Field>
 
-              {/* Only show Verify button if domain is saved to database */}
-              {initialValues.customDomain && customDomain === initialValues.customDomain && !isFree && (
-                <div className="flex justify-end">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={handleVerify}
-                    disabled={verifying || !customDomain}
-                  >
-                    {verifying ? "Verifying..." : "Verify Connection"}
-                  </Button>
-                </div>
-              )}
+              {initialValues.customDomain &&
+                customDomain === initialValues.customDomain &&
+                !isFree && (
+                  <div className="flex justify-end">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleVerify}
+                      disabled={verifying || !customDomain}
+                    >
+                      {verifying ? "Verifying..." : "Verify Connection"}
+                    </Button>
+                  </div>
+                )}
 
               {verificationResult && customDomain && (
                 <Alert variant={verificationResult.valid ? "success" : "error"}>
@@ -714,10 +742,14 @@ export default function WorkspaceShell() {
                     <InfoIcon className="h-4 w-4" />
                   )}
                   <AlertTitle>
-                    {verificationResult.valid ? "Domain is active" : "Verification failed"}
+                    {verificationResult.valid
+                      ? "Domain is active"
+                      : "Verification failed"}
                   </AlertTitle>
                   {!verificationResult.valid && (
-                    <AlertDescription>{verificationResult.message}</AlertDescription>
+                    <AlertDescription>
+                      {verificationResult.message}
+                    </AlertDescription>
                   )}
                 </Alert>
               )}
@@ -727,7 +759,7 @@ export default function WorkspaceShell() {
       </form>
 
       {/*Workspace delete*/}
-      < div className="mt-5" >
+      <div className="mt-5">
         <Frame className="bg-destructive/10">
           <FrameHeader>
             <FrameTitle className="text-destructive">Danger Zone</FrameTitle>
@@ -782,7 +814,7 @@ export default function WorkspaceShell() {
             </AlertDialog>
           </FramePanel>
         </Frame>
-      </div >
+      </div>
     </>
   );
 }

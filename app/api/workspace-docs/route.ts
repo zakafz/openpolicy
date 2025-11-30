@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { fetchPublishedDocumentsForWorkspaceServer } from "@/lib/documents";
 import { createServiceClient } from "@/lib/supabase/service";
 
-// GET /api/workspace-docs?workspace={workspace_slug} — returns published documents for a workspace
 export async function GET(request: Request) {
   try {
     const url = new URL(request.url);
@@ -17,7 +16,6 @@ export async function GET(request: Request) {
 
     const svc = createServiceClient();
 
-    // Resolve workspace by slug
     const { data: workspace, error: wsErr } = await svc
       .from("workspaces")
       .select("id, name, slug")
@@ -39,7 +37,6 @@ export async function GET(request: Request) {
       );
     }
 
-    // Fetch published documents for the workspace using centralized helper
     let documents: any[] = [];
     try {
       documents = await fetchPublishedDocumentsForWorkspaceServer(

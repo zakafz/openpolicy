@@ -3,8 +3,8 @@ import Container from "@/components/dashboard-container";
 import OverviewShell from "./overview-shell";
 
 export const metadata: Metadata = {
-  title: 'Overview',
-  description: 'Manage your policy documents, workspaces, and team settings.',
+  title: "Overview",
+  description: "Manage your policy documents, workspaces, and team settings.",
   robots: {
     index: false,
     follow: false,

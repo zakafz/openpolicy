@@ -2,9 +2,6 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 
-// POST /api/workspace/upload-logo — upload workspace logo.
-// Expects JSON: { workspaceId, filename, contentType?, fileBase64 }.
-// Authenticates session, verifies workspace ownership, uploads to 'workspace-logos', and updates workspace record.
 export async function POST(req: Request) {
   try {
     const body = await req.json().catch(() => ({}));
@@ -17,13 +14,10 @@ export async function POST(req: Request) {
       );
     }
 
-    // Basic filename sanitization
     const safeFilename = String(filename).replace(/[^a-zA-Z0-9_.-]/g, "-");
     if (safeFilename.length === 0) {
       return NextResponse.json({ error: "Invalid filename" }, { status: 400 });
     }
-
-    // Strip optional data URL prefix if present
     let base64 = String(fileBase64);
     const dataUrlMatch = base64.match(/^data:(.+);base64,(.+)$/);
     let inferredContentType = contentType;
@@ -32,7 +26,6 @@ export async function POST(req: Request) {
       base64 = dataUrlMatch[2];
     }
 
-    // Convert base64 to Buffer
     let buffer: Buffer;
     try {
       buffer = Buffer.from(base64, "base64");
@@ -43,7 +36,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // Optional size limit (e.g. 8MB)
     const MAX_BYTES = Number(
       process.env.WORKSPACE_LOGO_MAX_BYTES ?? 8 * 1024 * 1024,
     );
@@ -51,7 +43,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "File too large" }, { status: 413 });
     }
 
-    // Authenticate current user (session-aware client)
     const sessionClient = await createClient();
     const {
       data: { user },
@@ -62,10 +53,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
 
-    // Service client for privileged actions
     const svc = createServiceClient();
 
-    // Verify workspace ownership
     const { data: wsData, error: wsErr } = await svc
       .from("workspaces")
       .select("owner_id")
@@ -90,12 +79,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    // Prepare storage path and upload
     const bucket = "workspace-logos";
     const timestamp = Date.now();
     const destPath = `logos/${workspaceId}/${timestamp}-${safeFilename}`;
 
-    // Upload buffer to Supabase Storage (upsert so repeated uploads replace)
     const uploadOptions: any = { upsert: true };
     if (inferredContentType) uploadOptions.contentType = inferredContentType;
 
@@ -111,17 +98,14 @@ export async function POST(req: Request) {
       );
     }
 
-    // Retrieve public URL (bucket is public)
     const { data: publicUrlData } = svc.storage
       .from(bucket)
       .getPublicUrl(destPath);
-    // supabase client returns { data: { publicUrl } }
     const publicURL =
       (publicUrlData as any)?.publicUrl ??
       (publicUrlData as any)?.publicURL ??
       "";
 
-    // Persist workspace record update (logo and logo_path)
     const { error: updateErr } = await svc
       .from("workspaces")
       .update({

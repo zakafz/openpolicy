@@ -3,7 +3,6 @@
 import {
   Cookie,
   Folder,
-  Forward,
   GlobeIcon,
   Handshake,
   LayersIcon,
@@ -12,24 +11,14 @@ import {
   NotebookPen,
   Shield,
   TicketX,
-  Trash2,
   Truck,
 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   SidebarGroup,
   SidebarGroupLabel,
   SidebarMenu,
-  SidebarMenuAction,
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
@@ -46,7 +35,6 @@ export function NavDocuments() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // map document type to corresponding icon for the sidebar
   const typeIconMap: Record<
     | "privacy"
     | "terms"
@@ -71,7 +59,6 @@ export function NavDocuments() {
   useEffect(() => {
     let cancelled = false;
 
-    // If no workspace selected, do not fetch
     if (!selectedWorkspaceId) {
       setDocs([]);
       setLoading(false);
@@ -83,8 +70,6 @@ export function NavDocuments() {
       setLoading(true);
       setError(null);
       try {
-        // Use centralized helper to fetch recent documents for the selected workspace.
-        // Request the top 3 most-recent documents; the helper keeps query logic consistent.
         const docs = await fetchDocumentsForWorkspace(
           selectedWorkspaceId,
           "all",
@@ -107,7 +92,6 @@ export function NavDocuments() {
 
     load();
 
-    // Listen for document updates (create, rename, delete, etc.)
     const handleDocumentUpdate = () => {
       if (!cancelled) {
         load();
@@ -157,8 +141,6 @@ export function NavDocuments() {
                   >
                     <div className="flex items-center gap-2 min-w-0">
                       {(() => {
-                        // Narrow the key to the known literal union so TypeScript can
-                        // safely index `typeIconMap` without an `any` cast.
                         const key = String(d?.type ?? "other") as
                           | "privacy"
                           | "terms"
@@ -179,16 +161,15 @@ export function NavDocuments() {
                       <span className="truncate">{d.title}</span>
                     </div>
                     <Badge
-                      className={`text-xs capitalize shrink-0 ${d.status === "published"
+                      className={`text-xs capitalize shrink-0 ${
+                        d.status === "published"
                           ? "bg-info/15 text-info-foreground"
                           : d.status === "archived"
                             ? ""
                             : "bg-warning/20 text-warning-foreground"
-                        }`}
+                      }`}
                       variant={
-                        d.status === "archived"
-                          ? "secondary"
-                          : "default"
+                        d.status === "archived" ? "secondary" : "default"
                       }
                     >
                       {d.status || "draft"}

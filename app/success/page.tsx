@@ -1,15 +1,16 @@
-import type { Metadata } from "next";
 import { Receipt } from "lucide-react";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Footer } from "@/components/footer";
 import { Header } from "@/components/header";
 import Section from "@/components/section";
-import { Button } from "@/components/ui/button";
 import { SuccessWorkspaceHandler } from "@/components/success-workspace-handler";
+import { Button } from "@/components/ui/button";
 
 export const metadata: Metadata = {
-  title: 'Payment Successful',
-  description: 'Your payment was successful. Thank you for choosing OpenPolicy.',
+  title: "Payment Successful",
+  description:
+    "Your payment was successful. Thank you for choosing OpenPolicy.",
   robots: {
     index: false,
     follow: false,

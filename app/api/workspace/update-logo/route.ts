@@ -2,10 +2,6 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 
-// POST /api/workspace/update-logo
-// Updates a workspace logo (server-side). Expects JSON:
-// { workspaceId: string, publicURL?: string, path?: string }
-// Requires authenticated session and that the user owns the workspace.
 export async function POST(req: Request) {
   try {
     const body = await req.json().catch(() => ({}));
@@ -24,7 +20,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // Session-aware client to identify the current user from cookies
     const sessionClient = await createClient();
     const {
       data: { user },
@@ -35,10 +30,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
 
-    // Service-role client for privileged DB update
     const svc = createServiceClient();
 
-    // Verify ownership: fetch workspace owner_id
     const { data: wsData, error: wsErr } = await svc
       .from("workspaces")
       .select("owner_id")
@@ -63,12 +56,10 @@ export async function POST(req: Request) {
       );
     }
 
-    // Ensure the authenticated user is the owner
     if (String(wsData.owner_id) !== String(user.id)) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    // Build update payload
     const updatePayload: any = {
       updated_at: new Date().toISOString(),
     };

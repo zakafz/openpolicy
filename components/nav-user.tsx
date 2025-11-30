@@ -1,12 +1,13 @@
 "use client";
 
 import {
-  ArrowUpRight, CreditCard,
+  ArrowUpRight,
+  CreditCard,
   Home,
   LogOut,
   MoreVertical,
   Sparkles,
-  User
+  User,
 } from "lucide-react";
 import Link from "next/link";
 import * as React from "react";
@@ -31,27 +32,18 @@ import type { UsersRow } from "@/types/supabase";
 import { useWorkspace } from "@/context/workspace";
 import { LogoutButton } from "./logout-button";
 
-/**
- * NavUser handles user profile display and updates.
- * Listens for 'user:updated' events to refresh local state.
- */
-
 export function NavUser({ user }: { user: UsersRow }) {
   const { isMobile } = useSidebar();
   const { selectedWorkspaceId } = useWorkspace();
   const [isFreePlan, setIsFreePlan] = React.useState(false);
 
-  // Keep a local copy of the user so we can update the UI in real time.
   const [localUser, setLocalUser] = React.useState<UsersRow | null>(
     user ?? null,
   );
-
-  // Update localUser whenever the prop changes (important for initial render or prop updates)
   React.useEffect(() => {
     setLocalUser(user ?? null);
   }, [user]);
 
-  // Check if current workspace is on free plan
   React.useEffect(() => {
     if (!selectedWorkspaceId) {
       setIsFreePlan(false);
@@ -60,7 +52,6 @@ export function NavUser({ user }: { user: UsersRow }) {
 
     async function checkPlan() {
       try {
-        // Fetch workspace to get plan ID
         const { createClient } = await import("@/lib/supabase/client");
         const supabase = createClient();
         const { data: workspace } = await supabase
@@ -74,7 +65,6 @@ export function NavUser({ user }: { user: UsersRow }) {
           return;
         }
 
-        // Check if plan is free via API
         const res = await fetch(`/api/plans/check?planId=${workspace.plan}`);
         if (res.ok) {
           const data = await res.json();
@@ -88,7 +78,6 @@ export function NavUser({ user }: { user: UsersRow }) {
     checkPlan();
   }, [selectedWorkspaceId]);
 
-  // Listen for global 'user:updated' events and merge partial updates into localUser
   React.useEffect(() => {
     const handler = (ev: Event) => {
       try {
@@ -98,7 +87,6 @@ export function NavUser({ user }: { user: UsersRow }) {
 
         setLocalUser((prev) => {
           if (!prev) {
-            // If there was no previous user object, create a minimal one from detail
             const newUser: UsersRow = {
               id: detail.id ?? "",
               auth_id: detail.auth_id ?? "",
@@ -116,7 +104,6 @@ export function NavUser({ user }: { user: UsersRow }) {
             };
             return newUser;
           }
-          // Merge partial fields
           return {
             ...prev,
             full_name: detail.full_name ?? prev.full_name,
@@ -128,7 +115,7 @@ export function NavUser({ user }: { user: UsersRow }) {
           };
         });
       } catch {
-        // ignore malformed events
+        // ignore
       }
     };
 
@@ -192,18 +179,18 @@ export function NavUser({ user }: { user: UsersRow }) {
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             {isFreePlan && (
-              <><DropdownMenuGroup>
-                <Link href="/portal">
-                  <DropdownMenuItem>
-                    <Sparkles />
-                    Upgrade Workspace
-                  </DropdownMenuItem>
-                </Link>
-              </DropdownMenuGroup>
+              <>
+                <DropdownMenuGroup>
+                  <Link href="/portal">
+                    <DropdownMenuItem>
+                      <Sparkles />
+                      Upgrade Workspace
+                    </DropdownMenuItem>
+                  </Link>
+                </DropdownMenuGroup>
                 <DropdownMenuSeparator />
               </>
             )}
-
             <DropdownMenuGroup>
               <Link href={"/dashboard/settings/account"}>
                 <DropdownMenuItem>

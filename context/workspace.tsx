@@ -1,9 +1,7 @@
 "use client";
 
 import React from "react";
-import {
-  readSelectedWorkspaceId
-} from "@/lib/workspace";
+import { readSelectedWorkspaceId } from "@/lib/workspace";
 import type { WorkspaceRow } from "@/types/supabase";
 
 type WorkspaceContextValue = {
@@ -19,13 +17,6 @@ const WorkspaceContext = React.createContext<WorkspaceContextValue | undefined>(
 
 const STORAGE_KEY = "selectedWorkspace";
 
-/**
- * WorkspaceProvider
- *
- * Keeps the currently-selected workspace id (and an optional cached workspace object)
- * in React context, persists the id to localStorage and syncs across tabs via the
- * storage event. Consumers should call `useWorkspace()` to access/set the selection.
- */
 export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
   const [selectedWorkspaceId, setSelectedWorkspaceIdState] = React.useState<
     string | null
@@ -33,24 +24,20 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
   const [selectedWorkspace, setSelectedWorkspaceState] =
     React.useState<WorkspaceRow | null>(null);
 
-  // Initialize from localStorage once on mount
   React.useEffect(() => {
     try {
       if (typeof window !== "undefined") {
-        // Use centralized reader which handles historical shapes and parsing.
         const id = readSelectedWorkspaceId();
         if (id) {
           setSelectedWorkspaceIdState(id);
         }
       }
     } catch (e) {
-      // non-fatal, continue without persisted selection
       // eslint-disable-next-line no-console
       console.warn("WorkspaceProvider: failed to read selectedWorkspace", e);
     }
   }, []);
 
-  // Persist id to localStorage when it changes
   React.useEffect(() => {
     try {
       if (typeof window !== "undefined") {
@@ -66,16 +53,13 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
     }
   }, [selectedWorkspaceId]);
 
-  // Sync across browser tabs/windows
   React.useEffect(() => {
     const onStorage = (e: StorageEvent) => {
       if (e.key === STORAGE_KEY) {
         try {
-          // Use centralized reader to interpret persisted value consistently.
           const id = readSelectedWorkspaceId();
           setSelectedWorkspaceIdState(id);
         } catch {
-          // Fallback to the raw newValue when parsing fails to preserve previous behavior.
           setSelectedWorkspaceIdState(e.newValue ?? null);
         }
       }
@@ -98,7 +82,6 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
             }),
           );
         } catch (e) {
-          // Non-fatal: dispatch failure should not break app
           // eslint-disable-next-line no-console
           console.warn(
             "WorkspaceProvider: failed to dispatch workspace-changed event",
@@ -117,7 +100,6 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
 
   const setSelectedWorkspace = React.useCallback((ws: WorkspaceRow | null) => {
     setSelectedWorkspaceState(ws);
-    // Keep id in sync + persist to localStorage so the app can recover selection
     try {
       if (typeof window !== "undefined") {
         if (ws && (ws as any).id) {
@@ -186,12 +168,6 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-/**
- * useWorkspace - hook for consuming the workspace context
- *
- * Example:
- *   const { selectedWorkspaceId, setSelectedWorkspaceId } = useWorkspace();
- */
 export function useWorkspace() {
   const ctx = React.useContext(WorkspaceContext);
   if (!ctx) {

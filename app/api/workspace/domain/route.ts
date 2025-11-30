@@ -1,12 +1,15 @@
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { addDomainToVercel, removeDomainFromVercel } from "@/lib/vercel";
 
 export async function POST(req: NextRequest) {
   try {
     const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
     if (authError || !user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -14,7 +17,10 @@ export async function POST(req: NextRequest) {
     const { workspaceId, domain, oldDomain } = await req.json();
 
     if (!workspaceId) {
-      return NextResponse.json({ error: "Workspace ID is required" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Workspace ID is required" },
+        { status: 400 },
+      );
     }
 
     const { data: workspace, error: workspaceError } = await supabase
@@ -25,7 +31,10 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (workspaceError || !workspace) {
-      return NextResponse.json({ error: "Workspace not found or unauthorized" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Workspace not found or unauthorized" },
+        { status: 404 },
+      );
     }
 
     if (domain && domain !== oldDomain) {
@@ -39,14 +48,14 @@ export async function POST(req: NextRequest) {
       if (checkError) {
         return NextResponse.json(
           { error: "Failed to check domain availability" },
-          { status: 500 }
+          { status: 500 },
         );
       }
 
       if (existingDomain) {
         return NextResponse.json(
           { error: `This domain is already in use by another workspace` },
-          { status: 409 }
+          { status: 409 },
         );
       }
     }
@@ -54,50 +63,67 @@ export async function POST(req: NextRequest) {
     if (oldDomain && oldDomain !== domain) {
       try {
         await removeDomainFromVercel(oldDomain);
-      } catch (e) {
-      }
+      } catch (e) {}
     }
 
     if (domain) {
       try {
         const vercelResponse = await addDomainToVercel(domain);
-        
+
         if (vercelResponse.error) {
-          const errorMsg = vercelResponse.error.message || "Unknown Vercel error";
-          
-          if (errorMsg.includes("already exists") || errorMsg.includes("in use")) {
+          const errorMsg =
+            vercelResponse.error.message || "Unknown Vercel error";
+
+          if (
+            errorMsg.includes("already exists") ||
+            errorMsg.includes("in use")
+          ) {
             return NextResponse.json(
-              { error: "This domain is already registered with Vercel. Please remove it from other projects first." },
-              { status: 409 }
+              {
+                error:
+                  "This domain is already registered with Vercel. Please remove it from other projects first.",
+              },
+              { status: 409 },
             );
-          } else if (errorMsg.includes("invalid") || errorMsg.includes("domain")) {
+          } else if (
+            errorMsg.includes("invalid") ||
+            errorMsg.includes("domain")
+          ) {
             return NextResponse.json(
-              { error: "Invalid domain format. Please enter a valid domain (e.g., docs.example.com)" },
-              { status: 400 }
+              {
+                error:
+                  "Invalid domain format. Please enter a valid domain (e.g., docs.example.com)",
+              },
+              { status: 400 },
             );
-          } else if (errorMsg.includes("forbidden") || errorMsg.includes("not authorized")) {
+          } else if (
+            errorMsg.includes("forbidden") ||
+            errorMsg.includes("not authorized")
+          ) {
             return NextResponse.json(
-              { error: "Vercel authorization failed. Please check your Vercel API configuration." },
-              { status: 403 }
+              {
+                error:
+                  "Vercel authorization failed. Please check your Vercel API configuration.",
+              },
+              { status: 403 },
             );
           }
-          
+
           return NextResponse.json(
             { error: `Vercel error: ${errorMsg}` },
-            { status: 400 }
+            { status: 400 },
           );
         }
       } catch (e: any) {
         return NextResponse.json(
           { error: e.message || "Failed to add domain to Vercel" },
-          { status: 500 }
+          { status: 500 },
         );
       }
     } else if (!domain && oldDomain) {
       try {
         await removeDomainFromVercel(oldDomain);
-      } catch (e) {
-      }
+      } catch (e) {}
     }
 
     const { error: updateError } = await supabase
@@ -112,13 +138,13 @@ export async function POST(req: NextRequest) {
       if (updateError.code === "23505") {
         return NextResponse.json(
           { error: "This domain is already in use by another workspace" },
-          { status: 409 }
+          { status: 409 },
         );
       }
-      
+
       return NextResponse.json(
         { error: "Failed to update workspace" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -126,7 +152,7 @@ export async function POST(req: NextRequest) {
   } catch (error: any) {
     return NextResponse.json(
       { error: error.message || "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

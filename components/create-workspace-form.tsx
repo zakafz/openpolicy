@@ -25,7 +25,11 @@ import {
 } from "@/components/ui/tooltip";
 import { createClient } from "@/lib/supabase/client";
 import { fetchWorkspacesForOwner } from "@/lib/workspace";
-import { InputGroup, InputGroupAddon, InputGroupInput } from "./ui/input-group-coss";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "./ui/input-group-coss";
 import {
   Select,
   SelectItem,
@@ -62,8 +66,6 @@ export function CreateWorkspaceForm({ products }: { products: Product[] }) {
       return;
     }
 
-    // Slug rules: lowercase letters, numbers, hyphens, cannot start/end with hyphen,
-    // length reasonable (1-64; allow up to 64 with internal hyphens)
     const re = /^[a-z0-9]([a-z0-9-]{0,62}[a-z0-9])?$/;
     const isValid = re.test(slug);
     setSlugValid(isValid);
@@ -85,7 +87,9 @@ export function CreateWorkspaceForm({ products }: { products: Product[] }) {
     slugCheckRef.current = window.setTimeout(async () => {
       setCheckingSlug(true);
       try {
-        const res = await fetch(`/api/workspaces/check-slug?slug=${encodeURIComponent(slug)}`);
+        const res = await fetch(
+          `/api/workspaces/check-slug?slug=${encodeURIComponent(slug)}`,
+        );
         if (!res.ok) {
           throw new Error("Failed to check slug availability");
         }
@@ -213,7 +217,10 @@ export function CreateWorkspaceForm({ products }: { products: Product[] }) {
       const isFreePlan = price ? price.amountType === "free" : false;
 
       try {
-        const currentWorkspaces = await fetchWorkspacesForOwner(owner_id, supabase);
+        const currentWorkspaces = await fetchWorkspacesForOwner(
+          owner_id,
+          supabase,
+        );
         const limit = 1;
 
         if (currentWorkspaces.length >= limit) {
@@ -261,7 +268,7 @@ export function CreateWorkspaceForm({ products }: { products: Product[] }) {
             );
             setError(
               body?.error ??
-              "Failed to create free workspace. Please try again.",
+                "Failed to create free workspace. Please try again.",
             );
             setLoading(false);
             return;
@@ -384,7 +391,8 @@ export function CreateWorkspaceForm({ products }: { products: Product[] }) {
         <div className="flex flex-col items-center space-y-1">
           <h2 className="font-medium text-2xl">Create a workspace</h2>
           <p className="text-muted-foreground text-sm max-w-[80%] text-center">
-            A workspace is a place where you can work on compliance, legal, and internal documentation (etc...).
+            A workspace is a place where you can work on compliance, legal, and
+            internal documentation (etc...).
           </p>
         </div>
       </div>
@@ -429,7 +437,9 @@ export function CreateWorkspaceForm({ products }: { products: Product[] }) {
               }}
               aria-describedby="slug-desc"
             />
-            <InputGroupAddon align={'inline-end'}>.openpolicyhq.com</InputGroupAddon>
+            <InputGroupAddon align={"inline-end"}>
+              .openpolicyhq.com
+            </InputGroupAddon>
             <InputGroupAddon align="inline-start">
               {checkingSlug ? (
                 <LoaderCircleIcon className="animate-spin size-4" />
@@ -452,7 +462,7 @@ export function CreateWorkspaceForm({ products }: { products: Product[] }) {
             </InputGroupAddon>
           </InputGroup>
           <FieldDescription id="slug-desc">
-             {slugErrorMessage ? (
+            {slugErrorMessage ? (
               <span className="text-sm mb-1 text-rose-500 block" role="alert">
                 {slugErrorMessage}
               </span>

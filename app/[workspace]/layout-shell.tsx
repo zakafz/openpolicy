@@ -5,10 +5,12 @@ import {
   ChevronsUpDown,
   MessageCircleMore,
 } from "lucide-react";
-import { MenuToggleIcon } from "@/components/menu-toggle-icon";
 import Image from "next/image";
+import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
+import { MenuToggleIcon } from "@/components/menu-toggle-icon";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -35,8 +37,6 @@ import {
 import { fetchPublishedDocumentsForWorkspace } from "@/lib/documents";
 import { createClient } from "@/lib/supabase/client";
 import { cn, resolveWorkspaceFromRequest } from "@/lib/utils";
-import { createPortal } from "react-dom";
-import Link from "next/link";
 
 export default function LayoutShell({
   children,
@@ -62,7 +62,7 @@ export default function LayoutShell({
       });
       const slug = res.documentSlug;
       if (slug) return [{ id: `__placeholder__:${slug}`, title: slug, slug }];
-    } catch { }
+    } catch {}
     return [];
   };
   const [clientDocs, setClientDocs] = useState<any[]>(deriveInitialDocs());
@@ -136,7 +136,11 @@ export default function LayoutShell({
             className="size-10 rounded-xl"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           >
-            <MenuToggleIcon className="size-5" duration={300} open={mobileMenuOpen} />
+            <MenuToggleIcon
+              className="size-5"
+              duration={300}
+              open={mobileMenuOpen}
+            />
           </Button>
         </div>
         <MobileMenu
@@ -153,7 +157,9 @@ export default function LayoutShell({
             >
               Home
             </a>
-            <div className="text-muted-foreground text-xs font-medium ml-3">Documents</div>
+            <div className="text-muted-foreground text-xs font-medium ml-3">
+              Documents
+            </div>
             {clientDocs.map((doc) => (
               <a
                 className={buttonVariants({
@@ -167,13 +173,11 @@ export default function LayoutShell({
               </a>
             ))}
           </div>
-          {
-            workspace?.support_email && (
-              <Link href={`mailto:${workspace.support_email}`}>
-                <Button className="mt-auto w-full">Contact Us</Button>
-              </Link>
-            )
-          }
+          {workspace?.support_email && (
+            <Link href={`mailto:${workspace.support_email}`}>
+              <Button className="mt-auto w-full">Contact Us</Button>
+            </Link>
+          )}
         </MobileMenu>
         <div className="flex-row gap-1 items-center hidden md:flex">
           <a href={`/`}>

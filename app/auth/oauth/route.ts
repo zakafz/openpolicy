@@ -1,5 +1,3 @@
-// /auth/oauth/route.ts
-
 import { Polar } from "@polar-sh/sdk";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
@@ -117,14 +115,11 @@ export async function GET(request: Request) {
             }
           }
         }
-      } catch (err) {
-        // Silent error handling
-      }
+      } catch (err) {}
 
       const forwardedHost = request.headers.get("x-forwarded-host");
       const isLocalEnv = process.env.NODE_ENV === "development";
 
-      // Check if user has any workspaces
       let finalNext = next;
       if (next === "/dashboard") {
         try {
@@ -140,14 +135,12 @@ export async function GET(request: Request) {
               .eq("owner_id", user.id)
               .limit(1);
 
-            // If user has no workspaces, redirect to /create
             if (!workspaces || workspaces.length === 0) {
               finalNext = "/create";
             }
           }
         } catch (err) {
           console.error("Error checking workspaces:", err);
-          // On error, keep default redirect
         }
       }
 

@@ -33,7 +33,6 @@ export function NavMain({
       url: string;
     }[];
   }[];
-  // optional mapping of submenu title (lowercased) -> count to display on the right
   counts?: Record<string, number | string>;
 }) {
   const pathname = usePathname();
@@ -67,7 +66,6 @@ export function NavMain({
           return (
             <Collapsible
               key={item.title}
-              // defaultOpen is provided by the precomputed value from the caller (item.defaultOpen)
               defaultOpen={true}
               className="group/collapsible"
             >
@@ -104,7 +102,6 @@ export function NavMain({
                             className="flex items-center w-full gap-2"
                           >
                             <span className="truncate">{subItem.title}</span>
-                            {/* Count at the far right of the menu button */}
                             <span className="ml-auto font-mono text-xs text-muted-foreground">
                               {(() => {
                                 if (!counts) return null;

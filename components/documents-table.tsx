@@ -31,9 +31,6 @@ import { createClient } from "@/lib/supabase/client";
 import { readSelectedWorkspaceId } from "@/lib/workspace";
 import { TextShimmer } from "./motion-primitives/text-shimmer";
 
-/**
- * Map document `type` values to icons and human-readable labels.
- */
 const typeIconMap: Record<string, React.ComponentType<any>> = {
   privacy: Shield,
   terms: Handshake,
@@ -61,21 +58,12 @@ type Props = {
   workspaceId?: string;
 };
 
-/**
- * Normalize a type-like value: coerce to string, trim and lowercase.
- * Returns 'other' when the value is empty or not present.
- */
 function normalizeTypeValue(val: any) {
   if (val === undefined || val === null) return "other";
   const s = String(val).trim().toLowerCase();
   return s || "other";
 }
 
-/**
- * Extract a document type from a row using several possible keys.
- * This is defensive: some payloads may contain `type`, `doc_type`, `document_type`,
- * `documentType`, or it may be embedded inside `metadata`. Returns a normalized key.
- */
 function extractType(row: any) {
   if (!row) return "other";
   const keys = ["type", "doc_type", "document_type", "documentType"];
@@ -84,7 +72,6 @@ function extractType(row: any) {
     if (v !== undefined && v !== null) return normalizeTypeValue(v);
   }
 
-  // Check common metadata locations as a fallback
   try {
     const meta = row.metadata ?? row.raw ?? null;
     if (meta && typeof meta === "object") {
@@ -92,16 +79,13 @@ function extractType(row: any) {
       if (mv !== undefined && mv !== null) return normalizeTypeValue(mv);
     }
   } catch {
-    // ignore metadata parsing errors
+    // ignore
   }
 
   return "other";
 }
 
 export default function DocumentsTable({ type, workspaceId }: Props) {
-  // If the caller didn't pass a workspaceId prop, use the selected workspace
-  // from the global provider. This ensures the table always shows documents
-  // scoped to the current workspace.
   const { selectedWorkspaceId } = useWorkspace();
   const effectiveWorkspaceId = workspaceId ?? selectedWorkspaceId;
 
@@ -110,8 +94,6 @@ export default function DocumentsTable({ type, workspaceId }: Props) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // If we don't have a workspace to scope to, show a helpful message rather
-    // than fetching unscoped documents.
     if (!effectiveWorkspaceId) {
       setDocuments([]);
       setLoading(false);
@@ -126,19 +108,15 @@ export default function DocumentsTable({ type, workspaceId }: Props) {
       setError(null);
 
       try {
-        // Prefer the effective workspace id but fall back to the persisted value.
         const workspaceIdToUse =
           effectiveWorkspaceId ?? readSelectedWorkspaceId();
 
-        // Use centralized helper to fetch documents for the workspace. This
-        // keeps query behavior consistent across the app.
         const docs = await fetchDocumentsForWorkspace(
           workspaceIdToUse,
           type ?? null,
           createClient(),
         );
 
-        // normalize to the same variable names used downstream
         const data = docs ?? [];
         const fetchErr = null;
         if (fetchErr) {
@@ -146,8 +124,6 @@ export default function DocumentsTable({ type, workspaceId }: Props) {
           setError("Failed to load documents");
           setDocuments([]);
         } else {
-          // Normalize type for each row and store on a non-conflicting field to avoid
-          // repeatedly normalizing during render.
           const rows = (data as any[] | null) ?? [];
           const normalized = rows.map((r) => ({
             ...r,
@@ -217,9 +193,6 @@ export default function DocumentsTable({ type, workspaceId }: Props) {
             </TableHeader>
             <TableBody>
               {documents.map((d) => {
-                // Normalize the type value from the database to be robust against
-                // casing/whitespace differences, then look up icon/label based on the normalized key.
-                // Prefer a pre-normalized type (set during load). Otherwise extract on-the-fly.
                 const typeKey = d?.__normalized_type ?? extractType(d);
                 const Icon = typeIconMap[typeKey] ?? LayersIcon;
                 const typeLabel = typeLabelMap[typeKey] ?? typeKey;

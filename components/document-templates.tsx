@@ -1,6 +1,7 @@
 import type { DocumentType } from "@/types/documents";
 
-// Content templates per document type (Tiptap JSON)
+// Docs templates (Tiptap JSON)
+// TODO: Make them way better
 export const contentTemplates: Record<DocumentType, any> = {
   privacy: {
     type: "doc",

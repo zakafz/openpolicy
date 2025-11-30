@@ -2,10 +2,8 @@ import { NextResponse } from "next/server";
 import { api as polar } from "@/lib/polar";
 import { createClient } from "@/lib/supabase/server";
 
-// GET /api/polar/customer — return Polar customer for authenticated Supabase user
 export async function GET(req: Request) {
   try {
-    // server-side Supabase client (reads cookies)
     const supabase = await createClient();
     const {
       data: { user },
@@ -16,16 +14,13 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
 
-    // Ensure we pass a string to Polar SDK
     const authId = String(user.id);
 
     try {
-      // Polar SDK: getExternal expects { externalId: string }
       const res: any = await polar.customers.getExternal({
         externalId: authId,
       });
 
-      // Normalize result: SDK might return object directly or nested
       const customer = res?.data ?? res;
 
       if (!customer) {
@@ -42,7 +37,6 @@ export async function GET(req: Request) {
       );
     } catch (err: any) {
       const status = err?.statusCode ?? err?.status ?? 500;
-      // If Polar returns 404 for nonexistent external customer
       if (status === 404) {
         return NextResponse.json({}, { status: 404 });
       }

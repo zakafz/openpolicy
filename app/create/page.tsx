@@ -8,19 +8,22 @@ import { createClient } from "@/lib/supabase/server";
 import { fetchWorkspacesForOwner } from "@/lib/workspace";
 
 export const metadata: Metadata = {
-  title: 'Create a Workspace',
-  description: 'Set up your new workspace and start managing your policy documents. Choose your plan and get started in minutes.',
+  title: "Create a Workspace",
+  description:
+    "Set up your new workspace and start managing your policy documents. Choose your plan and get started in minutes.",
   openGraph: {
-    title: 'Create Your OpenPolicy Workspace',
-    description: 'Set up your workspace and start managing policy documents today.',
-    url: '/create',
+    title: "Create Your OpenPolicy Workspace",
+    description:
+      "Set up your workspace and start managing policy documents today.",
+    url: "/create",
   },
   twitter: {
-    title: 'Create a Workspace - OpenPolicy',
-    description: 'Set up your new workspace and start managing your policy documents.',
+    title: "Create a Workspace - OpenPolicy",
+    description:
+      "Set up your new workspace and start managing your policy documents.",
   },
   robots: {
-    index: false, // Don't index auth-required pages
+    index: false,
     follow: true,
   },
 };

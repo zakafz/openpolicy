@@ -15,14 +15,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  DOCUMENT_TYPE_ICON_MAP,
+  DOCUMENT_TYPE_LABEL_MAP,
+} from "@/lib/constants";
+import {
   readSelectedWorkspaceId,
   writeSelectedWorkspaceId,
 } from "@/lib/workspace";
 import type { DocumentType } from "@/types/documents";
-import {
-  DOCUMENT_TYPE_ICON_MAP,
-  DOCUMENT_TYPE_LABEL_MAP,
-} from "@/lib/constants";
 
 const documentTypes: {
   value: DocumentType;
@@ -30,57 +30,57 @@ const documentTypes: {
   description: string;
   icon: React.ComponentType<any>;
 }[] = [
-    {
-      value: "privacy",
-      label: DOCUMENT_TYPE_LABEL_MAP.privacy,
-      description:
-        "Details what personal data is collected, how it's used, and how it's protected.",
-      icon: DOCUMENT_TYPE_ICON_MAP.privacy,
-    },
-    {
-      value: "terms",
-      label: DOCUMENT_TYPE_LABEL_MAP.terms,
-      description:
-        "An agreement that outlines the rules users must follow to use a website and service, which can include limitations on liability.",
-      icon: DOCUMENT_TYPE_ICON_MAP.terms,
-    },
-    {
-      value: "cookie",
-      label: DOCUMENT_TYPE_LABEL_MAP.cookie,
-      description: "Explains the use of cookies, what they are for.",
-      icon: DOCUMENT_TYPE_ICON_MAP.cookie,
-    },
-    {
-      value: "refund",
-      label: DOCUMENT_TYPE_LABEL_MAP.refund,
-      description: "Explains the refund policy for the product.",
-      icon: DOCUMENT_TYPE_ICON_MAP.refund,
-    },
-    {
-      value: "shipping",
-      label: DOCUMENT_TYPE_LABEL_MAP.shipping,
-      description: "Explains the shipping policy for the product.",
-      icon: DOCUMENT_TYPE_ICON_MAP.shipping,
-    },
-    {
-      value: "intellectual-property",
-      label: DOCUMENT_TYPE_LABEL_MAP["intellectual-property"],
-      description: "Explains the intellectual property policy for the product.",
-      icon: DOCUMENT_TYPE_ICON_MAP["intellectual-property"],
-    },
-    {
-      value: "data-protection",
-      label: DOCUMENT_TYPE_LABEL_MAP["data-protection"],
-      description: "Explains the data protection policy for the product.",
-      icon: DOCUMENT_TYPE_ICON_MAP["data-protection"],
-    },
-    {
-      value: "other",
-      label: DOCUMENT_TYPE_LABEL_MAP.other,
-      description: "Other type of document",
-      icon: DOCUMENT_TYPE_ICON_MAP.other,
-    },
-  ];
+  {
+    value: "privacy",
+    label: DOCUMENT_TYPE_LABEL_MAP.privacy,
+    description:
+      "Details what personal data is collected, how it's used, and how it's protected.",
+    icon: DOCUMENT_TYPE_ICON_MAP.privacy,
+  },
+  {
+    value: "terms",
+    label: DOCUMENT_TYPE_LABEL_MAP.terms,
+    description:
+      "An agreement that outlines the rules users must follow to use a website and service, which can include limitations on liability.",
+    icon: DOCUMENT_TYPE_ICON_MAP.terms,
+  },
+  {
+    value: "cookie",
+    label: DOCUMENT_TYPE_LABEL_MAP.cookie,
+    description: "Explains the use of cookies, what they are for.",
+    icon: DOCUMENT_TYPE_ICON_MAP.cookie,
+  },
+  {
+    value: "refund",
+    label: DOCUMENT_TYPE_LABEL_MAP.refund,
+    description: "Explains the refund policy for the product.",
+    icon: DOCUMENT_TYPE_ICON_MAP.refund,
+  },
+  {
+    value: "shipping",
+    label: DOCUMENT_TYPE_LABEL_MAP.shipping,
+    description: "Explains the shipping policy for the product.",
+    icon: DOCUMENT_TYPE_ICON_MAP.shipping,
+  },
+  {
+    value: "intellectual-property",
+    label: DOCUMENT_TYPE_LABEL_MAP["intellectual-property"],
+    description: "Explains the intellectual property policy for the product.",
+    icon: DOCUMENT_TYPE_ICON_MAP["intellectual-property"],
+  },
+  {
+    value: "data-protection",
+    label: DOCUMENT_TYPE_LABEL_MAP["data-protection"],
+    description: "Explains the data protection policy for the product.",
+    icon: DOCUMENT_TYPE_ICON_MAP["data-protection"],
+  },
+  {
+    value: "other",
+    label: DOCUMENT_TYPE_LABEL_MAP.other,
+    description: "Other type of document",
+    icon: DOCUMENT_TYPE_ICON_MAP.other,
+  },
+];
 
 export default function NewDocumentShell({
   workspaceId: propWorkspaceId,
@@ -227,7 +227,7 @@ export default function NewDocumentShell({
           const body = await res.json().catch(() => null);
           setError(
             body?.message ??
-            "Slug already in use. Pick a different slug and try again.",
+              "Slug already in use. Pick a different slug and try again.",
           );
         } else {
           const body = await res.json().catch(() => null);
@@ -344,30 +344,30 @@ export default function NewDocumentShell({
           </FieldDescription>
         </Field>
 
-          <Field className="gap-2">
-            <FieldLabel htmlFor="status">Status</FieldLabel>
-            <Select
-              aria-label="Select status"
-              value={status}
-              onValueChange={(val) => setStatus(val as any)}
-            >
-              <SelectTrigger className="bg-card">
-                <SelectValue className={"capitalize"}>{status}</SelectValue>
-              </SelectTrigger>
-              <SelectPopup>
-                <SelectItem value="draft" className={"capitalize"}>
-                  draft
-                </SelectItem>
-                <SelectItem value="published" className={"capitalize"}>
-                  published
-                </SelectItem>
-                <SelectItem value="archived" className={"capitalize"}>
-                  archived
-                </SelectItem>
-              </SelectPopup>
-            </Select>
-            <FieldDescription>Document workflow status</FieldDescription>
-          </Field>
+        <Field className="gap-2">
+          <FieldLabel htmlFor="status">Status</FieldLabel>
+          <Select
+            aria-label="Select status"
+            value={status}
+            onValueChange={(val) => setStatus(val as any)}
+          >
+            <SelectTrigger className="bg-card">
+              <SelectValue className={"capitalize"}>{status}</SelectValue>
+            </SelectTrigger>
+            <SelectPopup>
+              <SelectItem value="draft" className={"capitalize"}>
+                draft
+              </SelectItem>
+              <SelectItem value="published" className={"capitalize"}>
+                published
+              </SelectItem>
+              <SelectItem value="archived" className={"capitalize"}>
+                archived
+              </SelectItem>
+            </SelectPopup>
+          </Select>
+          <FieldDescription>Document workflow status</FieldDescription>
+        </Field>
       </FieldGroup>
 
       <div className="rounded-b-xl border-t bg-accent/60 p-4 w-full">

@@ -11,7 +11,7 @@ import {
   Globe,
   Handshake,
   Monitor,
-  Shield
+  Shield,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { NavDocuments } from "@/components/nav-documents";
@@ -122,9 +122,6 @@ export function AppSidebar(props: {
   const navMainItems = useMemo(() => {
     const items = [...data.navMain];
     if (props.isAdmin) {
-      // Check if Monitors is already there to avoid duplicates if re-rendering (though useMemo handles deps)
-      // Actually, since we clone data.navMain which is static, we can just unshift.
-      // But let's be safe and create a new array.
       return [
         {
           title: "Monitors",
@@ -137,7 +134,6 @@ export function AppSidebar(props: {
     return items;
   }, [props.isAdmin]);
 
-  // document counts for sidebar (scoped to selected workspace)
   const [docCounts, setDocCounts] = useState({
     all: 0,
     published: 0,
@@ -147,7 +143,6 @@ export function AppSidebar(props: {
   const [countsLoading, setCountsLoading] = useState(false);
   const [isFree, setIsFree] = useState(true);
 
-  // Sync internal state with prop updates (e.g. if parent refetches)
   useEffect(() => {
     if (props.workspaces) {
       setWorkspaces(props.workspaces);
@@ -158,7 +153,6 @@ export function AppSidebar(props: {
     let cancelled = false;
 
     async function loadCounts() {
-      // Prefer context selection but fallback to persisted selection in localStorage.
       const workspaceIdToUse = selectedWorkspaceId ?? readSelectedWorkspaceId();
 
       if (!workspaceIdToUse) {
@@ -168,8 +162,6 @@ export function AppSidebar(props: {
 
       setCountsLoading(true);
       try {
-        // Use centralized helper which performs the head/count queries and returns
-        // a structured object. Pass a client instance for client-side execution.
         const counts = await fetchWorkspaceDocumentCounts(
           workspaceIdToUse,
           createClient(),
@@ -194,7 +186,6 @@ export function AppSidebar(props: {
 
     loadCounts();
 
-    // Listen for global "document-updated" events to re-fetch counts
     function handleDocUpdate() {
       loadCounts();
     }
@@ -206,10 +197,11 @@ export function AppSidebar(props: {
     };
   }, [selectedWorkspaceId]);
 
-  // Check if workspace is on free plan
   useEffect(() => {
     async function checkPlan() {
-      const ws = workspaces.find((w) => String(w.id) === String(selectedWorkspaceId));
+      const ws = workspaces.find(
+        (w) => String(w.id) === String(selectedWorkspaceId),
+      );
       if (!ws) {
         setIsFree(true);
         return;
@@ -218,14 +210,12 @@ export function AppSidebar(props: {
         const result = await isFreePlan(ws.plan ?? null);
         setIsFree(result);
       } catch (e) {
-        // On error, default to free to be safe
         setIsFree(true);
       }
     }
     checkPlan();
   }, [selectedWorkspaceId, workspaces]);
 
-  // memoized counts map for passing to NavMain
   const navCounts = useMemo(
     () => ({
       all: docCounts.all,
@@ -237,11 +227,6 @@ export function AppSidebar(props: {
   );
 
   useEffect(() => {
-    // Ensure selected workspace details (slug) are available.
-    // If the selectedWorkspaceId exists but we don't have its slug in the
-    // `workspaces` state (for example because the initial fetch didn't include it),
-    // fetch the single workspace by id and merge it into state so previewHref can
-    // build a valid URL.
     let cancelled = false;
 
     async function ensureWorkspace() {
@@ -252,7 +237,6 @@ export function AppSidebar(props: {
       if (existing && existing.slug) return;
 
       try {
-        // Use a lightweight client and the central helper to fetch the workspace.
         const supabaseClient = createClient();
         const ws = await fetchWorkspaceById(
           selectedWorkspaceId,
@@ -269,9 +253,8 @@ export function AppSidebar(props: {
               plan: (ws as any).plan ?? "Free",
               slug: (ws as any).slug ?? null,
               custom_domain: (ws as any).custom_domain ?? null,
-            } as WorkspaceRow; // cast to match type
+            } as WorkspaceRow;
             if (found) {
-              // update existing entry with any missing slug field
               return prev.map((p) =>
                 String(p.id) === String(ws.id) ? { ...p, ...mapped } : p,
               );
@@ -280,7 +263,6 @@ export function AppSidebar(props: {
           });
         }
       } catch (e) {
-        // Non-fatal; if this fails the preview button will remain disabled.
         console.warn("[AppSidebar] ensureWorkspace fetch failed", e);
       }
     }
@@ -309,7 +291,9 @@ export function AppSidebar(props: {
 
   const customDomainHref = useMemo(() => {
     if (!selectedWorkspaceId) return null;
-    const ws = workspaces.find((w) => String(w.id) === String(selectedWorkspaceId));
+    const ws = workspaces.find(
+      (w) => String(w.id) === String(selectedWorkspaceId),
+    );
     const customDomain = (ws as any)?.custom_domain;
     if (!customDomain) return null;
     return `https://${customDomain}`;

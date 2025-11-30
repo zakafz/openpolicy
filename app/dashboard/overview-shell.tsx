@@ -1,9 +1,11 @@
 "use client";
 
+import Link from "next/link";
 import * as React from "react";
 import PageTitle from "@/components/dashboard-page-title";
 import RecentDocumentsTable from "@/components/recent-documents-table";
 import { StatsSkeleton } from "@/components/skeletons";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   ErrorWorkspace,
@@ -14,11 +16,9 @@ import {
 import { useWorkspace } from "@/context/workspace";
 import useWorkspaceLoader from "@/hooks/use-workspace-loader";
 import { fetchWorkspaceDocumentCounts } from "@/lib/documents";
+import { FREE_PLAN_LIMITS, PRO_PLAN_LIMITS } from "@/lib/limits";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
-import { FREE_PLAN_LIMITS, PRO_PLAN_LIMITS } from "@/lib/limits";
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
 
 export default function OverviewShell(): React.ReactElement {
   const { selectedWorkspaceId } = useWorkspace();
@@ -48,7 +48,9 @@ export default function OverviewShell(): React.ReactElement {
         if (res.ok) {
           const data = await res.json();
           setIsFreePlanState(data.isFree);
-          const limit = data.isFree ? FREE_PLAN_LIMITS.documents : PRO_PLAN_LIMITS.documents;
+          const limit = data.isFree
+            ? FREE_PLAN_LIMITS.documents
+            : PRO_PLAN_LIMITS.documents;
           setPlanLimit(Number.isFinite(limit) ? limit : null);
         }
       } catch (e) {
@@ -135,7 +137,12 @@ export default function OverviewShell(): React.ReactElement {
   return (
     <>
       {planLimit !== null && (
-        <div className={cn("mb-8 rounded-xl p-6", stats.all >= planLimit ? "bg-destructive/5" : "bg-accent")}>
+        <div
+          className={cn(
+            "mb-8 rounded-xl p-6",
+            stats.all >= planLimit ? "bg-destructive/5" : "bg-accent",
+          )}
+        >
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="font-medium">
@@ -166,15 +173,10 @@ export default function OverviewShell(): React.ReactElement {
               <div
                 className={cn(
                   "h-full rounded-full transition-all",
-                  stats.all >= planLimit
-                    ? "bg-destructive/90"
-                    : "bg-primary",
+                  stats.all >= planLimit ? "bg-destructive/90" : "bg-primary",
                 )}
                 style={{
-                  width: `${Math.min(
-                    100,
-                    (stats.all / planLimit) * 100,
-                  )}%`,
+                  width: `${Math.min(100, (stats.all / planLimit) * 100)}%`,
                 }}
               />
             </div>

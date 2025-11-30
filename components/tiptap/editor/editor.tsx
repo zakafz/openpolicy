@@ -513,7 +513,12 @@ export function Editor({
           className="simple-editor-content"
         />
       ) : (
-        <Frame className={cn("max-h-[calc(100vh-24px)] h-[calc(100vh-24px)] mt-3 flex", className)}>
+        <Frame
+          className={cn(
+            "max-h-[calc(100vh-24px)] h-[calc(100vh-24px)] mt-3 flex",
+            className,
+          )}
+        >
           <FrameHeader className="flex flex-row justify-between py-1!">
             {!readOnly && (
               <Toolbar
@@ -522,8 +527,8 @@ export function Editor({
                 style={{
                   ...(isMobile
                     ? {
-                      bottom: `calc(100% - ${height - rect.y}px)`,
-                    }
+                        bottom: `calc(100% - ${height - rect.y}px)`,
+                      }
                     : {}),
                 }}
               >
@@ -550,7 +555,12 @@ export function Editor({
             <EditorContent
               editor={editor}
               role="presentation"
-              className={cn("md:py-20! py-5!", hideActions ? "simple-editor-content" : "simple-editor-content-edit ")}
+              className={cn(
+                "md:py-20! py-5!",
+                hideActions
+                  ? "simple-editor-content"
+                  : "simple-editor-content-edit ",
+              )}
             />
           </FramePanel>
         </Frame>

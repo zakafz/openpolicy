@@ -15,7 +15,7 @@ export async function isFreePlan(planId: string | null): Promise<boolean> {
 
   try {
     const product = await api.products.get({ id: planId });
-    const isFree = product.prices.some(price => price.amountType === 'free');
+    const isFree = product.prices.some((price) => price.amountType === "free");
     return isFree;
   } catch (e) {
     return true;

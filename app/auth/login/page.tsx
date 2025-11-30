@@ -7,8 +7,9 @@ import Section from "@/components/section";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
-  title: 'Login',
-  description: 'Sign in to your OpenPolicy account to manage your policy documents and workspaces.',
+  title: "Login",
+  description:
+    "Sign in to your OpenPolicy account to manage your policy documents and workspaces.",
   robots: {
     index: false,
     follow: true,

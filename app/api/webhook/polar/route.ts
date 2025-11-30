@@ -3,32 +3,25 @@ import * as Sentry from "@sentry/nextjs";
 import { createServiceClient } from "@/lib/supabase/service";
 import { fetchWorkspacesForOwner } from "@/lib/workspace";
 
-// Helper: fetch a remote image and upload to Supabase Storage (server-side)
-// This uses the service-role Supabase client (svc) passed in to perform the upload.
-// Bucket is expected to be configured (public in your case).
 async function uploadRemoteImageToBucket(
   supabaseServiceClient: any,
   remoteUrl: string,
   bucketName: string,
   destPath: string,
 ) {
-  // fetch remote image
   const res = await fetch(remoteUrl);
   if (!res.ok) throw new Error(`Failed to fetch remote image: ${res.status}`);
   const arrayBuffer = await res.arrayBuffer();
-  // Buffer is available in Node.js runtime for Next.js server functions
   const buffer = Buffer.from(arrayBuffer);
   const contentType =
     res.headers.get("content-type") || "application/octet-stream";
 
-  // upload to storage (upsert true to overwrite)
   const { error: uploadError } = await supabaseServiceClient.storage
     .from(bucketName)
     .upload(destPath, buffer, { contentType, upsert: true });
 
   if (uploadError) throw uploadError;
 
-  // get public URL (bucket is public)
   const { publicURL } = supabaseServiceClient.storage
     .from(bucketName)
     .getPublicUrl(destPath);
@@ -36,7 +29,6 @@ async function uploadRemoteImageToBucket(
   return { publicURL, path: destPath };
 }
 
-// Finalize a pending workspace by correlating webhook payload to pending_workspaces.
 async function finalizePendingWorkspace({
   svc,
   pendingWorkspaceId,
@@ -51,7 +43,6 @@ async function finalizePendingWorkspace({
   customerId?: string | null;
 }) {
   try {
-    // Build candidate queries in priority order
     const candidateQueries = [];
 
     if (pendingWorkspaceId) {
@@ -138,13 +129,12 @@ async function finalizePendingWorkspace({
       });
     }
 
-    // Try all candidates in order
     let pending: any = null;
     for (const { query, label } of candidateQueries) {
       const { data, error } = await query;
       if (error) {
         Sentry.captureException(error, {
-          tags: { context: 'finalizePendingWorkspace', query_label: label },
+          tags: { context: "finalizePendingWorkspace", query_label: label },
         });
         continue;
       }
@@ -154,7 +144,6 @@ async function finalizePendingWorkspace({
       }
     }
 
-    // Final fallback: try heuristics if still not found but identifiers present
     if (
       !pending &&
       (pendingWorkspaceId || customerExternalId || customerEmail || customerId)
@@ -179,7 +168,6 @@ async function finalizePendingWorkspace({
             return true;
           if (customerId && String(r.customer_id) === String(customerId))
             return true;
-          // metadata-based
           const md = r.metadata ?? {};
           if (
             customerExternalId &&
@@ -195,7 +183,6 @@ async function finalizePendingWorkspace({
           return false;
         });
         if (pending) {
-          // Matched via heuristic
         }
       }
     }
@@ -204,7 +191,6 @@ async function finalizePendingWorkspace({
       return;
     }
 
-    // Prevent duplicates (fetch workspaces for owner)
     let duplicateFound = false;
     try {
       const ownerWorkspaces = await fetchWorkspacesForOwner(
@@ -220,7 +206,7 @@ async function finalizePendingWorkspace({
       }
     } catch (existsErr) {
       Sentry.captureException(existsErr, {
-        tags: { context: 'finalizePendingWorkspace', step: 'check_duplicates' },
+        tags: { context: "finalizePendingWorkspace", step: "check_duplicates" },
       });
     }
 
@@ -229,7 +215,6 @@ async function finalizePendingWorkspace({
       return;
     }
 
-    // Pick a logo
     const logos: any = [
       "https://unblast.com/wp-content/uploads/2018/08/Gradient-Mesh-27.jpg",
       "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRbSkfgIzrobEXcqjh4iQEKOx9XN3dwebM24ZH6HtGH_cwiiGKrdT86DPAMqVINbAUjPnw&usqp=CAU",
@@ -240,7 +225,6 @@ async function finalizePendingWorkspace({
       pending?.metadata?.logo ??
       logos[Math.floor(Math.random() * logos.length)];
 
-    // Try to create the workspace
     let workspace = null;
     let createErr = null;
     try {
@@ -250,7 +234,6 @@ async function finalizePendingWorkspace({
           name: pending.name,
           owner_id: pending.owner_id,
           plan: pending.plan,
-          // store the chosen remote URL initially; we'll attempt to upload it to storage below
           logo: chosenLogo,
           slug: pending.slug ?? pending.metadata?.slug ?? null,
         })
@@ -264,7 +247,7 @@ async function finalizePendingWorkspace({
 
     if (createErr || !workspace) {
       Sentry.captureException(createErr, {
-        tags: { context: 'finalizePendingWorkspace', step: 'create_workspace' },
+        tags: { context: "finalizePendingWorkspace", step: "create_workspace" },
         extra: { pendingId: pending.id, workspaceName: pending.name },
       });
       try {
@@ -280,13 +263,12 @@ async function finalizePendingWorkspace({
           .eq("id", pending.id);
       } catch (annotateErr) {
         Sentry.captureException(annotateErr, {
-          tags: { context: 'finalizePendingWorkspace', step: 'annotate_error' },
+          tags: { context: "finalizePendingWorkspace", step: "annotate_error" },
         });
       }
       return;
     }
 
-    // Successfully created workspace; attempt to upload chosen remote logo into storage and update DB
     try {
       const bucketName = "workspace-logos";
       const ext = String(chosenLogo).split(".").pop()?.split("?")[0] ?? "jpg";
@@ -300,32 +282,26 @@ async function finalizePendingWorkspace({
           destPath,
         );
 
-        // Update workspace record with public URL and storage path
         await svc
           .from("workspaces")
           .update({ logo: publicURL, logo_path: path })
           .eq("id", workspace.id);
-      } catch (logoErr) {
-      }
-    } catch (e) {
-    }
+      } catch (logoErr) {}
+    } catch (e) {}
 
-    // Delete pending row now that workspace is created
     try {
       await svc.from("pending_workspaces").delete().eq("id", pending.id);
     } catch (delErr) {
       Sentry.captureException(delErr, {
-        tags: { context: 'finalizePendingWorkspace', step: 'cleanup_pending' },
+        tags: { context: "finalizePendingWorkspace", step: "cleanup_pending" },
       });
     }
   } catch (e) {
     Sentry.captureException(e, {
-      tags: { context: 'finalizePendingWorkspace', step: 'general_error' },
+      tags: { context: "finalizePendingWorkspace", step: "general_error" },
     });
   }
 }
-
-// POST webhook handler
 
 export const POST = Webhooks({
   webhookSecret: process.env.POLAR_WEBHOOK_SECRET!,
@@ -447,7 +423,6 @@ export const POST = Webhooks({
       metaCustomerId ??
       null;
 
-
     await finalizePendingWorkspace({
       svc,
       pendingWorkspaceId,
@@ -484,7 +459,7 @@ export const POST = Webhooks({
       }
     } catch (err) {
       Sentry.captureException(err, {
-        tags: { context: 'onSubscriptionCanceled' },
+        tags: { context: "onSubscriptionCanceled" },
       });
     }
   },
@@ -516,7 +491,7 @@ export const POST = Webhooks({
       }
     } catch (err) {
       Sentry.captureException(err, {
-        tags: { context: 'onSubscriptionRevoked' },
+        tags: { context: "onSubscriptionRevoked" },
       });
     }
   },

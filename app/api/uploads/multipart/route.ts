@@ -2,16 +2,8 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 
-// POST /api/uploads/multipart
-// Accepts multipart/form-data with:
-// - `file` (required)
-// - `workspaceId` (optional) — when provided, verifies requester owns the workspace
-// - `isLogo` (optional) — if truthy and workspaceId provided, saved as workspace logo
-// Returns: { ok: true, publicURL: string, path: string }
-// Notes: runs server-side; uses service-role Supabase client for storage writes and verifies ownership when applicable.
 export async function POST(req: Request) {
   try {
-    // Parse incoming multipart/form-data
     const form = await req.formData();
 
     const fileField = form.get("file");
@@ -22,15 +14,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
-    // fileField is a File-like object from the Fetch API
-    // Use its properties and arrayBuffer() to get bytes
     const incomingFile: File = fileField as File;
     const originalName = incomingFile.name ?? `upload-${Date.now()}`;
     const contentType = incomingFile.type || undefined;
     const arrayBuffer = await incomingFile.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    // Optional auth: if workspaceId provided, verify owner using session client
     const sessionClient = await createClient();
     const {
       data: { user },
@@ -49,7 +38,6 @@ export async function POST(req: Request) {
         );
       }
 
-      // Verify workspace ownership
       const { data: wsData, error: wsErr } = await svc
         .from("workspaces")
         .select("owner_id")
@@ -75,7 +63,6 @@ export async function POST(req: Request) {
       }
     }
 
-    // Build destination path
     const safeName = String(originalName).replace(/[^a-zA-Z0-9_.-]/g, "-");
     const timestamp = Date.now();
     const bucket = "workspace-logos";
@@ -83,7 +70,6 @@ export async function POST(req: Request) {
       ? `uploads/${workspaceId}/${timestamp}-${safeName}`
       : `uploads/${timestamp}-${safeName}`;
 
-    // Optional upload size limit
     const MAX_BYTES = Number(process.env.UPLOAD_MAX_BYTES ?? 8 * 1024 * 1024);
     if (buffer.length > MAX_BYTES) {
       return NextResponse.json({ error: "File too large" }, { status: 413 });
@@ -92,7 +78,6 @@ export async function POST(req: Request) {
     const uploadOptions: any = { upsert: true };
     if (contentType) uploadOptions.contentType = contentType;
 
-    // Upload to Supabase Storage using service client
     const { error: uploadError } = await svc.storage
       .from(bucket)
       .upload(destPath, buffer, uploadOptions);
@@ -104,7 +89,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // Get public URL (bucket expected to be public)
     const { data: publicUrlData } = svc.storage
       .from(bucket)
       .getPublicUrl(destPath);
@@ -113,7 +97,6 @@ export async function POST(req: Request) {
       (publicUrlData as any)?.publicURL ??
       "";
 
-    // If flagged as a logo and workspaceId present, persist to workspaces row
     if (workspaceId && isLogo) {
       try {
         await svc
@@ -129,7 +112,6 @@ export async function POST(req: Request) {
           "uploads/multipart: warning - failed to update workspace with logo",
           e,
         );
-        // continue and return success for the upload itself
       }
     }
 

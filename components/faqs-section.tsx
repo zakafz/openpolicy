@@ -12,8 +12,8 @@ export function FaqsSection() {
         <h2 className="font-medium text-3xl">Frequently Asked Questions</h2>
         <p className="max-w-2xl text-sm text-muted-foreground">
           Here are some common questions and answers that you might encounter
-          when using OpenPolicy. If you don't find the answer you're looking for,
-          feel free to reach out.
+          when using OpenPolicy. If you don't find the answer you're looking
+          for, feel free to reach out.
         </p>
       </div>
       <Accordion

@@ -43,6 +43,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import useWorkspaceLoader from "@/hooks/use-workspace-loader";
 import {
   DOCUMENT_TYPE_ICON_MAP,
   DOCUMENT_TYPE_LABEL_MAP,
@@ -51,7 +52,6 @@ import { fetchDocumentsForWorkspace } from "@/lib/documents";
 import { createClient } from "@/lib/supabase/client";
 import { timeAgo } from "@/lib/utils";
 import { readSelectedWorkspaceId } from "@/lib/workspace";
-import useWorkspaceLoader from "@/hooks/use-workspace-loader";
 
 export default function DocumentsShell(props: {
   type: "published" | "draft" | "archived" | "all";
@@ -89,8 +89,7 @@ export default function DocumentsShell(props: {
       const id = readSelectedWorkspaceId();
       if (!id) return;
       setWorkspaceId(id);
-    } catch {
-    }
+    } catch {}
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -212,12 +211,13 @@ export default function DocumentsShell(props: {
                     <TableCell>
                       <Badge variant="outline" className="capitalize">
                         <span
-                          className={`size-1.5 rounded-full ${d.status === "published"
-                            ? "bg-info"
-                            : d.status === "archived"
-                              ? "bg-muted-foreground/60"
-                              : "bg-amber-500"
-                            }`}
+                          className={`size-1.5 rounded-full ${
+                            d.status === "published"
+                              ? "bg-info"
+                              : d.status === "archived"
+                                ? "bg-muted-foreground/60"
+                                : "bg-amber-500"
+                          }`}
                           aria-hidden="true"
                         />
                         {d.status}
@@ -226,9 +226,7 @@ export default function DocumentsShell(props: {
                     <TableCell>
                       <Badge variant="secondary">{timeAgo(d.updated_at)}</Badge>
                     </TableCell>
-                    <TableCell
-                      title={new Date(d.created_at).toLocaleString()}
-                    >
+                    <TableCell title={new Date(d.created_at).toLocaleString()}>
                       {timeAgo(d.created_at)}
                     </TableCell>
                     <TableCell className="text-right">
@@ -273,17 +271,20 @@ export default function DocumentsShell(props: {
                                   onClick={async () => {
                                     setActionLoading(d.id);
                                     try {
-                                      const res = await fetch("/api/documents", {
-                                        method: "PUT",
-                                        headers: {
-                                          "Content-Type": "application/json",
+                                      const res = await fetch(
+                                        "/api/documents",
+                                        {
+                                          method: "PUT",
+                                          headers: {
+                                            "Content-Type": "application/json",
+                                          },
+                                          body: JSON.stringify({
+                                            id: d.id,
+                                            status: "draft",
+                                            published: false,
+                                          }),
                                         },
-                                        body: JSON.stringify({
-                                          id: d.id,
-                                          status: "draft",
-                                          published: false,
-                                        }),
-                                      });
+                                      );
                                       if (res.ok) {
                                         window.dispatchEvent(
                                           new CustomEvent("document-updated"),
@@ -355,7 +356,9 @@ export default function DocumentsShell(props: {
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
-                            <AlertDialogClose render={<Button variant="ghost" />}>
+                            <AlertDialogClose
+                              render={<Button variant="ghost" />}
+                            >
                               Cancel
                             </AlertDialogClose>
                             <AlertDialogClose
@@ -365,13 +368,16 @@ export default function DocumentsShell(props: {
                                   onClick={async () => {
                                     setActionLoading(d.id);
                                     try {
-                                      const res = await fetch("/api/documents", {
-                                        method: "DELETE",
-                                        headers: {
-                                          "Content-Type": "application/json",
+                                      const res = await fetch(
+                                        "/api/documents",
+                                        {
+                                          method: "DELETE",
+                                          headers: {
+                                            "Content-Type": "application/json",
+                                          },
+                                          body: JSON.stringify({ id: d.id }),
                                         },
-                                        body: JSON.stringify({ id: d.id }),
-                                      });
+                                      );
                                       if (res.ok) {
                                         window.dispatchEvent(
                                           new CustomEvent("document-updated"),

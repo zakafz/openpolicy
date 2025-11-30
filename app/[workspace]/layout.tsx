@@ -1,7 +1,7 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { fetchPublishedDocumentsForWorkspace } from "@/lib/documents";
 import { createServiceClient } from "@/lib/supabase/service";
-import type { Metadata } from "next";
 import LayoutShell from "./layout-shell";
 
 export async function generateMetadata({ params }: any): Promise<Metadata> {

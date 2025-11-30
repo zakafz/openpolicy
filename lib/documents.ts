@@ -1,14 +1,8 @@
-/**
- * Document helpers for CRUD operations and queries.
- * Functions throw Supabase errors on failure.
- */
-
 import { createClient } from "@/lib/supabase/client";
 import { createServiceClient } from "@/lib/supabase/service";
 
 type DocumentRow = any;
 
-/** Normalize string to URL-safe slug. */
 export function normalizeSlug(raw: string): string {
   return raw
     .toLowerCase()
@@ -19,12 +13,10 @@ export function normalizeSlug(raw: string): string {
     .replace(/^-+|-+$/g, "");
 }
 
-/** Validate slug format (alphanumeric + dash, max 64 chars). */
 export function isValidSlug(s: string): boolean {
   return /^[a-z0-9][a-z0-9-]{0,63}$/.test(s);
 }
 
-/** Generate unique slug by appending counter. Best-effort if check fails. */
 export async function makeUniqueSlug(
   svc: ReturnType<typeof createServiceClient>,
   base: string,
@@ -42,10 +34,10 @@ export async function makeUniqueSlug(
 
     const { data, error } = await q.limit(1);
     if (error) {
-      console.warn(
-        "makeUniqueSlug: check failed, returning candidate",
-        { error, candidate },
-      );
+      console.warn("makeUniqueSlug: check failed, returning candidate", {
+        error,
+        candidate,
+      });
       return candidate;
     }
 
@@ -57,11 +49,9 @@ export async function makeUniqueSlug(
     candidate = `${base}-${attempt}`;
   }
 
-
   return `${base}-${Date.now()}`;
 }
 
-/** Fetch document by ID. */
 export async function fetchDocumentById(
   id?: string | null,
   supabaseClient?: ReturnType<typeof createClient>,
@@ -79,7 +69,6 @@ export async function fetchDocumentById(
   return (data as DocumentRow) ?? null;
 }
 
-/** Fetch document by slug, optionally scoped to workspace. */
 export async function fetchDocumentBySlug(
   slug?: string | null,
   workspaceId?: string | null,
@@ -96,7 +85,6 @@ export async function fetchDocumentBySlug(
   return (data as DocumentRow) ?? null;
 }
 
-/** Fetch published documents for workspace (most recent first). */
 export async function fetchPublishedDocumentsForWorkspace(
   workspaceId?: string | null,
   supabaseClient?: ReturnType<typeof createClient>,
@@ -119,7 +107,6 @@ export async function fetchPublishedDocumentsForWorkspace(
   return (data as DocumentRow[]) ?? [];
 }
 
-/** Fetch workspace documents with optional status filter. */
 export async function fetchDocumentsForWorkspace(
   workspaceId?: string | null,
   status?: string | null,
@@ -155,7 +142,6 @@ export async function fetchDocumentsForWorkspace(
   }
 }
 
-/** Create document (server-side). */
 export async function createDocument(
   payload: {
     title: string;
@@ -199,7 +185,6 @@ export async function createDocument(
   return created as DocumentRow;
 }
 
-/** Update document by ID (server-side). */
 export async function updateDocument(
   id: string,
   updates: Record<string, any>,
@@ -219,7 +204,6 @@ export async function updateDocument(
   return updated as DocumentRow;
 }
 
-/** Delete document permanently (server-side). */
 export async function deleteDocumentPermanently(
   id: string,
   svc?: ReturnType<typeof createServiceClient>,
@@ -238,7 +222,6 @@ export async function deleteDocumentPermanently(
   return deleted as DocumentRow;
 }
 
-/** Fetch published documents (server-side variant). */
 export async function fetchPublishedDocumentsForWorkspaceServer(
   workspaceId?: string | null,
   svc?: ReturnType<typeof createServiceClient>,
@@ -261,7 +244,6 @@ export async function fetchPublishedDocumentsForWorkspaceServer(
   return (data as DocumentRow[]) ?? [];
 }
 
-/** Fetch document counts by status for workspace. */
 export async function fetchWorkspaceDocumentCounts(
   workspaceId?: string | null,
   supabaseClient?: ReturnType<typeof createClient>,
@@ -276,7 +258,6 @@ export async function fetchWorkspaceDocumentCounts(
   }
 
   const client = supabaseClient ?? createClient();
-
 
   const totalRes = await client
     .from("documents")

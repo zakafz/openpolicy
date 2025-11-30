@@ -9,7 +9,6 @@ import {
   TicketX,
   Truck,
 } from "lucide-react";
-
 export const DOCUMENT_TYPE_ICON_MAP: Record<string, LucideIcon> = {
   privacy: Shield,
   terms: Handshake,
@@ -20,7 +19,6 @@ export const DOCUMENT_TYPE_ICON_MAP: Record<string, LucideIcon> = {
   "data-protection": GlobeIcon,
   other: LayersIcon,
 };
-
 export const DOCUMENT_TYPE_LABEL_MAP: Record<string, string> = {
   privacy: "Privacy Policy",
   terms: "Terms of Service",

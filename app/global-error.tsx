@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect } from "react";
-import { AlertCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import * as Sentry from "@sentry/nextjs";
+import { AlertCircle } from "lucide-react";
+import { useEffect } from "react";
+import { Button } from "@/components/ui/button";
 
 export default function GlobalError({
   error,

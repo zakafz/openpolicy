@@ -9,7 +9,8 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuSeparator, DropdownMenuTrigger
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
   SidebarMenu,
@@ -41,37 +42,26 @@ export function WorkspaceSwitcher({
   const router = useRouter();
 
   React.useEffect(() => {
-    // Keep selected workspace in sync when the prop changes (e.g. first load / updates)
     if (!workspaces || workspaces.length === 0) {
       setWorkspace(null);
       return;
     }
 
-    // Prefer the workspace selected in the global provider if available
     if (selectedWorkspaceId) {
       const found = workspaces.find((w) => w.id === selectedWorkspaceId);
       if (found) {
-        // Only update local display state here. The provider already holds the
-        // canonical selection; calling provider setters from this effect can
-        // trigger the workspace-changed event and cause refetch loops.
         setWorkspace(found);
         return;
       }
     }
 
-    // Otherwise default to the first workspace and persist that selection to the provider
     const first = workspaces[0];
     setWorkspace(first);
     if (!selectedWorkspaceId && first) {
       try {
-        // Only set the provider selection once. Prefer writing the id so the
-        // provider persists to localStorage and dispatches a single workspace-changed event.
-        // Avoid calling the provider setter that may also attempt to write the workspace
-        // object here, which can cause redundant events in some flows.
         if (setSelectedWorkspaceId) {
           setSelectedWorkspaceId(first.id);
         } else if (setSelectedWorkspace) {
-          // Fallback if only the full setter is available.
           setSelectedWorkspace(first);
         }
       } catch (e) {
@@ -86,8 +76,6 @@ export function WorkspaceSwitcher({
     setSelectedWorkspace,
   ]);
 
-  // Selection persistence is handled by WorkspaceProvider (and the provider writes localStorage).
-  // No local persistence required here — this effect intentionally left as a no-op.
   React.useEffect(() => {}, [workspace]);
 
   if (!workspace) {
@@ -145,20 +133,14 @@ export function WorkspaceSwitcher({
               <DropdownMenuItem
                 key={item.id ?? item.name ?? index}
                 onClick={() => {
-                  // Update local display state immediately so the UI feels responsive.
                   setWorkspace(item);
                   try {
-                    // Only update the provider when the selection actually changed.
                     if (selectedWorkspaceId !== item.id) {
-                      // Prefer writing the id to persist selection and avoid double-dispatch.
                       if (setSelectedWorkspaceId) {
                         setSelectedWorkspaceId(item.id);
                       } else if (setSelectedWorkspace) {
-                        // Fallback: set full workspace object if id-only setter isn't available.
                         setSelectedWorkspace(item);
                       }
-                      // Navigate to the dashboard after switching workspaces so the user
-                      // lands on the workspace homepage.
                       try {
                         router.push("/dashboard");
                       } catch {

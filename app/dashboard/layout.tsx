@@ -1,8 +1,8 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { api } from "@/lib/polar";
 import { createClient } from "@/lib/supabase/server";
 import LayoutShell from "./layout-shell";
-import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   robots: {

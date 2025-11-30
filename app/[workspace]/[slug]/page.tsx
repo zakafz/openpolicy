@@ -1,5 +1,5 @@
-import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { Editor as TiptapEditor } from "@/components/tiptap/editor/editor";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -58,7 +58,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const workspaceName = ws.name || ws.slug || "Document Repository";
   const documentName = doc.title || doc.slug || "Document";
   const title = `${documentName} | ${workspaceName}`;
-  const description = `View ${documentName} from ${workspaceName}. Last updated: ${doc.updated_at ? new Date(doc.updated_at).toLocaleDateString() : 'recently'}.`;
+  const description = `View ${documentName} from ${workspaceName}. Last updated: ${doc.updated_at ? new Date(doc.updated_at).toLocaleDateString() : "recently"}.`;
 
   return {
     title: {
@@ -79,7 +79,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     },
   };
 }
-
 
 export default async function Page({ params }: Props) {
   // Next 16: `params` may be a Promise, unwrap it before accessing properties.

@@ -23,7 +23,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // Server-side session client (reads cookies)
     const sessionSupabase = await createClient();
     const {
       data: { user },
@@ -37,10 +36,8 @@ export async function POST(req: Request) {
     const owner_id = user.id;
     const customerEmail = user.email ?? undefined;
 
-    // Service-role client for privileged writes
     const svc = createServiceClient();
 
-    // Resolve or create Polar customer using externalId = supabase user id
     let customerId: string | null = null;
     try {
       const res: any = await polar.customers.getExternal({
@@ -51,7 +48,6 @@ export async function POST(req: Request) {
     } catch (err: any) {
       const status = err?.statusCode ?? err?.status ?? null;
       if (status === 404) {
-        // Customer does not exist in Polar. Try to create one.
         try {
           const createRes: any = await polar.customers.create({
             externalId: String(owner_id),
@@ -60,12 +56,10 @@ export async function POST(req: Request) {
           const created = createRes?.data ?? createRes;
           customerId = created?.id ?? null;
         } catch (createErr: any) {
-          // If creation fails due to existing email (422), try to find existing customer by email
           const createStatus =
             createErr?.statusCode ?? createErr?.status ?? null;
           if (createStatus === 422 && customerEmail) {
             try {
-              // list customers and match by email (best-effort)
               const listRes: any = await polar.customers.list({});
               const list = listRes?.data ?? listRes ?? [];
               if (Array.isArray(list) && list.length > 0) {
@@ -121,14 +115,10 @@ export async function POST(req: Request) {
       );
     }
 
-    // Before creating a subscription, enforce workspace limits (existing + pending)
     const MAX_WORKSPACES = Number(process.env.MAX_WORKSPACES ?? 3);
     try {
       let wsCount = 0;
       try {
-        // Use centralized helper to fetch the owner's workspaces so logic is consistent
-        // across the codebase. We pass the service client so the helper uses the
-        // privileged client in this server context.
         const ownerWorkspaces = await fetchWorkspacesForOwner(owner_id, svc);
         wsCount = Array.isArray(ownerWorkspaces) ? ownerWorkspaces.length : 0;
       } catch (wsErr) {
@@ -172,8 +162,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // Normalize and validate slug server-side (if provided).
-    // We perform uniqueness checks before creating the subscription so we fail fast.
     let normalizedSlug: string | null = null;
     try {
       const rawSlug = typeof slug === "string" ? String(slug) : "";
@@ -186,7 +174,6 @@ export async function POST(req: Request) {
       normalizedSlug = candidate || null;
 
       if (normalizedSlug) {
-        // Validate format: must start with alphanumeric, then alnum or dash, max ~64 chars.
         const slugRe = /^[a-z0-9][a-z0-9-]{0,63}$/;
         if (!slugRe.test(normalizedSlug)) {
           return NextResponse.json(
@@ -195,7 +182,6 @@ export async function POST(req: Request) {
           );
         }
 
-        // Check uniqueness in workspaces
         const { data: existingWs, error: wsErr } = await svc
           .from("workspaces")
           .select("id")
@@ -210,7 +196,6 @@ export async function POST(req: Request) {
           );
         }
 
-        // Check uniqueness in pending_workspaces
         const { data: existingPending, error: pendErr } = await svc
           .from("pending_workspaces")
           .select("id")
@@ -246,7 +231,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // Create subscription for free product. Include workspace info for traceability.
     let subscription: any = null;
     try {
       subscription = await polar.subscriptions.create({
@@ -268,9 +252,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // Create the workspace directly in DB (no pending_workspaces)
     try {
-      // Choose a random logo from a small curated list (we will upload this into the storage bucket)
       const logos = [
         "https://unblast.com/wp-content/uploads/2018/08/Gradient-Mesh-27.jpg",
         "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRbSkfgIzrobEXcqjh4iQEKOx9XN3dwebM24ZH6HtGH_cwiiGKrdT86DPAMqVINbAUjPnw&usqp=CAU",
@@ -279,9 +261,6 @@ export async function POST(req: Request) {
       ];
       const chosenLogo = logos[Math.floor(Math.random() * logos.length)];
 
-      // Insert workspace using service client (privileged). We temporarily store the chosen remote URL
-      // in the `logo` column and then attempt to upload that remote image into the storage bucket
-      // and update the workspace with the storage path + public URL.
       const { data: workspace, error: createErr } = await svc
         .from("workspaces")
         .insert({
@@ -289,7 +268,6 @@ export async function POST(req: Request) {
           owner_id,
           plan: productId,
           logo: chosenLogo,
-          // persist normalized slug if provided, otherwise null
           slug: normalizedSlug || null,
         })
         .select()
@@ -297,25 +275,18 @@ export async function POST(req: Request) {
 
       if (createErr || !workspace) {
         console.error("Failed to create workspace in DB:", createErr);
-        // Note: rollback of Polar subscription is intentionally not performed here.
         return NextResponse.json(
           { error: "Failed to create workspace in DB" },
           { status: 500 },
         );
       }
 
-      // Best-effort: attach polar ids to workspace metadata. Use the server helper
-      // to fetch/verify the created workspace before attempting the update so
-      // callers have a consistent place to centralize workspace reads.
       try {
         const meta = {
           polar_subscription_id: subscription?.id ?? null,
           polar_customer_id: customerId,
         };
 
-        // Verify the workspace exists via the server helper (uses service client)
-        // and then update the metadata. If the helper fails or doesn't return a row,
-        // we still attempt the update as a fallback.
         try {
           const latest = await fetchWorkspaceByIdServer(workspace.id as string);
           if (latest) {
@@ -324,15 +295,12 @@ export async function POST(req: Request) {
               .update({ metadata: meta })
               .eq("id", workspace.id as string);
           } else {
-            // Fallback: attempt update anyway
             await svc
               .from("workspaces")
               .update({ metadata: meta })
               .eq("id", workspace.id as string);
           }
         } catch (fetchErr) {
-          // If helper fails for any reason, attempt the update directly and log
-          // the helper error for diagnostics.
           console.warn("fetchWorkspaceByIdServer failed:", fetchErr);
           await svc
             .from("workspaces")

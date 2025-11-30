@@ -26,9 +26,6 @@ export async function POST(req: Request) {
       );
     }
 
-    const svc = createServiceClient();
-
-    // Resolve or create Polar customer
     let customerId: string | null = providedCustomerId ?? null;
 
     if (!customerId && customerExternalId) {
@@ -41,18 +38,14 @@ export async function POST(req: Request) {
       } catch (err: any) {
         const status = err?.statusCode ?? err?.status ?? null;
         if (status === 404) {
-          // Not found - try to create the Polar customer with externalId
           try {
             const createRes: any = await polar.customers.create({
               externalId: String(customerExternalId!),
-              // If customerEmail is nullish, omit or pass undefined so SDK does not send empty string.
               email: customerEmail ?? "",
             });
             const created = createRes?.data ?? createRes;
             customerId = created?.id ?? null;
           } catch (createErr: any) {
-            // If Polar returns 422 because a customer with this email already exists,
-            // attempt to locate the existing customer by email and use its id.
             const createStatus =
               createErr?.statusCode ?? createErr?.status ?? null;
             if (createStatus === 422 && customerEmail) {
@@ -107,7 +100,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // Create the subscription on Polar for free product.
     try {
       const subscription: any = await polar.subscriptions.create({
         productId: String(productId),
@@ -115,11 +107,6 @@ export async function POST(req: Request) {
         metadata: { pendingWorkspaceId: String(pendingWorkspaceId) },
       });
 
-      // IMPORTANT: Do not perform privileged DB updates here. Avoid updating
-      // `pending_workspaces` from this request to prevent service-role exposure
-      // in a request path that may be retried or raced. The webhook handler is
-      // responsible for finalizing the pending workspace using the metadata we
-      // include above (pendingWorkspaceId).
       console.info("Polar subscription created", {
         subscriptionId: subscription?.id ?? subscription?.data?.id,
         productId: productId,
@@ -128,7 +115,6 @@ export async function POST(req: Request) {
 
       return NextResponse.json({ ok: true, subscription }, { status: 201 });
     } catch (err: any) {
-      // Surface Polar error details where available to aid debugging.
       console.error("Polar subscriptions.create error:", err);
       const status = err?.statusCode ?? err?.status ?? 500;
       const message =

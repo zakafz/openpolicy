@@ -52,6 +52,7 @@ import {
   FrameHeader,
   FramePanel,
 } from "@/components/ui/frame";
+import { Input } from "@/components/ui/input";
 import {
   Menu,
   MenuItem,
@@ -59,13 +60,12 @@ import {
   MenuSeparator,
   MenuTrigger,
 } from "@/components/ui/menu";
+import { toastManager } from "@/components/ui/toast";
+import useWorkspaceLoader from "@/hooks/use-workspace-loader";
 import { fetchDocumentBySlug } from "@/lib/documents";
 import { createClient } from "@/lib/supabase/client";
 import { fmtAbsolute, timeAgo } from "@/lib/utils";
 import { readSelectedWorkspaceId } from "@/lib/workspace";
-import useWorkspaceLoader from "@/hooks/use-workspace-loader";
-import { Input } from "@/components/ui/input";
-import { toastManager } from "@/components/ui/toast";
 
 export default function DocumentShell() {
   const pathname = usePathname();
@@ -91,8 +91,7 @@ export default function DocumentShell() {
     try {
       const id = readSelectedWorkspaceId();
       if (id) setWorkspaceId(id);
-    } catch {
-    }
+    } catch {}
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -101,16 +100,14 @@ export default function DocumentShell() {
       if (e.key === "selectedWorkspace") {
         try {
           router.push("/dashboard");
-        } catch {
-        }
+        } catch {}
       }
     };
 
     const handleWorkspaceChanged = (e: Event) => {
       try {
         router.push("/dashboard");
-      } catch {
-      }
+      } catch {}
     };
 
     if (typeof window !== "undefined") {
@@ -266,12 +263,13 @@ export default function DocumentShell() {
       }
 
       if (existingDocs && existingDocs.length > 0) {
-        setRenameError("A document with this name already exists in this workspace");
+        setRenameError(
+          "A document with this name already exists in this workspace",
+        );
         setRenamingInProgress(false);
         return;
       }
 
-      // Update the document
       const res = await fetch("/api/documents", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -444,17 +442,22 @@ export default function DocumentShell() {
                   size={"lg"}
                 >
                   <span
-                    className={`size-1.5 rounded-full ${doc.status === "published"
-                      ? "bg-info"
-                      : doc.status === "archived"
-                        ? "bg-muted-foreground/60"
-                        : "bg-warning"
-                      }`}
+                    className={`size-1.5 rounded-full ${
+                      doc.status === "published"
+                        ? "bg-info"
+                        : doc.status === "archived"
+                          ? "bg-muted-foreground/60"
+                          : "bg-warning"
+                    }`}
                     aria-hidden="true"
                   />
                   {doc.status}
                 </BadgeCoss>
-                <BadgeCoss variant={"outline"} size={"lg"} className="max-lg:hidden">
+                <BadgeCoss
+                  variant={"outline"}
+                  size={"lg"}
+                  className="max-lg:hidden"
+                >
                   Slug: <span className="font-semibold">{doc.slug ?? "—"}</span>
                 </BadgeCoss>
               </div>
@@ -570,19 +573,18 @@ export default function DocumentShell() {
                                   });
                                   const payload = await res.json();
                                   if (res.ok && payload?.ok) {
-                                    // Dispatch event to update sidebar counts
-                                    window.dispatchEvent(new CustomEvent("document-updated"));
-                                    // navigate back to documents list after deletion
+                                    window.dispatchEvent(
+                                      new CustomEvent("document-updated"),
+                                    );
                                     try {
                                       router.push("/dashboard/documents/all");
                                     } catch {
-                                      // fallback: clear local doc state
                                       setDoc(null);
                                     }
                                   } else {
                                     setInfo(
                                       payload?.error ??
-                                      "Failed to delete document",
+                                        "Failed to delete document",
                                     );
                                   }
                                 } catch (e: any) {
@@ -619,12 +621,13 @@ export default function DocumentShell() {
                                   if (res.ok && payload?.document) {
                                     setDoc(payload.document);
                                     setInfo("Document archived");
-                                    // Dispatch event to update sidebar counts
-                                    window.dispatchEvent(new CustomEvent("document-updated"));
+                                    window.dispatchEvent(
+                                      new CustomEvent("document-updated"),
+                                    );
                                   } else {
                                     setInfo(
                                       payload?.error ??
-                                      "Failed to archive document",
+                                        "Failed to archive document",
                                     );
                                   }
                                 } catch (e: any) {
@@ -644,12 +647,16 @@ export default function DocumentShell() {
                 </AlertDialog>
 
                 {/* Rename Dialog */}
-                <AlertDialog open={renameDialogOpen} onOpenChange={setRenameDialogOpen}>
+                <AlertDialog
+                  open={renameDialogOpen}
+                  onOpenChange={setRenameDialogOpen}
+                >
                   <AlertDialogPopup>
                     <AlertDialogHeader>
                       <AlertDialogTitle>Rename Document</AlertDialogTitle>
                       <AlertDialogDescription>
-                        Enter a new name for "{doc.title}". Document names must be unique within the workspace.
+                        Enter a new name for "{doc.title}". Document names must
+                        be unique within the workspace.
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <Input
@@ -669,7 +676,9 @@ export default function DocumentShell() {
                       autoFocus
                     />
                     {renameError && (
-                      <p className="text-sm text-destructive mt-2">{renameError}</p>
+                      <p className="text-sm text-destructive mt-2">
+                        {renameError}
+                      </p>
                     )}
                     <AlertDialogFooter>
                       <AlertDialogClose render={<Button variant="ghost" />}>
@@ -706,9 +715,13 @@ export default function DocumentShell() {
                         if (res.ok && payload?.document) {
                           setDoc(payload.document);
                           setInfo("Document published");
-                          window.dispatchEvent(new CustomEvent("document-updated"));
+                          window.dispatchEvent(
+                            new CustomEvent("document-updated"),
+                          );
                         } else {
-                          setInfo(payload?.error ?? "Failed to publish document");
+                          setInfo(
+                            payload?.error ?? "Failed to publish document",
+                          );
                         }
                       } catch (e: any) {
                         setInfo(String(e?.message ?? e));
@@ -740,9 +753,13 @@ export default function DocumentShell() {
                         if (res.ok && payload?.document) {
                           setDoc(payload.document);
                           setInfo("Document restored to draft");
-                          window.dispatchEvent(new CustomEvent("document-updated"));
+                          window.dispatchEvent(
+                            new CustomEvent("document-updated"),
+                          );
                         } else {
-                          setInfo(payload?.error ?? "Failed to restore document");
+                          setInfo(
+                            payload?.error ?? "Failed to restore document",
+                          );
                         }
                       } catch (e: any) {
                         setInfo(String(e?.message ?? e));
@@ -774,7 +791,9 @@ export default function DocumentShell() {
                         if (res.ok && payload?.document) {
                           setDoc(payload.document);
                           setInfo("Document unpublished");
-                          window.dispatchEvent(new CustomEvent("document-updated"));
+                          window.dispatchEvent(
+                            new CustomEvent("document-updated"),
+                          );
                         } else {
                           setInfo(
                             payload?.error ?? "Failed to unpublish document",
@@ -805,12 +824,13 @@ export default function DocumentShell() {
                 size={"lg"}
               >
                 <span
-                  className={`size-1.5 rounded-full ${doc.status === "published"
-                    ? "bg-info"
-                    : doc.status === "archived"
-                      ? "bg-muted-foreground/60"
-                      : "bg-warning"
-                    }`}
+                  className={`size-1.5 rounded-full ${
+                    doc.status === "published"
+                      ? "bg-info"
+                      : doc.status === "archived"
+                        ? "bg-muted-foreground/60"
+                        : "bg-warning"
+                  }`}
                   aria-hidden="true"
                 />
                 {doc.status}

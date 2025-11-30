@@ -39,7 +39,7 @@ export function Header() {
       className={cn(
         "fixed top-0 left-1/2 -translate-x-1/2 z-50 max-xl:bg-background max-xl:border-border border-x border-transparent border-b w-full max-w-6xl",
         {
-          "border-border bg-background/95 backdrop-blur-lg supports-[backdrop-filter]:bg-background/50t":
+          "border-border bg-background/95 backdrop-blur-lg supports-backdrop-filter:bg-background/50":
             scrolled,
         },
       )}
@@ -126,7 +126,7 @@ function MobileMenu({ open, children, className, ...props }: MobileMenuProps) {
   return createPortal(
     <div
       className={cn(
-        "bg-background/95 backdrop-blur-lg supports-[backdrop-filter]:bg-background/50",
+        "bg-background/95 backdrop-blur-lg supports-backdrop-filter:bg-background/50",
         "fixed top-14 right-0 bottom-0 left-0 z-40 flex flex-col overflow-hidden border-y md:hidden",
       )}
       id="mobile-menu"
