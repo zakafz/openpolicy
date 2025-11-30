@@ -1,0 +1,22 @@
+## Security Vulnerability Reporting
+
+The OpenPolicy team prioritizes responsible disclosure of security vulnerabilities in our application. We value community contributions to our security posture and commit to responding promptly to all valid reports.
+
+## Reporting Guidelines
+
+To report a potential security issue, contact us directly via email at [support@openpolicy.com](mailto:support@openpolicy.com) or through our dedicated Slack channel.
+
+- Avoid automated scanning tools on our production systems or user interfaces. Reach out first, and we'll provision a testing environment.
+- Refrain from exploiting the issue beyond what's needed for proof-of-concept, such as excess data access or unauthorized changes.
+- Keep the details private until we've addressed and confirmed the fix.
+- Exclude physical attacks, social engineering, DDoS, spam, or third-party app exploits from your testing.
+- Include clear reproduction steps, like affected URLs or vulnerability descriptions. More complex cases may need additional context like code snippets or logs.
+
+## Our Commitments
+
+- We'll acknowledge your report within 5 business days, including an initial assessment and timeline for resolution.
+- Provided you adhere to these guidelines, no legal action will be pursued regarding your disclosure.
+- Your report and personal information remain confidential; we won't share without explicit consent.
+- Regular updates will keep you informed on fix progress.
+- Upon resolution, we'll credit you publicly as the finder (opt-out available on request).
+- We aim for swift resolutions and collaborate on any post-fix disclosure.
