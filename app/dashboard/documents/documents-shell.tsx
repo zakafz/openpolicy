@@ -140,14 +140,13 @@ export default function DocumentsShell(props: {
     : `/dashboard/documents/new`;
 
   return (
-    <>
+    <div className="w-full">
       <PageTitle
         title={title + (documents ? ` (${documents.length})` : "")}
         description={`Manage your ${props.type} documents`}
       />
-
-      <Frame className="w-full">
-        <FramePanel>
+      <Frame className="w-full max-w-full md:max-w-[calc(100vw-16rem-2rem)] md:group-has-data-[state=collapsed]/sidebar-wrapper:max-w-[calc(100vw-3rem-2rem)]">
+        <FramePanel className="overflow-x-auto">
           {loading ? (
             <DocumentsTableSkeleton />
           ) : error ? (
@@ -411,6 +410,6 @@ export default function DocumentsShell(props: {
           )}
         </FramePanel>
       </Frame>
-    </>
+    </div>
   );
 }
