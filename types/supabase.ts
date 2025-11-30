@@ -28,4 +28,9 @@ export interface WorkspaceRow {
   disable_icon: boolean;
   return_url: string | null;
   custom_domain: string | null;
+  subscription_id: string | null;
+  subscription_status: string | null;
+  subscription_current_period_end: string | null;
+  payment_failed_at: string | null;
 }
+

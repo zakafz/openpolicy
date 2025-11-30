@@ -299,7 +299,7 @@ export function AppSidebar(props: {
   }, [selectedWorkspaceId, workspaces]);
 
   return (
-    <Sidebar collapsible="icon" className="z-100">
+    <Sidebar collapsible="icon" className="z-50">
       <SidebarHeader>
         <WorkspaceSwitcher workspaces={workspaces} products={props.products} />
       </SidebarHeader>

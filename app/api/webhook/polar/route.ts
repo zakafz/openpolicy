@@ -314,6 +314,12 @@ export const POST = Webhooks({
       null;
     const customer =
       payload?.data?.customer ?? payload?.data?.subscription?.customer ?? null;
+    
+    const subscription = payload?.data?.subscription ?? payload?.data;
+    const subscriptionId = subscription?.id ?? null;
+    const status = subscription?.status ?? null;
+    const currentPeriodEnd = subscription?.current_period_end ?? null;
+    
     await finalizePendingWorkspace({
       svc,
       pendingWorkspaceId,
@@ -321,6 +327,23 @@ export const POST = Webhooks({
       customerEmail: customer?.email ?? null,
       customerId: customer?.id ?? null,
     });
+    
+    if (subscriptionId && customer?.externalId) {
+      try {
+        await svc
+          .from("workspaces")
+          .update({
+            subscription_id: subscriptionId,
+            subscription_status: status,
+            subscription_current_period_end: currentPeriodEnd,
+          })
+          .eq("owner_id", customer.externalId);
+      } catch (err) {
+        Sentry.captureException(err, {
+          tags: { context: "onSubscriptionCreated", step: "update_subscription" },
+        });
+      }
+    }
   },
 
   onSubscriptionUpdated: async (payload: any) => {
@@ -331,6 +354,12 @@ export const POST = Webhooks({
       null;
     const customer =
       payload?.data?.customer ?? payload?.data?.subscription?.customer ?? null;
+    
+    const subscription = payload?.data?.subscription ?? payload?.data;
+    const subscriptionId = subscription?.id ?? null;
+    const status = subscription?.status ?? null;
+    const currentPeriodEnd = subscription?.current_period_end ?? null;
+    
     await finalizePendingWorkspace({
       svc,
       pendingWorkspaceId,
@@ -338,6 +367,22 @@ export const POST = Webhooks({
       customerEmail: customer?.email ?? null,
       customerId: customer?.id ?? null,
     });
+    
+    if (subscriptionId) {
+      try {
+        await svc
+          .from("workspaces")
+          .update({
+            subscription_status: status,
+            subscription_current_period_end: currentPeriodEnd,
+          })
+          .eq("subscription_id", subscriptionId);
+      } catch (err) {
+        Sentry.captureException(err, {
+          tags: { context: "onSubscriptionUpdated", step: "update_status" },
+        });
+      }
+    }
   },
 
   onSubscriptionActive: async (payload: any) => {
@@ -348,6 +393,11 @@ export const POST = Webhooks({
       null;
     const customer =
       payload?.data?.customer ?? payload?.data?.subscription?.customer ?? null;
+    
+    const subscription = payload?.data?.subscription ?? payload?.data;
+    const subscriptionId = subscription?.id ?? null;
+    const currentPeriodEnd = subscription?.current_period_end ?? null;
+    
     await finalizePendingWorkspace({
       svc,
       pendingWorkspaceId,
@@ -355,6 +405,22 @@ export const POST = Webhooks({
       customerEmail: customer?.email ?? null,
       customerId: customer?.id ?? null,
     });
+    
+    if (subscriptionId) {
+      try {
+        await svc
+          .from("workspaces")
+          .update({
+            subscription_status: "active",
+            subscription_current_period_end: currentPeriodEnd,
+          })
+          .eq("subscription_id", subscriptionId);
+      } catch (err) {
+        Sentry.captureException(err, {
+          tags: { context: "onSubscriptionActive", step: "update_active" },
+        });
+      }
+    }
   },
 
   onOrderCreated: async (payload: any) => {
@@ -436,11 +502,58 @@ export const POST = Webhooks({
     const svc = createServiceClient();
     const customer =
       payload?.data?.customer ?? payload?.data?.subscription?.customer ?? null;
-    const customerExternalId = customer?.externalId ?? null;
-    const customerEmail = customer?.email ?? null;
-    const customerId = customer?.id ?? null;
+    const subscription = payload?.data?.subscription ?? payload?.data;
+    const subscriptionId = subscription?.id ?? null;
+
+    if (subscriptionId) {
+      try {
+        const { data: workspace } = await svc
+          .from("workspaces")
+          .select("id, plan")
+          .eq("subscription_id", subscriptionId)
+          .single();
+
+        if (workspace) {
+          const { data: activeDocuments } = await svc
+            .from("documents")
+            .select("id, created_at")
+            .eq("workspace_id", workspace.id)
+            .neq("status", "archived")
+            .order("created_at", { ascending: true });
+
+          if (activeDocuments && activeDocuments.length > 3) {
+            const toArchive = activeDocuments.slice(
+              0,
+              activeDocuments.length - 3,
+            );
+            const idsToArchive = toArchive.map((d) => d.id);
+
+            await svc
+              .from("documents")
+              .update({ status: "archived" })
+              .in("id", idsToArchive);
+          }
+
+          await svc
+            .from("workspaces")
+            .update({
+              plan: null,
+              subscription_status: "canceled",
+            })
+            .eq("id", workspace.id);
+        }
+      } catch (err) {
+        Sentry.captureException(err, {
+          tags: { context: "onSubscriptionCanceled", step: "downgrade" },
+        });
+      }
+    }
 
     try {
+      const customerExternalId = customer?.externalId ?? null;
+      const customerEmail = customer?.email ?? null;
+      const customerId = customer?.id ?? null;
+
       if (customerExternalId) {
         await svc
           .from("pending_workspaces")
@@ -468,11 +581,58 @@ export const POST = Webhooks({
     const svc = createServiceClient();
     const customer =
       payload?.data?.customer ?? payload?.data?.subscription?.customer ?? null;
-    const customerExternalId = customer?.externalId ?? null;
-    const customerEmail = customer?.email ?? null;
-    const customerId = customer?.id ?? null;
+    const subscription = payload?.data?.subscription ?? payload?.data;
+    const subscriptionId = subscription?.id ?? null;
+
+    if (subscriptionId) {
+      try {
+        const { data: workspace } = await svc
+          .from("workspaces")
+          .select("id, plan")
+          .eq("subscription_id", subscriptionId)
+          .single();
+
+        if (workspace) {
+          const { data: activeDocuments } = await svc
+            .from("documents")
+            .select("id, created_at")
+            .eq("workspace_id", workspace.id)
+            .neq("status", "archived")
+            .order("created_at", { ascending: true });
+
+          if (activeDocuments && activeDocuments.length > 3) {
+            const toArchive = activeDocuments.slice(
+              0,
+              activeDocuments.length - 3,
+            );
+            const idsToArchive = toArchive.map((d) => d.id);
+
+            await svc
+              .from("documents")
+              .update({ status: "archived" })
+              .in("id", idsToArchive);
+          }
+
+          await svc
+            .from("workspaces")
+            .update({
+              plan: null,
+              subscription_status: "canceled",
+            })
+            .eq("id", workspace.id);
+        }
+      } catch (err) {
+        Sentry.captureException(err, {
+          tags: { context: "onSubscriptionRevoked", step: "downgrade" },
+        });
+      }
+    }
 
     try {
+      const customerExternalId = customer?.externalId ?? null;
+      const customerEmail = customer?.email ?? null;
+      const customerId = customer?.id ?? null;
+
       if (customerExternalId) {
         await svc
           .from("pending_workspaces")

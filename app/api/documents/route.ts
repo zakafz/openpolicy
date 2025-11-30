@@ -79,6 +79,18 @@ export async function POST(req: Request) {
 
     const svc = createServiceClient();
 
+    const { canCreateDocuments } = await import("@/lib/subscription");
+    if (!canCreateDocuments(workspace)) {
+      return NextResponse.json(
+        {
+          error: "Subscription payment required",
+          message:
+            "Your subscription has a payment issue. Please update your payment method to continue creating documents.",
+        },
+        { status: 402 }, // Payment Required
+      );
+    }
+
     const isFree = await isFreePlan(workspace.plan);
     const limit = isFree
       ? FREE_PLAN_LIMITS.documents
@@ -479,6 +491,19 @@ export async function PUT(req: Request) {
       );
     }
 
+    const { data: workspace, error: workspaceError } = await svc
+      .from("workspaces")
+      .select("id, plan")
+      .eq("id", currentDoc?.workspace_id)
+      .single();
+
+    if (workspaceError || !workspace) {
+      return NextResponse.json(
+        { error: "Workspace not found" },
+        { status: 404 },
+      );
+    }
+
     const updatePayload: Record<string, any> = {
       updated_at: new Date().toISOString(),
     };
@@ -492,6 +517,32 @@ export async function PUT(req: Request) {
     }
 
     if (typeof body.status === "string" && body.status.trim().length > 0) {
+      const newStatus = body.status;
+      const currentStatus = currentDoc?.status;
+
+      if (currentStatus === "archived" && newStatus !== "archived") {
+        const isFree = await isFreePlan(workspace.plan);
+
+        if (isFree) {
+          const { count } = await svc
+            .from("documents")
+            .select("*", { count: "exact", head: true })
+            .eq("workspace_id", workspace.id)
+            .neq("status", "archived");
+
+          if ((count ?? 0) >= FREE_PLAN_LIMITS.documents) {
+            return NextResponse.json(
+              {
+                error: "Free plan limit reached",
+                message:
+                  "Free plan is limited to 3 active documents. Archive other documents first or upgrade to Pro.",
+              },
+              { status: 403 },
+            );
+          }
+        }
+      }
+
       updatePayload.status = body.status;
     }
 

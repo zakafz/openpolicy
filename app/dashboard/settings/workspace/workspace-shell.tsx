@@ -4,6 +4,7 @@ import { Check, Copy, InfoIcon, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 import PageTitle from "@/components/dashboard-page-title";
+import { SubscriptionAlert } from "@/components/subscription-alert";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   AlertDialog,
@@ -348,6 +349,42 @@ export default function WorkspaceShell() {
       if (authError) throw authError;
       if (!user) throw new Error("Not authenticated");
 
+      // Cancel Polar subscription first if it exists
+      if (workspace.subscription_id) {
+        try {
+          const cancelResponse = await fetch(
+            "/api/workspace/cancel-subscription",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ workspaceId: workspace.id }),
+            },
+          );
+
+          if (!cancelResponse.ok) {
+            const errorData = await cancelResponse.json();
+            console.error("Failed to cancel subscription:", errorData);
+            throw new Error(
+              errorData.error || "Failed to cancel subscription",
+            );
+          }
+        } catch (cancelError: any) {
+          console.error("Error canceling subscription:", cancelError);
+          throw new Error(
+            `Failed to cancel subscription: ${cancelError.message}`,
+          );
+        }
+      }
+
+      // Delete all documents in the workspace first to avoid foreign key constraint
+      const { error: documentsDeleteErr } = await supabase
+        .from("documents")
+        .delete()
+        .eq("workspace_id", workspace.id);
+
+      if (documentsDeleteErr) throw documentsDeleteErr;
+
+      // Now delete the workspace
       const { error: deleteErr } = await supabase
         .from("workspaces")
         .delete()
@@ -371,7 +408,7 @@ export default function WorkspaceShell() {
         type: "success",
       });
 
-      router.push("/dashboard");
+      router.push("/create");
     } catch (err: any) {
       toastManager.add({
         title: "Uh oh! Could not delete workspace",
@@ -456,6 +493,7 @@ export default function WorkspaceShell() {
         title="Workspace Settings"
         description="Manage your workspace settings."
       />
+      <SubscriptionAlert workspace={workspace} />
       {/*Workspace name*/}
       <form onSubmit={(e) => handleSave("general", e)}>
         <Frame>

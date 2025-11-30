@@ -5,6 +5,8 @@ import * as React from "react";
 import PageTitle from "@/components/dashboard-page-title";
 import RecentDocumentsTable from "@/components/recent-documents-table";
 import { StatsSkeleton } from "@/components/skeletons";
+import { SubscriptionAlert } from "@/components/subscription-alert";
+import { FreePlanLimitAlert } from "@/components/free-plan-limit-alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -136,6 +138,10 @@ export default function OverviewShell(): React.ReactElement {
 
   return (
     <>
+      <SubscriptionAlert workspace={workspace} />
+      {isFreePlanState && planLimit !== null && (
+        <FreePlanLimitAlert documentCount={stats.all} limit={planLimit} />
+      )}
       {planLimit !== null && (
         <div
           className={cn(

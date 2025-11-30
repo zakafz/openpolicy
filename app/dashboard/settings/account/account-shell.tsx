@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import * as React from "react";
 import PageTitle from "@/components/dashboard-page-title";
+import { SubscriptionAlert } from "@/components/subscription-alert";
 import {
   AlertDialog,
   AlertDialogClose,
@@ -225,7 +226,7 @@ export default function AccountShell() {
             },
           }),
         );
-      } catch (_e) {}
+      } catch (_e) { }
 
       toastManager.add({
         title: "Success!",
@@ -309,6 +310,7 @@ export default function AccountShell() {
 
   return (
     <>
+      <SubscriptionAlert workspace={workspace} />
       <PageTitle
         title="Account Settings"
         description="Manage your account details and preferences."
