@@ -115,7 +115,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const MAX_WORKSPACES = Number(process.env.MAX_WORKSPACES ?? 3);
+    const MAX_WORKSPACES = Number(process.env.MAX_WORKSPACES ?? 1);
     try {
       let wsCount = 0;
       try {
