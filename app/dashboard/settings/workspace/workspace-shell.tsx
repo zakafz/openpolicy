@@ -349,7 +349,6 @@ export default function WorkspaceShell() {
       if (authError) throw authError;
       if (!user) throw new Error("Not authenticated");
 
-      // Cancel Polar subscription first if it exists
       if (workspace.subscription_id) {
         try {
           const cancelResponse = await fetch(
@@ -376,7 +375,6 @@ export default function WorkspaceShell() {
         }
       }
 
-      // Delete all documents in the workspace first to avoid foreign key constraint
       const { error: documentsDeleteErr } = await supabase
         .from("documents")
         .delete()
@@ -384,7 +382,6 @@ export default function WorkspaceShell() {
 
       if (documentsDeleteErr) throw documentsDeleteErr;
 
-      // Now delete the workspace
       const { error: deleteErr } = await supabase
         .from("workspaces")
         .delete()

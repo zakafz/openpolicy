@@ -31,6 +31,5 @@ export interface WorkspaceRow {
   subscription_id: string | null;
   subscription_status: string | null;
   subscription_current_period_end: string | null;
-  payment_failed_at: string | null;
 }
 
