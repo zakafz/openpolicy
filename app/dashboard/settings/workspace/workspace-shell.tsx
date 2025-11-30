@@ -497,7 +497,7 @@ export default function WorkspaceShell() {
               />
               <FieldDescription>
                 <a
-                  href="mailto:support@openpolicy.com"
+                  href="mailto:support@openpolicyhq.com"
                   className="text-primary hover:underline"
                 >
                   Contact us

@@ -11,7 +11,7 @@ OpenPolicy is a modern, open-source platform designed to simplify the creation, 
 - **Document Management**:
   - **Status Workflow**: Draft, Publish, and Archive states.
   - **SEO Optimized**: Automatic dynamic metadata generation for better discoverability.
-- **Custom Branding**: Workspaces get unique slugs (e.g., `acme.openpolicy.com` support ready).
+- **Custom Branding**: Workspaces get unique slugs (e.g., `acme.openpolicyhq.com` support ready).
 
 ## Tech Stack
 

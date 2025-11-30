@@ -4,7 +4,7 @@ The OpenPolicy team prioritizes responsible disclosure of security vulnerabiliti
 
 ## Reporting Guidelines
 
-To report a potential security issue, contact us directly via email at [support@openpolicy.com](mailto:support@openpolicyhq.com) or through our dedicated Slack channel.
+To report a potential security issue, contact us directly via email at [support@openpolicyhq.com](mailto:support@openpolicyhq.com) or through our dedicated Slack channel.
 
 - Avoid automated scanning tools on our production systems or user interfaces. Reach out first, and we'll provision a testing environment.
 - Refrain from exploiting the issue beyond what's needed for proof-of-concept, such as excess data access or unauthorized changes.
