@@ -4,7 +4,7 @@ The OpenPolicy team prioritizes responsible disclosure of security vulnerabiliti
 
 ## Reporting Guidelines
 
-To report a potential security issue, contact us directly via email at [support@openpolicyhq.com](mailto:support@openpolicyhq.com) or through our dedicated Slack channel.
+To report a potential security issue, contact us directly via email at [support@openpolicyhq.com](mailto:support@openpolicyhq.com)
 
 - Avoid automated scanning tools on our production systems or user interfaces. Reach out first, and we'll provision a testing environment.
 - Refrain from exploiting the issue beyond what's needed for proof-of-concept, such as excess data access or unauthorized changes.
@@ -14,7 +14,7 @@ To report a potential security issue, contact us directly via email at [support@
 
 ## Our Commitments
 
-- We'll acknowledge your report within 5 business days, including an initial assessment and timeline for resolution.
+- We'll acknowledge your report within 5 business days.
 - Provided you adhere to these guidelines, no legal action will be pursued regarding your disclosure.
 - Your report and personal information remain confidential; we won't share without explicit consent.
 - Regular updates will keep you informed on fix progress.
