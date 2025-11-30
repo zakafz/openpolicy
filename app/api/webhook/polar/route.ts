@@ -286,8 +286,8 @@ async function finalizePendingWorkspace({
           .from("workspaces")
           .update({ logo: publicURL, logo_path: path })
           .eq("id", workspace.id);
-      } catch (logoErr) {}
-    } catch (e) {}
+      } catch (_logoErr) {}
+    } catch (_e) {}
 
     try {
       await svc.from("pending_workspaces").delete().eq("id", pending.id);

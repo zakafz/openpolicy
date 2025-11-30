@@ -28,8 +28,8 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import type { UsersRow } from "@/types/supabase";
 import { useWorkspace } from "@/context/workspace";
+import type { UsersRow } from "@/types/supabase";
 import { LogoutButton } from "./logout-button";
 
 export function NavUser({ user }: { user: UsersRow }) {

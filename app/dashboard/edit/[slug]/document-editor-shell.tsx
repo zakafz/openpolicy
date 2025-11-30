@@ -3,7 +3,7 @@
 import { Notebook } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { TextShimmer } from "@/components/motion-primitives/text-shimmer";
 import { Editor } from "@/components/tiptap/editor/editor";
 import {
@@ -30,7 +30,7 @@ export default function DocumentEditorShell() {
   const [docTitle, setDocTitle] = useState<string | null>(null);
   const [initialContent, setInitialContent] = useState<any>(null);
   const [initialIsJson, setInitialIsJson] = useState<boolean>(true);
-  const [docWorkspaceId, setDocWorkspaceId] = useState<string | null>(null);
+  const [_docWorkspaceId, setDocWorkspaceId] = useState<string | null>(null);
   const [blocked, setBlocked] = useState<boolean>(false);
 
   useEffect(() => {
@@ -171,7 +171,7 @@ export default function DocumentEditorShell() {
           } else {
             setBlocked(false);
           }
-        } catch (e) {
+        } catch (_e) {
           setBlocked(false);
         }
       } catch (e: any) {
@@ -195,7 +195,7 @@ export default function DocumentEditorShell() {
 
   if (!slug) {
     return (
-      <div className="w-full justify-center flex items-center h-full">
+      <div className="flex h-full w-full items-center justify-center">
         <Empty>
           <EmptyHeader>
             <EmptyMedia variant="icon">
@@ -213,7 +213,7 @@ export default function DocumentEditorShell() {
 
   if (loading) {
     return (
-      <div className="w-full justify-center flex items-center h-full">
+      <div className="flex h-full w-full items-center justify-center">
         <TextShimmer className="font-mono text-sm" duration={1}>
           Loading editor...
         </TextShimmer>
@@ -223,7 +223,7 @@ export default function DocumentEditorShell() {
 
   if (error) {
     return (
-      <div className="w-full justify-center flex items-center h-full">
+      <div className="flex h-full w-full items-center justify-center">
         <Empty>
           <EmptyHeader>
             <EmptyMedia variant="icon">
@@ -239,7 +239,7 @@ export default function DocumentEditorShell() {
 
   if (blocked) {
     return (
-      <div className="w-full justify-center flex items-center h-full">
+      <div className="flex h-full w-full items-center justify-center">
         <Empty>
           <EmptyHeader>
             <EmptyMedia variant="icon">
@@ -264,14 +264,12 @@ export default function DocumentEditorShell() {
   }
 
   return (
-    <>
-      <Editor
-        docId={docId ?? undefined}
-        docTitle={docTitle ?? undefined}
-        initialContent={initialContent}
-        initialIsJson={initialIsJson}
-        documentSlug={docSlug ?? null}
-      />
-    </>
+    <Editor
+      docId={docId ?? undefined}
+      docTitle={docTitle ?? undefined}
+      initialContent={initialContent}
+      initialIsJson={initialIsJson}
+      documentSlug={docSlug ?? null}
+    />
   );
 }

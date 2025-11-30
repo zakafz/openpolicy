@@ -9,7 +9,7 @@ export default function Container({
 }) {
   return (
     <div
-      className={`pt-12 pb-32 max-w-4xl w-full mx-auto min-h-full ${className || ""}`}
+      className={`mx-auto min-h-full w-full max-w-4xl pt-12 pb-32 ${className || ""}`}
     >
       {children}
     </div>

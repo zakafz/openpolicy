@@ -40,23 +40,23 @@ export function Footer() {
   return (
     <footer className="flex w-full">
       <div className="h-[full] min-w-4 grow border-r" />
-      <div className={cn("w-full max-w-6xl h-fit pb-14 pt-5")}>
-        <div className="grid max-w-5xl grid-cols-6 gap-6 p-4 h-full">
-          <div className="col-span-6 flex flex-col h-full gap-4 pt-5 md:col-span-4">
+      <div className={cn("h-fit w-full max-w-6xl pt-5 pb-14")}>
+        <div className="grid h-full max-w-5xl grid-cols-6 gap-6 p-4">
+          <div className="col-span-6 flex h-full flex-col gap-4 pt-5 md:col-span-4">
             <a className="w-max" href="/">
               <Image
                 src="/logo.svg"
                 alt="Logo"
                 width={32}
                 height={32}
-                className="h-7 min-h-7 max-h-7 w-full"
+                className="h-7 max-h-7 min-h-7 w-full"
               />
             </a>
             <p className="max-w-sm text-balance font-mono text-muted-foreground text-sm">
               Host, manage, and update your policies and documents.
             </p>
             <Separator orientation="vertical" className={"flex-1"} />
-            <p className="font-light text-muted-foreground text-xs mt-auto">
+            <p className="mt-auto font-light text-muted-foreground text-xs">
               &copy; {new Date().getFullYear()} OpenPolicy, All rights reserved
             </p>
           </div>

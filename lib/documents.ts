@@ -116,30 +116,26 @@ export async function fetchDocumentsForWorkspace(
   if (!workspaceId) return [];
 
   const client = supabaseClient ?? createClient();
-  try {
-    let q = client
-      .from("documents")
-      .select(
-        "id,title,slug,type,status,version,created_at,updated_at,published,workspace_id",
-      )
-      .eq("workspace_id", workspaceId);
+  let q = client
+    .from("documents")
+    .select(
+      "id,title,slug,type,status,version,created_at,updated_at,published,workspace_id",
+    )
+    .eq("workspace_id", workspaceId);
 
-    if (status && status !== "all") {
-      q = q.eq("status", status);
-      if (status === "published") {
-        q = q.eq("published", true);
-      }
+  if (status && status !== "all") {
+    q = q.eq("status", status);
+    if (status === "published") {
+      q = q.eq("published", true);
     }
-
-    const orderField = status === "all" ? "updated_at" : "created_at";
-    q = q.order(orderField, { ascending: false }).limit(limit);
-
-    const { data, error } = await q;
-    if (error) throw error;
-    return (data as DocumentRow[]) ?? [];
-  } catch (err) {
-    throw err;
   }
+
+  const orderField = status === "all" ? "updated_at" : "created_at";
+  q = q.order(orderField, { ascending: false }).limit(limit);
+
+  const { data, error } = await q;
+  if (error) throw error;
+  return (data as DocumentRow[]) ?? [];
 }
 
 export async function createDocument(

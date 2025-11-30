@@ -36,14 +36,14 @@ export default function Home() {
     <>
       <Header />
 
-      <Section className="p-0! py-32! min-h-screen flex items-center justify-center flex-col">
-        <div className="flex-col px-4 mb-10 text-start w-full">
+      <Section className="flex min-h-screen flex-col items-center justify-center p-0! py-32!">
+        <div className="mb-10 w-full flex-col px-4 text-start">
           <h1 className="font-medium text-4xl md:text-5xl">Contact Us</h1>
-          <p className="text-base mt-2 text-muted-foreground">
+          <p className="mt-2 text-base text-muted-foreground">
             Contact the support team at OpenPolicy.
           </p>
         </div>
-        <div className="grid md:grid-cols-3 border-y w-full">
+        <div className="grid w-full border-y md:grid-cols-3">
           <Box
             description="We respond to all emails within 48 hours."
             icon={Mail}
@@ -81,7 +81,7 @@ export default function Home() {
             </div>
           </Box>
         </div>
-        <div className="z-1 flex h-full flex-col text-start w-full gap-4 mt-10 px-5">
+        <div className="z-1 mt-10 flex h-full w-full flex-col gap-4 px-5 text-start">
           <h2 className="font-medium text-2xl text-muted-foreground tracking-tight md:text-3xl">
             Find us <span className="text-foreground">online</span>
           </h2>
@@ -125,7 +125,7 @@ function Box({
   return (
     <div
       className={cn(
-        "flex flex-col bg-card justify-between border-b md:border-r md:border-b-0",
+        "flex flex-col justify-between border-b bg-card md:border-r md:border-b-0",
         className,
       )}
     >

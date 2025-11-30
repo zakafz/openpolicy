@@ -5,8 +5,8 @@ import { useRouter } from "next/navigation";
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
-import { fetchWorkspacesForOwner } from "@/lib/workspace";
 import { cn } from "@/lib/utils";
+import { fetchWorkspacesForOwner } from "@/lib/workspace";
 
 interface PricingSectionProps extends React.ComponentProps<"div"> {
   plans: Product[];
@@ -20,7 +20,7 @@ export function PricingSection({
   description,
   ...props
 }: PricingSectionProps) {
-  const [frequency, setFrequency] = React.useState<"monthly">("monthly");
+  const [frequency, _setFrequency] = React.useState<"monthly">("monthly");
 
   return (
     <div
@@ -41,7 +41,7 @@ export function PricingSection({
         )}
       </div>
 
-      <div className="mx-auto grid w-full max-w-4xl mt-5 gap-5 grid-cols-1 md:grid-cols-2">
+      <div className="mx-auto mt-5 grid w-full max-w-4xl grid-cols-1 gap-5 md:grid-cols-2">
         {plans.map((plan) => (
           <PricingCard frequency={frequency} key={plan.id} plan={plan} />
         ))}
@@ -94,11 +94,11 @@ export function PricingCard({
   }, []);
 
   const highlighted =
-    plan.metadata?.["highlighted"] === true ||
-    plan.metadata?.["highlighted"] === "true";
+    plan.metadata?.highlighted === true ||
+    plan.metadata?.highlighted === "true";
 
   const buttonText =
-    (plan.metadata && (plan.metadata["buttonText"] as string)) ?? "Choose";
+    (plan.metadata && (plan.metadata.buttonText as string)) ?? "Choose";
 
   const isCurrentPlan = hasWorkspace && currentPlanId === plan.id;
 
@@ -148,7 +148,7 @@ export function PricingCard({
         <h3 className="mt-6 mb-2 flex items-end gap-1">
           <span className="font-medium text-3xl">
             {(() => {
-              const p = (plan.prices && plan.prices[0]) as any;
+              const p = plan.prices?.[0] as any;
               if (!p) return "";
               if (p.amountType === "fixed") {
                 const cents = Number(p.priceAmount ?? 0);
@@ -210,7 +210,7 @@ export function PricingCard({
               } else {
                 router.push(`/create`);
               }
-            } catch (err) {
+            } catch (_err) {
               router.push(`/auth/login`);
             }
           }}

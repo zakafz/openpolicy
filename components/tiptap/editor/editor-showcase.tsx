@@ -15,7 +15,7 @@ export function EditorShowcase({
   return (
     <SidebarProvider className="flex items-center justify-center max-md:hidden">
       <Editor
-        className="w-full h-fit! min-h-none! max-h-none!"
+        className="h-fit! max-h-none! min-h-none! w-full"
         documentSlug={null}
         initialContent={initialContent}
         initialIsJson={initialIsJson}

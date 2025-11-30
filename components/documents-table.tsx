@@ -164,13 +164,13 @@ export default function DocumentsTable({ type, workspaceId }: Props) {
             Loading documents…
           </TextShimmer>
         ) : error ? (
-          <div className="p-8 text-center text-sm text-destructive">
+          <div className="p-8 text-center text-destructive text-sm">
             {error}
           </div>
         ) : !documents || documents.length === 0 ? (
           <div className="p-10 text-center">
-            <h3 className="text-lg font-medium">No {type ?? "documents"}</h3>
-            <p className="text-sm text-muted-foreground mt-2">
+            <h3 className="font-medium text-lg">No {type ?? "documents"}</h3>
+            <p className="mt-2 text-muted-foreground text-sm">
               You don't have any {type ?? "documents"} yet.
             </p>
             <div className="mt-4 flex justify-center">
@@ -194,7 +194,7 @@ export default function DocumentsTable({ type, workspaceId }: Props) {
             <TableBody>
               {documents.map((d) => {
                 const typeKey = d?.__normalized_type ?? extractType(d);
-                const Icon = typeIconMap[typeKey] ?? LayersIcon;
+                const _Icon = typeIconMap[typeKey] ?? LayersIcon;
                 const typeLabel = typeLabelMap[typeKey] ?? typeKey;
                 return (
                   <TableRow key={d.id}>
@@ -211,7 +211,7 @@ export default function DocumentsTable({ type, workspaceId }: Props) {
                     <TableCell>
                       <Badge variant="outline">
                         <span
-                          className={`size-1.5 rounded-full mr-2 ${
+                          className={`mr-2 size-1.5 rounded-full ${
                             d.status === "published"
                               ? "bg-emerald-500"
                               : d.status === "archived"

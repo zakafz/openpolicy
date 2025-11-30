@@ -15,7 +15,7 @@ export default async function Page({
       <Header />
 
       <Section className="p-4">
-        <div className="w-full min-h-screen flex justify-center items-center">
+        <div className="flex min-h-screen w-full items-center justify-center">
           <Card>
             <CardHeader>
               <CardTitle className="text-2xl">
@@ -24,11 +24,11 @@ export default async function Page({
             </CardHeader>
             <CardContent>
               {params?.error ? (
-                <p className="text-sm text-muted-foreground">
+                <p className="text-muted-foreground text-sm">
                   Code error: {params.error}
                 </p>
               ) : (
-                <p className="text-sm text-muted-foreground">
+                <p className="text-muted-foreground text-sm">
                   An unspecified error occurred.
                 </p>
               )}

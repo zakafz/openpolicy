@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/frame";
 import { fetchDocumentBySlug } from "@/lib/documents";
 import { createServiceClient } from "@/lib/supabase/service";
-import { fmtAbsolute, timeAgo } from "@/lib/utils";
+import { fmtAbsolute } from "@/lib/utils";
 
 type Props = {
   params: {
@@ -120,27 +120,25 @@ export default async function Page({ params }: Props) {
   }
 
   return (
-    <>
-      <Frame className="w-full border">
-        <FrameHeader className="flex flex-row max-md:flex-col md:items-center justify-between">
-          <FrameTitle className="text-md font-mono">{doc.title}</FrameTitle>
-          <FrameDescription>
-            <Badge variant={"secondary"} className="font-mono mt-1">
-              Last update: <span>{fmtAbsolute(doc.updated_at)}</span>
-            </Badge>
-          </FrameDescription>
-        </FrameHeader>
-        <FramePanel className="py-10! md:py-20!">
-          <TiptapEditor
-            docId={doc.id}
-            initialContent={parsedInitialContent}
-            initialIsJson={typeof parsedInitialContent !== "string"}
-            docTitle={doc.title}
-            documentSlug={doc.slug}
-            readOnly={true}
-          />
-        </FramePanel>
-      </Frame>
-    </>
+    <Frame className="w-full border">
+      <FrameHeader className="flex flex-row justify-between max-md:flex-col md:items-center">
+        <FrameTitle className="font-mono text-md">{doc.title}</FrameTitle>
+        <FrameDescription>
+          <Badge variant={"secondary"} className="mt-1 font-mono">
+            Last update: <span>{fmtAbsolute(doc.updated_at)}</span>
+          </Badge>
+        </FrameDescription>
+      </FrameHeader>
+      <FramePanel className="py-10! md:py-20!">
+        <TiptapEditor
+          docId={doc.id}
+          initialContent={parsedInitialContent}
+          initialIsJson={typeof parsedInitialContent !== "string"}
+          docTitle={doc.title}
+          documentSlug={doc.slug}
+          readOnly={true}
+        />
+      </FramePanel>
+    </Frame>
   );
 }

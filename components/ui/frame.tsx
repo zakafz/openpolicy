@@ -20,7 +20,7 @@ function FramePanel({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="frame-panel"
       className={cn(
-        "relative bg-clip-padding not-has-[table]:rounded-xl not-has-[table]:border not-has-[table]:bg-card not-has-[table]:p-5 not-has-[table]:shadow-xs before:pointer-events-none before:absolute before:rounded-[calc(var(--radius-xl)-1px)] before:shadow-[0_1px_--theme(--color-black/4%)] has-[table]:before:hidden dark:bg-clip-border dark:before:shadow-[0_-1px_--theme(--color-white/8%)]",
+        "relative not-has-[table]:rounded-xl not-has-[table]:border not-has-[table]:bg-card bg-clip-padding not-has-[table]:p-5 not-has-[table]:shadow-xs before:pointer-events-none before:absolute before:rounded-[calc(var(--radius-xl)-1px)] before:shadow-[0_1px_--theme(--color-black/4%)] has-[table]:before:hidden dark:bg-clip-border dark:before:shadow-[0_-1px_--theme(--color-white/8%)]",
         className,
       )}
       {...props}
@@ -42,7 +42,7 @@ function FrameTitle({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="frame-panel-title"
-      className={cn("text-sm font-semibold", className)}
+      className={cn("font-semibold text-sm", className)}
       {...props}
     />
   );
@@ -55,7 +55,7 @@ function FrameDescription({
   return (
     <div
       data-slot="frame-panel-description"
-      className={cn("text-sm text-muted-foreground", className)}
+      className={cn("text-muted-foreground text-sm", className)}
       {...props}
     />
   );

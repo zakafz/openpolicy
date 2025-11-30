@@ -42,13 +42,10 @@ export async function GET(request: Request) {
             email: user.email ?? null,
             provider:
               user.app_metadata?.provider ??
-              (user.identities && user.identities[0]
-                ? user.identities[0].provider
-                : null),
-            provider_user_id:
-              user.identities && user.identities[0]
-                ? user.identities[0].id
-                : null,
+              (user.identities?.[0] ? user.identities[0].provider : null),
+            provider_user_id: user.identities?.[0]
+              ? user.identities[0].id
+              : null,
             raw_user: user.user_metadata ?? {},
             metadata: {},
           };
@@ -115,7 +112,7 @@ export async function GET(request: Request) {
             }
           }
         }
-      } catch (err) {}
+      } catch (_err) {}
 
       const forwardedHost = request.headers.get("x-forwarded-host");
       const isLocalEnv = process.env.NODE_ENV === "development";

@@ -10,7 +10,7 @@ export function FaqsSection() {
     <div className="mx-auto w-full space-y-7 px-4 py-8">
       <div className="space-y-2">
         <h2 className="font-medium text-3xl">Frequently Asked Questions</h2>
-        <p className="max-w-2xl text-sm text-muted-foreground">
+        <p className="max-w-2xl text-muted-foreground text-sm">
           Here are some common questions and answers that you might encounter
           when using OpenPolicy. If you don't find the answer you're looking
           for, feel free to reach out.

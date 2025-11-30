@@ -1,4 +1,4 @@
-import { resolveCname } from "dns/promises";
+import { resolveCname } from "node:dns/promises";
 import { type NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {

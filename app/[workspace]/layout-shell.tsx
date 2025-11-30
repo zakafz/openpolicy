@@ -12,7 +12,6 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { MenuToggleIcon } from "@/components/menu-toggle-icon";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Button as ButtonShadcn } from "@/components/ui/button-shadcn";
 import {
@@ -95,7 +94,7 @@ export default function LayoutShell({
     if (documents && Array.isArray(documents) && documents.length > 0) {
       setClientDocs(documents);
     }
-  }, [workspace?.id, documents]);
+  }, [workspace?.id, documents, workspace?.slug]);
 
   useEffect(() => {
     if (mobileMenuOpen) {
@@ -109,22 +108,22 @@ export default function LayoutShell({
   }, [mobileMenuOpen]);
 
   return (
-    <div className="bg-card ">
-      <div className="w-screen bg-background h-11 fixed z-40 top-0 left-0" />
+    <div className="bg-card">
+      <div className="fixed top-0 left-0 z-40 h-11 w-screen bg-background" />
       <div className="h-12" />
-      <header className="w-[95%] z-50 top-5 left-1/2 -translate-x-1/2 fixed max-w-4xl mx-auto bg-accent backdrop-blur-lg supports-backdrop-filter:bg-accent/80 border h-12 rounded-2xl flex flex-row justify-between p-1 items-center">
+      <header className="-translate-x-1/2 fixed top-5 left-1/2 z-50 mx-auto flex h-12 w-[95%] max-w-4xl flex-row items-center justify-between rounded-2xl border bg-accent p-1 backdrop-blur-lg supports-backdrop-filter:bg-accent/80">
         <a
           href={workspace?.return_url ? workspace.return_url : "/"}
           className="flex items-center"
         >
           {!workspace?.disable_icon && (
-            <Avatar className="size-10 min-h-10 min-w-10 rounded-xl aspect-square">
+            <Avatar className="aspect-square size-10 min-h-10 min-w-10 rounded-xl">
               <AvatarImage src={workspace?.logo} alt="User avatar" />
-              <AvatarFallback className="bg-card rounded-xl" />
+              <AvatarFallback className="rounded-xl bg-card" />
             </Avatar>
           )}
-          <div className="flex flex-row gap-2 ml-2">
-            <div className="tracking-tight text-lg font-medium">{wsName}</div>
+          <div className="ml-2 flex flex-row gap-2">
+            <div className="font-medium text-lg tracking-tight">{wsName}</div>
           </div>
         </a>
         <div className="md:hidden">
@@ -147,7 +146,7 @@ export default function LayoutShell({
           className="flex flex-col justify-between gap-2"
           open={mobileMenuOpen}
         >
-          <div className="grid gap-y-2 overflow-y-auto max-h-[calc(100vh-8rem)]">
+          <div className="grid max-h-[calc(100vh-8rem)] gap-y-2 overflow-y-auto">
             <a
               className={buttonVariants({
                 variant: "ghost",
@@ -157,7 +156,7 @@ export default function LayoutShell({
             >
               Home
             </a>
-            <div className="text-muted-foreground text-xs font-medium ml-3">
+            <div className="ml-3 font-medium text-muted-foreground text-xs">
               Documents
             </div>
             {clientDocs.map((doc) => (
@@ -179,7 +178,7 @@ export default function LayoutShell({
             </Link>
           )}
         </MobileMenu>
-        <div className="flex-row gap-1 items-center hidden md:flex">
+        <div className="hidden flex-row items-center gap-1 md:flex">
           <a href={`/`}>
             <Button
               onClick={() => router.push("/")}
@@ -195,24 +194,24 @@ export default function LayoutShell({
               <TooltipTrigger asChild>
                 <a href={`mailto:${workspace.support_email}`}>
                   <Button
-                    className="aspect-square rounded-xl h-full group"
+                    className="group aspect-square h-full rounded-xl"
                     variant={"ghost"}
                   >
-                    <MessageCircleMore className="text-muted-foreground size-5 group-hover:text-primary" />
+                    <MessageCircleMore className="size-5 text-muted-foreground group-hover:text-primary" />
                   </Button>
                 </a>
               </TooltipTrigger>
-              <TooltipContent className="text-xs font-mono rounded p-1 px-2">
+              <TooltipContent className="rounded p-1 px-2 font-mono text-xs">
                 Contact us
               </TooltipContent>
             </Tooltip>
           ) : null}
         </div>
       </header>
-      <div className="w-[95%] max-w-4xl mx-auto mt-10 pb-10 min-h-[calc(100vh-60px)]">
+      <div className="mx-auto mt-10 min-h-[calc(100vh-60px)] w-[95%] max-w-4xl pb-10">
         {children}
         {docCount > 1 && pathname !== "/" && (
-          <div className="flex justify-end mt-5">
+          <div className="mt-5 flex justify-end">
             <Button
               variant={"outline"}
               className="bg-card"
@@ -266,12 +265,12 @@ export default function LayoutShell({
         )}
       </div>
 
-      <div className="w-full border-t py-8 bg-accent">
-        <div className="mx-auto w-[95%] max-w-4xl text-muted-foreground flex gap-1 text-sm">
+      <div className="w-full border-t bg-accent py-8">
+        <div className="mx-auto flex w-[95%] max-w-4xl gap-1 text-muted-foreground text-sm">
           Powered by{" "}
           <a
             href="https://openpolicyhq.com"
-            className="text-primary font-mono flex gap-1"
+            className="flex gap-1 font-mono text-primary"
           >
             <Image
               src="/icon-openpolicy.svg"
@@ -325,11 +324,11 @@ function DocumentSelect({
         const found = docList.find((d) => d.value === current);
         setSelectedName(found ? found.label : null);
       }
-    } catch (e) {
+    } catch (_e) {
       setValue("__all__");
       setSelectedName("All documents");
     }
-  }, [pathname, workspace?.slug, documents]);
+  }, [pathname, workspace?.slug, docList.find]);
 
   const hasDocs = docList.length > 0;
   return (
@@ -340,7 +339,7 @@ function DocumentSelect({
           role="combobox"
           aria-expanded={open}
           disabled={!hasDocs}
-          className={`min-w-[200px] bg-card h-10 justify-between ring-0 shadow-none rounded-xl font-mono ${!hasDocs ? "opacity-60 cursor-not-allowed" : ""}`}
+          className={`h-10 min-w-[200px] justify-between rounded-xl bg-card font-mono shadow-none ring-0 ${!hasDocs ? "cursor-not-allowed opacity-60" : ""}`}
         >
           {selectedName ??
             (value
@@ -353,7 +352,7 @@ function DocumentSelect({
           <ChevronsUpDown className="opacity-50" />
         </ButtonShadcn>
       </PopoverTrigger>
-      <PopoverContent className="w-[250px] p-0 rounded-xl overflow-hidden shadow-none">
+      <PopoverContent className="w-[250px] overflow-hidden rounded-xl p-0 shadow-none">
         <Command>
           <CommandInput
             placeholder="Search documents..."
@@ -397,7 +396,7 @@ function DocumentSelect({
                     setOpen(false);
                     setSelectedName(d.label);
                     if (!newValue) return;
-                    const res = resolveWorkspaceFromRequest({
+                    const _res = resolveWorkspaceFromRequest({
                       hostname:
                         typeof window !== "undefined"
                           ? window.location.hostname
@@ -438,7 +437,7 @@ function MobileMenu({ open, children, className, ...props }: MobileMenuProps) {
     <div
       className={cn(
         "bg-background backdrop-blur-lg supports-[backdrop-filter]:bg-background/50",
-        "fixed top-18 w-[95%] max-w-4xl mb-5 mx-auto right-0 bottom-0 left-0 z-40 flex flex-col overflow-hidden border rounded-xl md:hidden",
+        "fixed top-18 right-0 bottom-0 left-0 z-40 mx-auto mb-5 flex w-[95%] max-w-4xl flex-col overflow-hidden rounded-xl border md:hidden",
       )}
       id="mobile-menu"
     >

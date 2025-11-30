@@ -1,6 +1,6 @@
 "use client";
 
-import { type LucideIcon } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -51,7 +51,7 @@ export function NavMain({
                   asChild
                   tooltip={item.title}
                   className={
-                    pathname + "/" === item.url ? "bg-sidebar-accent" : ""
+                    `${pathname}/` === item.url ? "bg-sidebar-accent" : ""
                   }
                 >
                   <Link href={item.url}>
@@ -75,7 +75,7 @@ export function NavMain({
                     <SidebarMenuButton
                       tooltip={item.title}
                       className={
-                        item.items?.some((sub) => pathname + "/" === sub.url)
+                        item.items?.some((sub) => `${pathname}/` === sub.url)
                           ? "bg-sidebar-accent"
                           : ""
                       }
@@ -92,17 +92,17 @@ export function NavMain({
                         <SidebarMenuSubButton
                           asChild
                           className={
-                            pathname + "/" === subItem.url
+                            `${pathname}/` === subItem.url
                               ? "bg-sidebar-accent"
                               : ""
                           }
                         >
                           <Link
                             href={subItem.url}
-                            className="flex items-center w-full gap-2"
+                            className="flex w-full items-center gap-2"
                           >
                             <span className="truncate">{subItem.title}</span>
-                            <span className="ml-auto font-mono text-xs text-muted-foreground">
+                            <span className="ml-auto font-mono text-muted-foreground text-xs">
                               {(() => {
                                 if (!counts) return null;
                                 const key = String(

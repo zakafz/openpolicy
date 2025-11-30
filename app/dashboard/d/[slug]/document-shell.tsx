@@ -93,7 +93,7 @@ export default function DocumentShell() {
       if (id) setWorkspaceId(id);
     } catch {}
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [workspaceId]);
 
   useEffect(() => {
     const handleStorage = (e: StorageEvent) => {
@@ -104,7 +104,7 @@ export default function DocumentShell() {
       }
     };
 
-    const handleWorkspaceChanged = (e: Event) => {
+    const handleWorkspaceChanged = (_e: Event) => {
       try {
         router.push("/dashboard");
       } catch {}
@@ -207,7 +207,7 @@ export default function DocumentShell() {
               setDoc(data ?? null);
               setBlocked(false);
             }
-          } catch (e) {
+          } catch (_e) {
             setDoc(data ?? null);
             setBlocked(false);
           }
@@ -303,7 +303,7 @@ export default function DocumentShell() {
 
   if (!slug) {
     return (
-      <div className="w-full justify-center flex items-center h-full">
+      <div className="flex h-full w-full items-center justify-center">
         <Empty>
           <EmptyHeader>
             <EmptyMedia variant="icon">
@@ -322,7 +322,7 @@ export default function DocumentShell() {
 
   if (loading) {
     return (
-      <div className="w-full justify-center flex items-center h-full">
+      <div className="flex h-full w-full items-center justify-center">
         <TextShimmer className="font-mono text-sm" duration={1}>
           Loading document...
         </TextShimmer>
@@ -332,7 +332,7 @@ export default function DocumentShell() {
 
   if (blocked) {
     return (
-      <div className="w-full justify-center flex items-center h-full">
+      <div className="flex h-full w-full items-center justify-center">
         <Empty>
           <EmptyHeader>
             <EmptyMedia variant="icon">
@@ -358,7 +358,7 @@ export default function DocumentShell() {
   if (!doc) {
     const message = String(error ?? "Document not found");
     return (
-      <div className="w-full justify-center flex items-center h-full">
+      <div className="flex h-full w-full items-center justify-center">
         <Empty>
           <EmptyHeader>
             <EmptyMedia variant="icon">
@@ -378,7 +378,7 @@ export default function DocumentShell() {
   }
 
   let parsedInitialContent: any = null;
-  if (doc && doc.content) {
+  if (doc?.content) {
     if (typeof doc.content === "string") {
       try {
         parsedInitialContent = JSON.parse(doc.content);
@@ -419,11 +419,11 @@ export default function DocumentShell() {
       ) : null}
       <Frame className="w-full">
         <Collapsible defaultOpen>
-          <FrameHeader className="flex-row lg:items-center justify-between px-2 py-2 max-lg:flex-col">
-            <div className="flex items-center gap-2 justify-between w-full">
-              <div className="items-center flex  gap-2">
+          <FrameHeader className="flex-row justify-between px-2 py-2 max-lg:flex-col lg:items-center">
+            <div className="flex w-full items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
                 <CollapsibleTrigger
-                  className="data-panel-open:[&_svg]:rotate-180 capitalize"
+                  className="capitalize data-panel-open:[&_svg]:rotate-180"
                   render={<Button variant="ghost" />}
                 >
                   <ChevronDownIcon className="size-4" />
@@ -523,12 +523,12 @@ export default function DocumentShell() {
                         render={<MenuItem variant="destructive" />}
                       >
                         {doc.status === "archived" ? (
-                          <div className="flex gap-2 items-center">
+                          <div className="flex items-center gap-2">
                             <Trash />
                             Delete
                           </div>
                         ) : (
-                          <div className="flex gap-2 items-center">
+                          <div className="flex items-center gap-2">
                             <Archive />
                             Archive
                           </div>
@@ -676,7 +676,7 @@ export default function DocumentShell() {
                       autoFocus
                     />
                     {renameError && (
-                      <p className="text-sm text-destructive mt-2">
+                      <p className="mt-2 text-destructive text-sm">
                         {renameError}
                       </p>
                     )}
@@ -811,7 +811,7 @@ export default function DocumentShell() {
                 )}
               </div>
             </div>
-            <div className="flex items-center gap-2 mt-2 lg:hidden">
+            <div className="mt-2 flex items-center gap-2 lg:hidden">
               <BadgeCoss
                 variant={
                   doc.status === "published"
@@ -852,7 +852,7 @@ export default function DocumentShell() {
                   readOnly={true}
                 />
               ) : (
-                <div className="text-sm text-muted-foreground">
+                <div className="text-muted-foreground text-sm">
                   No content yet.
                 </div>
               )}
@@ -860,11 +860,11 @@ export default function DocumentShell() {
           </CollapsiblePanel>
         </Collapsible>
         <FrameFooter className="flex flex-row justify-between max-lg:flex-col">
-          <div className="text-xs font-mono text-muted-foreground">
+          <div className="font-mono text-muted-foreground text-xs">
             Last updated:{" "}
             <Badge variant={"secondary"}>{timeAgo(doc.updated_at)}</Badge>
           </div>
-          <div className="text-xs font-mono text-muted-foreground">
+          <div className="font-mono text-muted-foreground text-xs">
             Created:{" "}
             <Badge variant={"secondary"}>{fmtAbsolute(doc.created_at)}</Badge>
           </div>

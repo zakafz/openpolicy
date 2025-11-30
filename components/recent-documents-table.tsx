@@ -90,11 +90,11 @@ export default function RecentDocumentsTable({
         {loading ? (
           <RecentDocumentsSkeleton />
         ) : error ? (
-          <div className="p-6 text-center text-sm text-destructive">
+          <div className="p-6 text-center text-destructive text-sm">
             {error}
           </div>
         ) : !docs || docs.length === 0 ? (
-          <div className="p-6 text-center text-sm text-muted-foreground">
+          <div className="p-6 text-center text-muted-foreground text-sm">
             <Empty>
               <EmptyHeader>
                 <EmptyMedia variant="icon">
@@ -114,7 +114,7 @@ export default function RecentDocumentsTable({
                 <TableHead>Title</TableHead>
                 <TableHead>Type</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead className="flex justify-end items-center">
+                <TableHead className="flex items-center justify-end">
                   Last edited
                 </TableHead>
               </TableRow>
@@ -135,7 +135,7 @@ export default function RecentDocumentsTable({
                         className="flex items-center gap-2"
                       >
                         <Icon
-                          className="w-4 h-4 opacity-80"
+                          className="h-4 w-4 opacity-80"
                           aria-hidden="true"
                         />
                         <span className="underline">{d.title}</span>
@@ -171,7 +171,7 @@ export default function RecentDocumentsTable({
               <TableRow>
                 <TableCell
                   colSpan={4}
-                  className="text-right text-xs font-mono text-muted-foreground"
+                  className="text-right font-mono text-muted-foreground text-xs"
                 >
                   Showing {docs.length} recently edited document
                   {docs?.length === 1 ? "" : "s"}

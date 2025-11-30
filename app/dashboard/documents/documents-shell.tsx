@@ -56,7 +56,7 @@ import { readSelectedWorkspaceId } from "@/lib/workspace";
 export default function DocumentsShell(props: {
   type: "published" | "draft" | "archived" | "all";
 }) {
-  const router = useRouter();
+  const _router = useRouter();
   const searchParams = useSearchParams();
   const initialWorkspaceId = searchParams?.get("workspaceId") ?? null;
   const { workspace } = useWorkspaceLoader();
@@ -78,7 +78,7 @@ export default function DocumentsShell(props: {
         createClient(),
       );
       setDocuments(docs ?? []);
-    } catch (e) {
+    } catch (_e) {
       setError("Failed to reload documents");
     }
   };
@@ -91,7 +91,7 @@ export default function DocumentsShell(props: {
       setWorkspaceId(id);
     } catch {}
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [workspaceId]);
 
   useEffect(() => {
     if (!workspaceId) {
@@ -113,7 +113,7 @@ export default function DocumentsShell(props: {
         );
         if (cancelled) return;
         setDocuments(docs ?? []);
-      } catch (e) {
+      } catch (_e) {
         if (cancelled) return;
         setError("Failed to load documents");
         setDocuments([]);
@@ -132,7 +132,7 @@ export default function DocumentsShell(props: {
   const title =
     props.type === "all"
       ? "All Documents"
-      : props.type.charAt(0).toUpperCase() + props.type.slice(1) + " Documents";
+      : `${props.type.charAt(0).toUpperCase() + props.type.slice(1)} Documents`;
 
   const createHref = workspaceId
     ? `/dashboard/documents/new?workspaceId=${workspaceId}`
@@ -149,15 +149,15 @@ export default function DocumentsShell(props: {
           {loading ? (
             <DocumentsTableSkeleton />
           ) : error ? (
-            <div className="p-8 text-center text-sm text-destructive">
+            <div className="p-8 text-center text-destructive text-sm">
               {error}
             </div>
           ) : !documents || documents.length === 0 ? (
             <div className="p-10 text-center">
-              <h3 className="text-lg font-medium">
+              <h3 className="font-medium text-lg">
                 No {props.type !== "all" ? props.type : ""} documents
               </h3>
-              <p className="text-sm text-muted-foreground mt-2">
+              <p className="mt-2 text-muted-foreground text-sm">
                 You don't have any {props.type !== "all" ? props.type : ""}{" "}
                 documents yet.
               </p>
@@ -195,7 +195,7 @@ export default function DocumentsShell(props: {
                             LayersIcon;
                           return (
                             <Icon
-                              className="w-4 h-4 opacity-80"
+                              className="h-4 w-4 opacity-80"
                               aria-hidden="true"
                             />
                           );
@@ -407,7 +407,7 @@ export default function DocumentsShell(props: {
                   <TableCell colSpan={6} className="font-mono">
                     Total
                   </TableCell>
-                  <TableCell className="text-right font-mono font-medium">
+                  <TableCell className="text-right font-medium font-mono">
                     {documents.length} documents
                   </TableCell>
                 </TableRow>

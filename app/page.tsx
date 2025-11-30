@@ -1,4 +1,3 @@
-import { ArrowUpRightIcon, Text } from "lucide-react";
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
@@ -33,7 +32,7 @@ export default function Home() {
     {
       title: "Create",
       icon: (
-        <div className="w-fit size-7! justify-center flex items-center border bg-border/60">
+        <div className="flex size-7! w-fit items-center justify-center border bg-border/60">
           1
         </div>
       ),
@@ -42,7 +41,7 @@ export default function Home() {
     {
       title: "Write",
       icon: (
-        <div className="w-fit size-7! justify-center flex items-center border bg-border/60">
+        <div className="flex size-7! w-fit items-center justify-center border bg-border/60">
           2
         </div>
       ),
@@ -51,7 +50,7 @@ export default function Home() {
     {
       title: "Publish",
       icon: (
-        <div className="w-fit size-7! justify-center flex items-center border bg-border/60">
+        <div className="flex size-7! w-fit items-center justify-center border bg-border/60">
           3
         </div>
       ),
@@ -64,20 +63,20 @@ export default function Home() {
       <Header />
 
       <Section className="p-4">
-        <div className="flex flex-col items-center justify-center max-w-[800px] mx-auto pt-32 pb-32">
-          <Announcement className="mb-3 pointer-events-none">
+        <div className="mx-auto flex max-w-[800px] flex-col items-center justify-center pt-32 pb-32">
+          <Announcement className="pointer-events-none mb-3">
             <AnnouncementTag>Latest update</AnnouncementTag>
             <AnnouncementTitle>OpenPolicy 1.0 is now live</AnnouncementTitle>
           </Announcement>
 
-          <h1 className="text-5xl font-medium text-center mb-5 leading-15">
+          <h1 className="mb-5 text-center font-medium text-5xl leading-15">
             The Easiest Way to Host Your Policies
           </h1>
-          <p className="text-lg text-center max-w-[600px] mx-auto text-muted-foreground">
+          <p className="mx-auto max-w-[600px] text-center text-lg text-muted-foreground">
             Stop messing with PDF uploads and complex CMSs. OpenPolicy lets you
             write, host, and manage your public legal documents in minutes.
           </p>
-          <div className="mx-auto flex gap-2 mt-5">
+          <div className="mx-auto mt-5 flex gap-2">
             <Link href="/auth/login">
               <Button size="lg">Get Started</Button>
             </Link>
@@ -90,10 +89,10 @@ export default function Home() {
         </div>
       </Section>
       <Section className="py-8">
-        <h2 className="text-balance font-medium text-3xl text-center">
+        <h2 className="text-balance text-center font-medium text-3xl">
           Document management doesn't have to be complicated
         </h2>
-        <p className="mt-2 text-balance text-muted-foreground text-sm mb-10 text-center">
+        <p className="mt-2 mb-10 text-balance text-center text-muted-foreground text-sm">
           Get your policies, public documents, and other legal documents live in
           three simple steps.
         </p>
@@ -111,10 +110,10 @@ export default function Home() {
         <FeaturesSection />
       </Section>
       <Section className="py-8">
-        <h2 className="text-balance font-medium text-3xl text-start">
+        <h2 className="text-balance text-start font-medium text-3xl">
           Centralized document repository for your organization
         </h2>
-        <p className="mt-2 text-balance text-muted-foreground text-sm mb-5 text-start">
+        <p className="mt-2 mb-5 text-balance text-start text-muted-foreground text-sm">
           View and manage all your documents in one place. Never lose track of
           your documents again. Neither you or your clients will have to search
           through multiple systems to find the documents they need.
@@ -126,24 +125,24 @@ export default function Home() {
       </Section>
 
       <Section className="py-8">
-        <h2 className="text-balance font-medium text-3xl text-start">
+        <h2 className="text-balance text-start font-medium text-3xl">
           A simple and straightforward editor
         </h2>
-        <p className="mt-2 text-balance text-muted-foreground text-sm mb-7 text-start">
+        <p className="mt-2 mb-7 text-balance text-start text-muted-foreground text-sm">
           Focus on the content, not the formatting. Our intuitive text editor
           provides all the tools you need to write comprehensive, easy-to-read
           document.
         </p>
-        <div className="mx-auto w-full flex items-center justify-center">
-          <Card className="col-span-full md:hidden overflow-hidden rounded-none shadow-none pl-6">
-            <div className="mask-b-from-95% -ml-2 pl-2 pt-2">
-              <div className="bg-background relative mx-auto h-96 overflow-hidden border-px border border-border border-b-0 border-r-0">
+        <div className="mx-auto flex w-full items-center justify-center">
+          <Card className="col-span-full overflow-hidden rounded-none pl-6 shadow-none md:hidden">
+            <div className="mask-b-from-95% -ml-2 pt-2 pl-2">
+              <div className="relative mx-auto h-96 overflow-hidden border border-border border-px border-r-0 border-b-0 bg-background">
                 <Image
                   src="/demo-3.png"
                   alt="app screen"
                   width={2880}
                   height={1842}
-                  className="object-top-left h-full object-cover"
+                  className="h-full object-cover object-top-left"
                 />
               </div>
             </div>

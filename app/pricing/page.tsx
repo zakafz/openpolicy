@@ -30,7 +30,7 @@ export default async function Pricing() {
     <>
       <Header />
       <Section className="p-4 py-16">
-        <div className="w-full min-h-screen flex justify-center items-center">
+        <div className="flex min-h-screen w-full items-center justify-center">
           <PricingSection
             heading="Plans that Scale with You"
             description="All plans. Start free today, upgrade later."

@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { api as polar } from "@/lib/polar";
-import { createServiceClient } from "@/lib/supabase/service";
 
 export async function POST(req: Request) {
   try {

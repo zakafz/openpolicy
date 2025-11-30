@@ -13,7 +13,7 @@ import { TextShimmer } from "./motion-primitives/text-shimmer";
 
 export function NoSelectedWorkspace() {
   return (
-    <div className="w-full justify-center flex items-center h-full">
+    <div className="flex h-full w-full items-center justify-center">
       <Empty>
         <EmptyHeader>
           <EmptyMedia variant="icon">
@@ -31,7 +31,7 @@ export function NoSelectedWorkspace() {
 
 export function LoadingWorkspace() {
   return (
-    <div className="w-full justify-center flex items-center h-full">
+    <div className="flex h-full w-full items-center justify-center">
       <TextShimmer className="font-mono text-sm" duration={1}>
         Loading workspace...
       </TextShimmer>
@@ -51,7 +51,7 @@ export function ErrorWorkspace({ error }: { error: string }) {
   };
 
   return (
-    <div className="w-full justify-center flex items-center h-full">
+    <div className="flex h-full w-full items-center justify-center">
       <Empty>
         <EmptyHeader>
           <EmptyMedia variant="icon">
@@ -72,7 +72,7 @@ export function ErrorWorkspace({ error }: { error: string }) {
 
 export function NoWorkspace() {
   return (
-    <div className="w-full justify-center flex items-center h-full">
+    <div className="flex h-full w-full items-center justify-center">
       <Empty>
         <EmptyHeader>
           <EmptyMedia variant="icon">

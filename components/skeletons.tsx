@@ -17,7 +17,7 @@ export function StatsSkeleton() {
         <Card
           key={index}
           className={cn(
-            "rounded-none bg-muted border-0 shadow-none py-0",
+            "rounded-none border-0 bg-muted py-0 shadow-none",
             index === 0 && "rounded-l-xl",
             index === 3 && "rounded-r-xl",
           )}
@@ -40,7 +40,7 @@ export function RecentDocumentsSkeleton() {
           <TableHead>Title</TableHead>
           <TableHead>Type</TableHead>
           <TableHead>Status</TableHead>
-          <TableHead className="flex justify-end items-center">
+          <TableHead className="flex items-center justify-end">
             Last edited
           </TableHead>
         </TableRow>
@@ -109,7 +109,7 @@ export function DocumentsTableSkeleton() {
               <Skeleton className="h-5 w-16" />
             </TableCell>
             <TableCell className="text-right">
-              <Skeleton className="h-5 w-16 ml-auto" />
+              <Skeleton className="ml-auto h-5 w-16" />
             </TableCell>
           </TableRow>
         ))}

@@ -282,7 +282,7 @@ export function Editor({
   const toolbarRef = useRef<HTMLDivElement | null>(null);
 
   const [isSaving, setIsSaving] = useState(false);
-  const [lastSavedAt, setLastSavedAt] = useState<number | null>(null);
+  const [_lastSavedAt, setLastSavedAt] = useState<number | null>(null);
   const [isDirty, setIsDirty] = useState(false);
   const saveTimeout = useRef<number | null>(null);
 
@@ -362,7 +362,7 @@ export function Editor({
         // Treat as an HTML/string content
         editor.commands.setContent(contentToSet);
       }
-    } catch (e) {
+    } catch (_e) {
       // Best-effort fallback: attempt setContent again and swallow errors
       try {
         editor.commands.setContent(contentToSet);
@@ -371,7 +371,7 @@ export function Editor({
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [editor, initialContent, initialIsJson]);
+  }, [editor, initialContent, initialIsJson, DEFAULT_DOC]);
 
   // Save helper: sends editor JSON to the server for the provided docId.
   async function performSave(payload: any) {
@@ -406,7 +406,7 @@ export function Editor({
       } else {
         // If server returned the updated document, prefer its updated_at to set lastSavedAt.
         const updatedDoc = body?.document ?? body;
-        if (updatedDoc && updatedDoc.updated_at) {
+        if (updatedDoc?.updated_at) {
           const parsed = Date.parse(String(updatedDoc.updated_at));
           if (!Number.isNaN(parsed)) {
             setLastSavedAt(parsed);
@@ -432,7 +432,7 @@ export function Editor({
               },
             }),
           );
-        } catch (e) {
+        } catch (_e) {
           // ignore event dispatch errors
         }
       }
@@ -480,7 +480,7 @@ export function Editor({
         saveTimeout.current = null;
       }
     };
-  }, [editor, docId]);
+  }, [editor, docId, performSave]);
 
   // Expose an explicit save button action for manual save as well
   const handleManualSave = async () => {
@@ -515,14 +515,14 @@ export function Editor({
       ) : (
         <Frame
           className={cn(
-            "max-h-[calc(100vh-24px)] h-[calc(100vh-24px)] mt-3 flex",
+            "mt-3 flex h-[calc(100vh-24px)] max-h-[calc(100vh-24px)]",
             className,
           )}
         >
           <FrameHeader className="flex flex-row justify-between py-1!">
             {!readOnly && (
               <Toolbar
-                className="bg-transparent! border-b-0! p-0! flex justify-between!"
+                className="justify-between! flex border-b-0! bg-transparent! p-0!"
                 ref={toolbarRef}
                 style={{
                   ...(isMobile
@@ -551,15 +551,15 @@ export function Editor({
               </Toolbar>
             )}
           </FrameHeader>
-          <FramePanel className="flex-1 p-0 overflow-scroll">
+          <FramePanel className="flex-1 overflow-scroll p-0">
             <EditorContent
               editor={editor}
               role="presentation"
               className={cn(
-                "md:py-20! py-5!",
+                "py-5! md:py-20!",
                 hideActions
                   ? "simple-editor-content"
-                  : "simple-editor-content-edit ",
+                  : "simple-editor-content-edit",
               )}
             />
           </FramePanel>

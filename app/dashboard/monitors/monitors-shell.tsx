@@ -119,21 +119,21 @@ export default function MonitorsShell({
         description="Overview of system statistics."
       />
 
-      <div className="mx-auto mb-10 grid grid-cols-1 gap-px overflow-hidden border-r-0 border-b-0 bg-accent border sm:grid-cols-2 lg:grid-cols-3">
-        {data.map((stat, index) => (
+      <div className="mx-auto mb-10 grid grid-cols-1 gap-px overflow-hidden border border-r-0 border-b-0 bg-accent sm:grid-cols-2 lg:grid-cols-3">
+        {data.map((stat, _index) => (
           <Card
             key={stat.name}
             className={cn(
-              "rounded-none bg-muted border-0 shadow-none py-0",
-              "border-b border-r",
+              "rounded-none border-0 bg-muted py-0 shadow-none",
+              "border-r border-b",
             )}
           >
             <CardContent className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2 p-4 sm:p-6">
-              <div className="text-sm font-medium text-muted-foreground">
+              <div className="font-medium text-muted-foreground text-sm">
                 {stat.name}
               </div>
 
-              <div className="w-full flex-none text-3xl font-medium tracking-tight text-foreground">
+              <div className="w-full flex-none font-medium text-3xl text-foreground tracking-tight">
                 {stat.value}
               </div>
             </CardContent>
@@ -141,7 +141,7 @@ export default function MonitorsShell({
         ))}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10">
+      <div className="mb-10 grid grid-cols-1 gap-4 md:grid-cols-3">
         <Card className="rounded-none shadow-none">
           <CardHeader>
             <CardTitle>User Signups</CardTitle>

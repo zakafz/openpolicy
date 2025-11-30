@@ -59,7 +59,7 @@ export default function OverviewShell(): React.ReactElement {
     }
 
     checkPlan();
-  }, [workspace?.plan]);
+  }, [workspace?.plan, workspace]);
 
   React.useEffect(() => {
     let cancelled = false;
@@ -143,12 +143,12 @@ export default function OverviewShell(): React.ReactElement {
             stats.all >= planLimit ? "bg-destructive/5" : "bg-accent",
           )}
         >
-          <div className="flex items-center justify-between mb-4">
+          <div className="mb-4 flex items-center justify-between">
             <div>
               <h3 className="font-medium">
                 {isFreePlanState ? "Free" : "Pro"} Plan Usage
               </h3>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-muted-foreground text-sm">
                 {isFreePlanState
                   ? "You are on the Free plan. Upgrade to Pro for more documents."
                   : `Your Pro plan is limited to ${planLimit} documents.`}
@@ -196,17 +196,17 @@ export default function OverviewShell(): React.ReactElement {
             <Card
               key={stat.name}
               className={cn(
-                "rounded-none bg-muted border-0 shadow-none py-0",
+                "rounded-none border-0 bg-muted py-0 shadow-none",
                 index === 0 && "rounded-l-xl",
                 index === data.length - 1 && "rounded-r-xl",
               )}
             >
               <CardContent className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2 p-4 sm:p-6">
-                <div className="text-sm font-medium text-muted-foreground">
+                <div className="font-medium text-muted-foreground text-sm">
                   {stat.name}
                 </div>
 
-                <div className="w-full flex-none text-3xl font-medium tracking-tight text-foreground">
+                <div className="w-full flex-none font-medium text-3xl text-foreground tracking-tight">
                   {stat.value}
                 </div>
               </CardContent>

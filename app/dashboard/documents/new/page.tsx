@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 export default function NewDocumentPage() {
   return (
-    <Container className="flex justify-center items-center">
+    <Container className="flex items-center justify-center">
       <NewDocumentShell />
     </Container>
   );

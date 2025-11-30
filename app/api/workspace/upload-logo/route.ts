@@ -29,7 +29,7 @@ export async function POST(req: Request) {
     let buffer: Buffer;
     try {
       buffer = Buffer.from(base64, "base64");
-    } catch (err) {
+    } catch (_err) {
       return NextResponse.json(
         { error: "Invalid base64 data" },
         { status: 400 },

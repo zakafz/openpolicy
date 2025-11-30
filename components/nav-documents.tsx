@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { Badge } from "@/components/ui/badge";
 import {
   SidebarGroup,
   SidebarGroupLabel,
@@ -26,7 +27,6 @@ import {
 import { useWorkspace } from "@/context/workspace";
 import { fetchDocumentsForWorkspace } from "@/lib/documents";
 import { createClient } from "@/lib/supabase/client";
-import { Badge } from "@/components/ui/badge";
 
 export function NavDocuments() {
   const { isMobile } = useSidebar();
@@ -131,54 +131,50 @@ export function NavDocuments() {
             </SidebarMenuButton>
           </SidebarMenuItem>
         ) : (
-          <>
-            {docs.map((d) => (
-              <SidebarMenuItem key={d.id}>
-                <SidebarMenuButton asChild>
-                  <Link
-                    href={`/dashboard/d/${d.slug}`}
-                    className="flex items-center gap-2 justify-between w-full"
+          docs.map((d) => (
+            <SidebarMenuItem key={d.id}>
+              <SidebarMenuButton asChild>
+                <Link
+                  href={`/dashboard/d/${d.slug}`}
+                  className="flex w-full items-center justify-between gap-2"
+                >
+                  <div className="flex min-w-0 items-center gap-2">
+                    {(() => {
+                      const key = String(d?.type ?? "other") as
+                        | "privacy"
+                        | "terms"
+                        | "cookie"
+                        | "refund"
+                        | "shipping"
+                        | "intellectual-property"
+                        | "data-protection"
+                        | "other";
+                      const Icon = typeIconMap[key] ?? Folder;
+                      return (
+                        <Icon
+                          className="h-4 w-4 shrink-0 opacity-80"
+                          aria-hidden="true"
+                        />
+                      );
+                    })()}
+                    <span className="truncate">{d.title}</span>
+                  </div>
+                  <Badge
+                    className={`shrink-0 text-xs capitalize ${
+                      d.status === "published"
+                        ? "bg-info/15 text-info-foreground"
+                        : d.status === "archived"
+                          ? ""
+                          : "bg-warning/20 text-warning-foreground"
+                    }`}
+                    variant={d.status === "archived" ? "secondary" : "default"}
                   >
-                    <div className="flex items-center gap-2 min-w-0">
-                      {(() => {
-                        const key = String(d?.type ?? "other") as
-                          | "privacy"
-                          | "terms"
-                          | "cookie"
-                          | "refund"
-                          | "shipping"
-                          | "intellectual-property"
-                          | "data-protection"
-                          | "other";
-                        const Icon = typeIconMap[key] ?? Folder;
-                        return (
-                          <Icon
-                            className="w-4 h-4 opacity-80 shrink-0"
-                            aria-hidden="true"
-                          />
-                        );
-                      })()}
-                      <span className="truncate">{d.title}</span>
-                    </div>
-                    <Badge
-                      className={`text-xs capitalize shrink-0 ${
-                        d.status === "published"
-                          ? "bg-info/15 text-info-foreground"
-                          : d.status === "archived"
-                            ? ""
-                            : "bg-warning/20 text-warning-foreground"
-                      }`}
-                      variant={
-                        d.status === "archived" ? "secondary" : "default"
-                      }
-                    >
-                      {d.status || "draft"}
-                    </Badge>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            ))}
-          </>
+                    {d.status || "draft"}
+                  </Badge>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          ))
         )}
 
         <SidebarMenuItem>

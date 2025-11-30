@@ -63,7 +63,7 @@ export async function POST(req: NextRequest) {
     if (oldDomain && oldDomain !== domain) {
       try {
         await removeDomainFromVercel(oldDomain);
-      } catch (e) {}
+      } catch (_e) {}
     }
 
     if (domain) {
@@ -123,7 +123,7 @@ export async function POST(req: NextRequest) {
     } else if (!domain && oldDomain) {
       try {
         await removeDomainFromVercel(oldDomain);
-      } catch (e) {}
+      } catch (_e) {}
     }
 
     const { error: updateError } = await supabase

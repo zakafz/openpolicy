@@ -46,15 +46,15 @@ export default async function Page() {
   const products = await api.products.list({ isArchived: false });
 
   return (
-    <div className="relative flex min-h-screen flex-col gap-2 w-full items-center justify-center p-4 bg-card">
-      <div className="flex items-end flex-col">
+    <div className="relative flex min-h-screen w-full flex-col items-center justify-center gap-2 bg-card p-4">
+      <div className="flex flex-col items-end">
         <CreateWorkspaceForm products={products.result.items} />
-        <span className="text-xs text-muted-foreground flex items-center w-fit pr-4">
+        <span className="flex w-fit items-center pr-4 text-muted-foreground text-xs">
           Want to{" "}
           <LogoutButton>
             <Button
               variant="link"
-              className="text-xs px-0.5 text-muted-foreground pr-0 hover:text-red-500"
+              className="px-0.5 pr-0 text-muted-foreground text-xs hover:text-red-500"
             >
               Logout
             </Button>

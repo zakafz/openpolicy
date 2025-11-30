@@ -28,7 +28,7 @@ export default async function Login() {
       <Header />
 
       <Section className="p-4">
-        <div className="w-full min-h-screen flex justify-center items-center">
+        <div className="flex min-h-screen w-full items-center justify-center">
           <LoginForm />
         </div>
       </Section>

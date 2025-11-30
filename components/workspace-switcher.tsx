@@ -64,7 +64,7 @@ export function WorkspaceSwitcher({
         } else if (setSelectedWorkspace) {
           setSelectedWorkspace(first);
         }
-      } catch (e) {
+      } catch (_e) {
         // ignore
       }
     }
@@ -76,7 +76,7 @@ export function WorkspaceSwitcher({
     setSelectedWorkspace,
   ]);
 
-  React.useEffect(() => {}, [workspace]);
+  React.useEffect(() => {}, []);
 
   if (!workspace) {
     return null;
@@ -90,9 +90,9 @@ export function WorkspaceSwitcher({
               size="lg"
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
-              <div className="border text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
+              <div className="flex aspect-square size-8 items-center justify-center rounded-lg border text-sidebar-primary-foreground">
                 {workspace.logo ? (
-                  <Avatar className="h-8 w-8 min-w-8 min-h-8 rounded-lg">
+                  <Avatar className="h-8 min-h-8 w-8 min-w-8 rounded-lg">
                     <AvatarImage
                       src={
                         workspace.logo ||
@@ -100,19 +100,19 @@ export function WorkspaceSwitcher({
                       }
                       alt={workspace.name || "Unknown"}
                     />
-                    <AvatarFallback className="rounded-lg uppercase text-primary">
+                    <AvatarFallback className="rounded-lg text-primary uppercase">
                       {workspace.name?.charAt(0) || "NA"}
                     </AvatarFallback>
                   </Avatar>
                 ) : (
-                  <div className="size-4 flex items-center justify-center rounded bg-muted-foreground text-muted-foreground/80">
+                  <div className="flex size-4 items-center justify-center rounded bg-muted-foreground text-muted-foreground/80">
                     {workspace.name?.charAt(0) ?? ""}
                   </div>
                 )}
               </div>
               <div className="flex flex-col leading-4">
                 <span className="truncate font-medium">{workspace.name}</span>
-                <span className="truncate text-xs font-mono text-muted-foreground">
+                <span className="truncate font-mono text-muted-foreground text-xs">
                   {products.find((product) => product.id === workspace.plan)
                     ?.name || "Unknown"}
                 </span>
@@ -147,7 +147,7 @@ export function WorkspaceSwitcher({
                         // ignore router failures
                       }
                     }
-                  } catch (e) {
+                  } catch (_e) {
                     // ignore provider errors
                   }
                 }}
@@ -163,25 +163,25 @@ export function WorkspaceSwitcher({
                         }
                         alt={item.name || "Unknown"}
                       />
-                      <AvatarFallback className="uppercase text-primary">
+                      <AvatarFallback className="text-primary uppercase">
                         {item.name?.charAt(0) || "NA"}
                       </AvatarFallback>
                     </Avatar>
                   ) : (
-                    <div className="size-3.5 shrink-0 flex items-center justify-center rounded bg-muted-foreground text-muted-foreground/80">
+                    <div className="flex size-3.5 shrink-0 items-center justify-center rounded bg-muted-foreground text-muted-foreground/80">
                       {item.name?.charAt(0) ?? ""}
                     </div>
                   )}
                 </div>
-                <div className="flex flex-col leading-4 ml-1 w-full">
+                <div className="ml-1 flex w-full flex-col leading-4">
                   <span className="truncate font-medium">{item.name}</span>
-                  <span className="truncate text-xs font-mono text-muted-foreground">
+                  <span className="truncate font-mono text-muted-foreground text-xs">
                     {products.find((product) => product.id === item.plan)
                       ?.name || "Unknown"}
                   </span>
                 </div>
                 {workspace?.id === item.id && (
-                  <div className="p-1 bg-accent rounded-lg flex justify-center items-center">
+                  <div className="flex items-center justify-center rounded-lg bg-accent p-1">
                     <Check className="size-4 text-primary" />
                   </div>
                 )}
@@ -192,12 +192,12 @@ export function WorkspaceSwitcher({
               <TooltipProvider>
                 <Tooltip delayDuration={500}>
                   <TooltipTrigger asChild>
-                    <div className="opacity-50 cursor-not-allowed">
+                    <div className="cursor-not-allowed opacity-50">
                       <DropdownMenuItem disabled className="gap-2 p-2">
                         <div className="flex size-6 items-center justify-center rounded-md border bg-transparent">
                           <Plus className="size-4" />
                         </div>
-                        <div className="text-muted-foreground font-medium">
+                        <div className="font-medium text-muted-foreground">
                           Add workspace
                         </div>
                       </DropdownMenuItem>
@@ -205,7 +205,7 @@ export function WorkspaceSwitcher({
                   </TooltipTrigger>
                   <TooltipContent
                     side="bottom"
-                    className="text-xs z-50 font-mono"
+                    className="z-50 font-mono text-xs"
                   >
                     You can only have one workspace.
                   </TooltipContent>
@@ -217,7 +217,7 @@ export function WorkspaceSwitcher({
                   <div className="flex size-6 items-center justify-center rounded-md border bg-transparent">
                     <Plus className="size-4" />
                   </div>
-                  <div className="text-muted-foreground font-medium">
+                  <div className="font-medium text-muted-foreground">
                     Add workspace
                   </div>
                 </DropdownMenuItem>

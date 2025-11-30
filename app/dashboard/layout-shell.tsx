@@ -32,9 +32,9 @@ export default function LayoutShell({
   isAdmin?: boolean;
 }) {
   const [profile, setProfile] = useState<UsersRow | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [_loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
-  const [checkingWorkspaces, setCheckingWorkspaces] = useState(true);
+  const [_checkingWorkspaces, setCheckingWorkspaces] = useState(true);
   const [ownerWorkspaces, setOwnerWorkspaces] = useState<any[] | null>(null);
   const [firstWorkspaceId, setFirstWorkspaceId] = useState<string | null>(null);
 
@@ -95,30 +95,25 @@ export default function LayoutShell({
         if (profileError) throw profileError;
 
         setProfile(profileData as UsersRow | null);
+        const ownerWorkspaces = await fetchWorkspacesForOwner(
+          user.id,
+          supabase,
+        );
+        setOwnerWorkspaces(ownerWorkspaces ?? []);
+        const hasWorkspace =
+          Array.isArray(ownerWorkspaces) && ownerWorkspaces.length > 0;
 
-        try {
-          const ownerWorkspaces = await fetchWorkspacesForOwner(
-            user.id,
-            supabase,
-          );
-          setOwnerWorkspaces(ownerWorkspaces ?? []);
-          const hasWorkspace =
-            Array.isArray(ownerWorkspaces) && ownerWorkspaces.length > 0;
-
-          if (hasWorkspace) {
-            try {
-              const firstId = ownerWorkspaces[0]?.id ?? null;
-              if (firstId) setFirstWorkspaceId(firstId);
-            } catch {
-              // ignore
-            }
-          } else {
-            if (pathname !== "/create") {
-              router.push("/create");
-            }
+        if (hasWorkspace) {
+          try {
+            const firstId = ownerWorkspaces[0]?.id ?? null;
+            if (firstId) setFirstWorkspaceId(firstId);
+          } catch {
+            // ignore
           }
-        } catch (wError: any) {
-          throw wError;
+        } else {
+          if (pathname !== "/create") {
+            router.push("/create");
+          }
         }
       } catch (err: any) {
         setError(err);
@@ -130,7 +125,7 @@ export default function LayoutShell({
 
     fetchAuthAndProfile();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [pathname, router.push]);
 
   if (error) throw error;
 
@@ -144,8 +139,8 @@ export default function LayoutShell({
       />
       <SidebarInset className="bg-card">
         {!isDocumentEdit && (
-          <header className="flex h-14 shrink-0 border-b items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 sticky top-0 z-10 bg-card">
-            <div className="flex items-center  gap-2 px-4">
+          <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-2 border-b bg-card transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
+            <div className="flex items-center gap-2 px-4">
               <SidebarTrigger className="-ml-1" />
               <Breadcrumb>
                 <BreadcrumbList>
@@ -164,14 +159,14 @@ export default function LayoutShell({
                     ? `/dashboard/documents/new?workspaceId=${firstWorkspaceId}`
                     : "/dashboard/documents/new"
                 }
-                className="ml-auto mr-4"
+                className="mr-4 ml-auto"
               >
                 <Button size={"sm"}>Create Document</Button>
               </Link>
             )}
           </header>
         )}
-        <div className="flex flex-1 flex-col gap-4 px-4 overflow-scroll h-full">
+        <div className="flex h-full flex-1 flex-col gap-4 overflow-scroll px-4">
           {children}
         </div>
       </SidebarInset>

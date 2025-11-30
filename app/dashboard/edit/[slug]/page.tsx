@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 export default function Page() {
   return (
-    <Container className="py-0! px-0!">
+    <Container className="px-0! py-0!">
       <DocumentEditorShell />
     </Container>
   );

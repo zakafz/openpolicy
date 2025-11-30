@@ -31,14 +31,13 @@ import {
 } from "@/components/ui/tooltip";
 import { useWorkspace } from "@/context/workspace";
 import { fetchWorkspaceDocumentCounts } from "@/lib/documents";
+import { isFreePlan } from "@/lib/limits";
 import { createClient } from "@/lib/supabase/client";
 import { fetchWorkspaceById, readSelectedWorkspaceId } from "@/lib/workspace";
 import type { WorkspaceRow } from "@/types/supabase";
-import { isFreePlan } from "@/lib/limits";
 import { Button } from "./ui/button";
 import { WorkspaceSwitcher } from "./workspace-switcher";
 
-// This is sample data.
 const data = {
   navMain: [
     {
@@ -140,8 +139,8 @@ export function AppSidebar(props: {
     drafts: 0,
     archived: 0,
   });
-  const [countsLoading, setCountsLoading] = useState(false);
-  const [isFree, setIsFree] = useState(true);
+  const [_countsLoading, setCountsLoading] = useState(false);
+  const [_isFree, setIsFree] = useState(true);
 
   useEffect(() => {
     if (props.workspaces) {
@@ -209,7 +208,7 @@ export function AppSidebar(props: {
       try {
         const result = await isFreePlan(ws.plan ?? null);
         setIsFree(result);
-      } catch (e) {
+      } catch (_e) {
         setIsFree(true);
       }
     }
@@ -234,7 +233,7 @@ export function AppSidebar(props: {
       const existing = workspaces.find(
         (w) => String(w.id) === String(selectedWorkspaceId),
       );
-      if (existing && existing.slug) return;
+      if (existing?.slug) return;
 
       try {
         const supabaseClient = createClient();
@@ -304,7 +303,7 @@ export function AppSidebar(props: {
       <SidebarHeader>
         <WorkspaceSwitcher workspaces={workspaces} products={props.products} />
       </SidebarHeader>
-      <div className="w-full px-2 group-data-[collapsible=icon]:hidden flex gap-2">
+      <div className="flex w-full gap-2 px-2 group-data-[collapsible=icon]:hidden">
         {customDomainHref ? (
           <>
             <Tooltip delayDuration={500}>

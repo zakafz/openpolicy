@@ -39,73 +39,71 @@ export function LoginForm({
     };
 
   return (
-    <>
-      <div className="flex flex-1 flex-col justify-center px-4 py-10 lg:px-6">
-        <div className="sm:mx-auto sm:w-full sm:max-w-sm">
-          <h2 className="text-center text-xl mb-2 font-semibold text-foreground">
-            Log into OpenPolicy
-          </h2>
-          <p className="text-sm text-center text-muted-foreground mb-5">
-            Get started now. Log in or create account.
-          </p>
+    <div className="flex flex-1 flex-col justify-center px-4 py-10 lg:px-6">
+      <div className="sm:mx-auto sm:w-full sm:max-w-sm">
+        <h2 className="mb-2 text-center font-semibold text-foreground text-xl">
+          Log into OpenPolicy
+        </h2>
+        <p className="mb-5 text-center text-muted-foreground text-sm">
+          Get started now. Log in or create account.
+        </p>
 
-          <form onSubmit={(e) => e.preventDefault()}>
-            <div className="flex flex-col gap-2">
-              {error && <p className="text-sm text-destructive-500">{error}</p>}
-              <Button
-                type="button"
-                onClick={handleSocialLogin("github")}
-                size={"lg"}
-                variant="outline"
-                className="inline-flex w-full items-center justify-center space-x-2"
-                disabled={loadingProvider === "github"}
-              >
-                {loadingProvider === "github" ? (
-                  <Spinner className="size-5" aria-hidden={true} />
-                ) : (
-                  <GithubLight className="size-5" aria-hidden={true} />
-                )}
-                <span className="text-sm font-medium">
-                  {loadingProvider === "github"
-                    ? "Logging in..."
-                    : "Continue with GitHub"}
-                </span>
-              </Button>
-              <Button
-                type="button"
-                onClick={handleSocialLogin("google")}
-                size={"lg"}
-                variant="outline"
-                className="inline-flex w-full items-center justify-center space-x-2"
-                disabled={loadingProvider === "google"}
-              >
-                {loadingProvider === "google" ? (
-                  <Spinner className="size-5" aria-hidden={true} />
-                ) : (
-                  <Google className="size-5" aria-hidden={true} />
-                )}
-                <span className="text-sm font-medium">
-                  {loadingProvider === "google"
-                    ? "Logging in..."
-                    : "Continue with Google"}
-                </span>
-              </Button>
-            </div>
-          </form>
+        <form onSubmit={(e) => e.preventDefault()}>
+          <div className="flex flex-col gap-2">
+            {error && <p className="text-destructive-500 text-sm">{error}</p>}
+            <Button
+              type="button"
+              onClick={handleSocialLogin("github")}
+              size={"lg"}
+              variant="outline"
+              className="inline-flex w-full items-center justify-center space-x-2"
+              disabled={loadingProvider === "github"}
+            >
+              {loadingProvider === "github" ? (
+                <Spinner className="size-5" aria-hidden={true} />
+              ) : (
+                <GithubLight className="size-5" aria-hidden={true} />
+              )}
+              <span className="font-medium text-sm">
+                {loadingProvider === "github"
+                  ? "Logging in..."
+                  : "Continue with GitHub"}
+              </span>
+            </Button>
+            <Button
+              type="button"
+              onClick={handleSocialLogin("google")}
+              size={"lg"}
+              variant="outline"
+              className="inline-flex w-full items-center justify-center space-x-2"
+              disabled={loadingProvider === "google"}
+            >
+              {loadingProvider === "google" ? (
+                <Spinner className="size-5" aria-hidden={true} />
+              ) : (
+                <Google className="size-5" aria-hidden={true} />
+              )}
+              <span className="font-medium text-sm">
+                {loadingProvider === "google"
+                  ? "Logging in..."
+                  : "Continue with Google"}
+              </span>
+            </Button>
+          </div>
+        </form>
 
-          <p className="mt-4 text-xs text-muted-foreground">
-            By signing in, you agree to our{" "}
-            <a href="#" className="underline underline-offset-4">
-              terms of service
-            </a>{" "}
-            and{" "}
-            <a href="#" className="underline underline-offset-4">
-              privacy policy
-            </a>
-            .
-          </p>
-        </div>
+        <p className="mt-4 text-muted-foreground text-xs">
+          By signing in, you agree to our{" "}
+          <a href="#" className="underline underline-offset-4">
+            terms of service
+          </a>{" "}
+          and{" "}
+          <a href="#" className="underline underline-offset-4">
+            privacy policy
+          </a>
+          .
+        </p>
       </div>
-    </>
+    </div>
   );
 }

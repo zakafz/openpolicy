@@ -24,14 +24,14 @@ export default function Error({
         <div className="flex h-20 w-20 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/20">
           <AlertCircle className="h-10 w-10 text-red-600 dark:text-red-500" />
         </div>
-        <h2 className="text-2xl font-bold tracking-tight">
+        <h2 className="font-bold text-2xl tracking-tight">
           Something went wrong!
         </h2>
         <p className="text-muted-foreground">
           We apologize for the inconvenience. The error has been logged.
         </p>
         {error.digest && (
-          <p className="text-xs text-muted-foreground font-mono bg-muted px-2 py-1 rounded">
+          <p className="rounded bg-muted px-2 py-1 font-mono text-muted-foreground text-xs">
             Error ID: {error.digest}
           </p>
         )}

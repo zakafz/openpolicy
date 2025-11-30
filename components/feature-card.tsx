@@ -20,7 +20,7 @@ export function FeatureCard({
 }: FeatureCardPorps) {
   return (
     <div className={cn("relative overflow-hidden p-6", className)} {...props}>
-      <div className="-mt-2 -ml-20 pointer-events-none absolute top-0 left-1/2 size-full mask-[radial-gradient(farthest-side_at_top,white,transparent)]">
+      <div className="-mt-2 -ml-20 mask-[radial-gradient(farthest-side_at_top,white,transparent)] pointer-events-none absolute top-0 left-1/2 size-full">
         <GridPattern
           className="absolute inset-0 size-full stroke-foreground/20"
           height={40}
@@ -29,7 +29,7 @@ export function FeatureCard({
         />
       </div>
       {feature.icon}
-      <h3 className="mt-10 text-sm font-medium md:text-base">
+      <h3 className="mt-10 font-medium text-sm md:text-base">
         {feature.title}
       </h3>
       <p className="relative z-20 mt-2 font-light text-muted-foreground text-xs">

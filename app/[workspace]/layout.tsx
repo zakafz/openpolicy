@@ -64,7 +64,7 @@ export default async function Layout({ children, params }: any) {
   let documents = [];
   try {
     documents = await fetchPublishedDocumentsForWorkspace(ws.id, svc, 100);
-  } catch (e) {
+  } catch (_e) {
     documents = [];
   }
 

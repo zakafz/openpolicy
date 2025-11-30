@@ -1,7 +1,6 @@
-import { ArrowUpRight, FileSearchCorner, RouteIcon } from "lucide-react";
+import { ArrowUpRight, FileSearchCorner } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import Container from "@/components/dashboard-container";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -49,7 +48,7 @@ export default async function Page({ params }: Props) {
       100,
     );
     docList = Array.isArray(docs) ? docs : [];
-  } catch (e) {
+  } catch (_e) {
     return notFound();
   }
 
@@ -58,7 +57,7 @@ export default async function Page({ params }: Props) {
       <header className="mb-6">
         <Badge
           variant={"secondary"}
-          className="text-sm font-mono text-muted-foreground"
+          className="font-mono text-muted-foreground text-sm"
         >
           Published documents ({docList.length})
         </Badge>
@@ -92,14 +91,14 @@ export default async function Page({ params }: Props) {
               <Link
                 href={`/${d.slug}`}
                 key={d.id}
-                className="p-4 rounded-2xl bg-accent group overflow-hidden"
+                className="group overflow-hidden rounded-2xl bg-accent p-4"
               >
-                <div className="flex items-start justify-between gap-4 relative">
+                <div className="relative flex items-start justify-between gap-4">
                   <div>
-                    <div className="text-lg font-medium w-fit">
+                    <div className="w-fit font-medium text-lg">
                       {d.title ?? d.slug}
                     </div>
-                    <div className="text-sm text-muted-foreground mt-1">
+                    <div className="mt-1 text-muted-foreground text-sm">
                       {d.updated_at
                         ? `Updated ${timeAgo(d.updated_at)} • ${fmtAbsolute(
                             d.updated_at,
@@ -109,8 +108,8 @@ export default async function Page({ params }: Props) {
                           : ""}
                     </div>
                   </div>
-                  <div className="absolute transition-all duration-200 -right-5 -top-5 opacity-0 group-hover:opacity-100 group-hover:right-0 group-hover:top-0">
-                    <ArrowUpRight className="text-muted-foreground size-5" />
+                  <div className="-right-5 -top-5 absolute opacity-0 transition-all duration-200 group-hover:top-0 group-hover:right-0 group-hover:opacity-100">
+                    <ArrowUpRight className="size-5 text-muted-foreground" />
                   </div>
                 </div>
               </Link>

@@ -24,7 +24,7 @@ export default function GlobalError({
             <div className="flex h-20 w-20 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/20">
               <AlertCircle className="h-10 w-10 text-red-600 dark:text-red-500" />
             </div>
-            <h2 className="text-2xl font-bold tracking-tight">
+            <h2 className="font-bold text-2xl tracking-tight">
               Critical Error
             </h2>
             <p className="text-muted-foreground">

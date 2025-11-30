@@ -243,7 +243,7 @@ export async function POST(req: Request) {
               );
             }
           }
-        } catch (e) {}
+        } catch (_e) {}
 
         try {
           if (workspace_id) {
@@ -324,7 +324,7 @@ export async function POST(req: Request) {
           { expected: workspace_id, got: createdWorkspaceId, created },
         );
         try {
-          if (created && created.id) {
+          if (created?.id) {
             await deleteDocumentPermanently(String(created.id), svc);
           }
         } catch (delErr) {
@@ -350,7 +350,7 @@ export async function POST(req: Request) {
         verifyErr,
       );
       try {
-        if (created && created.id) {
+        if (created?.id) {
           await deleteDocumentPermanently(String(created.id), svc);
         }
       } catch (delErr) {
@@ -497,7 +497,7 @@ export async function PUT(req: Request) {
 
     if (typeof body.published === "boolean") {
       const requestedPublished = !!body.published;
-      const currentlyPublished = !!(currentDoc && currentDoc.published);
+      const currentlyPublished = !!currentDoc?.published;
 
       updatePayload.published = requestedPublished;
       if (requestedPublished && !currentlyPublished) {

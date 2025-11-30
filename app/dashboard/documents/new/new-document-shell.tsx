@@ -95,9 +95,9 @@ export default function NewDocumentShell({
 
   const [title, setTitle] = useState("");
   const [slug, setSlug] = useState("");
-  const [slugDirty, setSlugDirty] = useState(false);
+  const [_slugDirty, setSlugDirty] = useState(false);
   const [type, setType] = useState<DocumentType>("privacy");
-  const [parentId, setParentId] = useState<string | null>(null);
+  const [parentId, _setParentId] = useState<string | null>(null);
   const [status, setStatus] = useState<"draft" | "published" | "archived">(
     "draft",
   );
@@ -122,7 +122,7 @@ export default function NewDocumentShell({
   }
 
   const [error, setError] = useState<string | null>(null);
-  const [successUrl, setSuccessUrl] = useState<string | null>(null);
+  const [_successUrl, setSuccessUrl] = useState<string | null>(null);
 
   const workspaceId =
     propWorkspaceId ??
@@ -260,13 +260,13 @@ export default function NewDocumentShell({
       <div className="flex flex-col items-center justify-center gap-6 rounded-t-xl border-b bg-accent/60 py-8">
         <div className="flex flex-col items-center space-y-1">
           <h2 className="font-medium text-2xl">Create a document</h2>
-          <p className="text-muted-foreground text-sm max-w-[80%] text-center">
+          <p className="max-w-[80%] text-center text-muted-foreground text-sm">
             Create a new document for this workspace (policies, terms, etc.).
           </p>
         </div>
       </div>
 
-      <FieldGroup className="p-4 flex gap-4">
+      <FieldGroup className="flex gap-4 p-4">
         <Field className="gap-2">
           <FieldLabel htmlFor="title">Document Title</FieldLabel>
           <Input
@@ -294,14 +294,14 @@ export default function NewDocumentShell({
                   <div className="flex items-center gap-2">
                     {selectedType ? (
                       <>
-                        <selectedType.icon className="w-4 h-4 opacity-72" />
+                        <selectedType.icon className="h-4 w-4 opacity-72" />
                         <span className="truncate">{selectedType.label}</span>
                       </>
                     ) : (
                       <span className="truncate">Select a document</span>
                     )}
                   </div>
-                  <span className="truncate text-xs text-muted-foreground">
+                  <span className="truncate text-muted-foreground text-xs">
                     {selectedType ? selectedType.description : ""}
                   </span>
                 </span>
@@ -312,10 +312,10 @@ export default function NewDocumentShell({
                 <SelectItem key={t.value} value={t.value}>
                   <span className="flex flex-col">
                     <div className="flex items-center gap-2">
-                      <t.icon className="w-4 h-4 opacity-72" />
+                      <t.icon className="h-4 w-4 opacity-72" />
                       <span className="truncate">{t.label}</span>
                     </div>
-                    <span className="truncate text-xs text-muted-foreground max-w-[500px] whitespace-pre-wrap">
+                    <span className="max-w-[500px] truncate whitespace-pre-wrap text-muted-foreground text-xs">
                       {t.description}
                     </span>
                   </span>
@@ -370,12 +370,12 @@ export default function NewDocumentShell({
         </Field>
       </FieldGroup>
 
-      <div className="rounded-b-xl border-t bg-accent/60 p-4 w-full">
+      <div className="w-full rounded-b-xl border-t bg-accent/60 p-4">
         {error ? (
-          <div className="mb-2 text-sm text-destructive">{error}</div>
+          <div className="mb-2 text-destructive text-sm">{error}</div>
         ) : null}
 
-        <div className="flex gap-2 w-full justify-end">
+        <div className="flex w-full justify-end gap-2">
           <Link href={"/dashboard"}>
             <Button variant={"outline"}>Cancel</Button>
           </Link>

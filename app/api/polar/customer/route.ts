@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { api as polar } from "@/lib/polar";
 import { createClient } from "@/lib/supabase/server";
 
-export async function GET(req: Request) {
+export async function GET(_req: Request) {
   try {
     const supabase = await createClient();
     const {

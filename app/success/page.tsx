@@ -28,16 +28,16 @@ export default async function Success({
     <>
       <Header />
       <Section className="p-0!">
-        <div className="w-full min-h-screen flex justify-center items-center">
-          <div className="w-full max-w-md flex justify-center items-center flex-col">
-            <div className="size-16 mb-2 bg-green-500/10 border border-green-500/20 rounded-2xl flex items-center justify-center">
+        <div className="flex min-h-screen w-full items-center justify-center">
+          <div className="flex w-full max-w-md flex-col items-center justify-center">
+            <div className="mb-2 flex size-16 items-center justify-center rounded-2xl border border-green-500/20 bg-green-500/10">
               <Receipt className="size-10 text-green-600" />
             </div>
-            <h1 className="text-3xl font-medium mb-2">Success!</h1>
-            <p className="text-base mb-2 text-muted-foreground">
+            <h1 className="mb-2 font-medium text-3xl">Success!</h1>
+            <p className="mb-2 text-base text-muted-foreground">
               Your payment was successful, thank you.
             </p>
-            <p className="text-sm mb-5 bg p-1 rounded-lg bg-border/60 px-3 text-muted-foreground">
+            <p className="bg mb-5 rounded-lg bg-border/60 p-1 px-3 text-muted-foreground text-sm">
               Checkout ID: {checkoutId}
             </p>
             <SuccessWorkspaceHandler />

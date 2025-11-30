@@ -1,6 +1,6 @@
-import { Button } from "@/components/ui/button";
 import { ChevronRight } from "lucide-react";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 export default function ContentSection() {
   return (
@@ -16,7 +16,7 @@ export default function ContentSection() {
         />
 
         <div className="grid gap-6 md:grid-cols-2 md:gap-12">
-          <h2 className="text-4xl font-medium">
+          <h2 className="font-medium text-4xl">
             OpenPolicy is a new and innovative way to host, manage, and update
             your policies and documents.
           </h2>
@@ -28,7 +28,7 @@ export default function ContentSection() {
               build with it.
             </p>
             <Link href="/auth/login">
-              <Button size="sm" className="gap-1 pr-1.5 flex flex-row">
+              <Button size="sm" className="flex flex-row gap-1 pr-1.5">
                 <span>Get Started</span>
                 <ChevronRight className="size-4" />
               </Button>

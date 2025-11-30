@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Copy, Globe, InfoIcon, Sparkle, Sparkles } from "lucide-react";
+import { Check, Copy, InfoIcon, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 import PageTitle from "@/components/dashboard-page-title";
@@ -26,7 +26,6 @@ import {
 import {
   Frame,
   FrameDescription,
-  FrameFooter,
   FrameHeader,
   FramePanel,
   FrameTitle,
@@ -48,7 +47,6 @@ import {
 } from "@/components/workspace-states";
 import { useWorkspace } from "@/context/workspace";
 import useWorkspaceLoader from "@/hooks/use-workspace-loader";
-import { isFreePlan } from "@/lib/limits";
 import { createClient } from "@/lib/supabase/client";
 
 export default function WorkspaceShell() {
@@ -125,7 +123,7 @@ export default function WorkspaceShell() {
         } else {
           setIsFree(true);
         }
-      } catch (error) {
+      } catch (_error) {
         setIsFree(true);
       }
     };
@@ -170,7 +168,7 @@ export default function WorkspaceShell() {
           type: "error",
         });
       }
-    } catch (error) {
+    } catch (_error) {
       toastManager.add({
         title: "Error",
         description: "Failed to verify domain.",
@@ -218,7 +216,7 @@ export default function WorkspaceShell() {
     return <NoWorkspace />;
   }
 
-  const validate = () => {
+  const _validate = () => {
     setFieldError(null);
     if (!name || !name.trim()) {
       setFieldError("Workspace name is required.");
@@ -363,7 +361,7 @@ export default function WorkspaceShell() {
             detail: { id: null, workspace: null },
           }),
         );
-      } catch (e) {
+      } catch (_e) {
         // ignore
       }
 
@@ -432,7 +430,7 @@ export default function WorkspaceShell() {
       setLogo(publicURL ?? "");
       try {
         if (typeof reload === "function") await reload();
-      } catch (e) {
+      } catch (_e) {
         // ignore
       }
 
@@ -461,7 +459,7 @@ export default function WorkspaceShell() {
       {/*Workspace name*/}
       <form onSubmit={(e) => handleSave("general", e)}>
         <Frame>
-          <FrameHeader className="flex justify-between flex-row items-center">
+          <FrameHeader className="flex flex-row items-center justify-between">
             <div>
               <FrameTitle>Workspace</FrameTitle>
               <FrameDescription>Manage workspace settings.</FrameDescription>
@@ -469,7 +467,7 @@ export default function WorkspaceShell() {
             <Button
               type="submit"
               size={"sm"}
-              className="w-fit ml-auto"
+              className="ml-auto w-fit"
               disabled={!isGeneralDirty || savingMap.general || fetching}
             >
               {savingMap.general ? "Saving..." : "Save"}
@@ -500,7 +498,7 @@ export default function WorkspaceShell() {
               <FieldDescription>
                 <a
                   href="mailto:support@openpolicy.com"
-                  className="hover:underline text-primary"
+                  className="text-primary hover:underline"
                 >
                   Contact us
                 </a>{" "}
@@ -513,7 +511,7 @@ export default function WorkspaceShell() {
       {/*Workspace branding*/}
       <form className="mt-5" onSubmit={(e) => handleSave("branding", e)}>
         <Frame>
-          <FrameHeader className="flex justify-between flex-row items-center">
+          <FrameHeader className="flex flex-row items-center justify-between">
             <div>
               <FrameTitle>Documents Page Branding</FrameTitle>
               <FrameDescription>
@@ -524,19 +522,19 @@ export default function WorkspaceShell() {
             <Button
               type="submit"
               size={"sm"}
-              className="w-fit ml-auto"
+              className="ml-auto w-fit"
               disabled={!isBrandingDirty || savingMap.branding || fetching}
             >
               {savingMap.branding ? "Saving..." : "Save"}
             </Button>
           </FrameHeader>
           <FramePanel>
-            <Field className={"mt-4 flex flex-row gap-2 w-full items-center"}>
-              <Avatar className="size-14 rounded-xl aspect-square">
+            <Field className={"mt-4 flex w-full flex-row items-center gap-2"}>
+              <Avatar className="aspect-square size-14 rounded-xl">
                 <AvatarImage src={workspace?.logo || ""} alt="Workspace logo" />
-                <AvatarFallback className="bg-card rounded-xl" />
+                <AvatarFallback className="rounded-xl bg-card" />
               </Avatar>
-              <div className="w-full flex flex-col gap-2">
+              <div className="flex w-full flex-col gap-2">
                 <FieldLabel>Upload Logo</FieldLabel>
                 <Input
                   type="file"
@@ -548,7 +546,7 @@ export default function WorkspaceShell() {
               </div>
             </Field>
             <Label
-              className="flex mt-4 items-center justify-between gap-6 border rounded-lg p-3 has-data-checked:border-blue-500/20 has-data-checked:bg-blue-500/5"
+              className="mt-4 flex items-center justify-between gap-6 rounded-lg border p-3 has-data-checked:border-blue-500/20 has-data-checked:bg-blue-500/5"
               htmlFor={switchId}
             >
               <div className="flex flex-col gap-1">
@@ -597,7 +595,7 @@ export default function WorkspaceShell() {
       {/*Custom Domain*/}
       <form className="mt-5" onSubmit={(e) => handleSave("domain", e)}>
         <Frame>
-          <FrameHeader className="flex justify-between flex-row items-center">
+          <FrameHeader className="flex flex-row items-center justify-between">
             <div>
               <FrameTitle>Custom Domain</FrameTitle>
               <FrameDescription>
@@ -607,7 +605,7 @@ export default function WorkspaceShell() {
             <Button
               type={isFree ? "button" : "submit"}
               size={"sm"}
-              className="w-fit ml-auto"
+              className="ml-auto w-fit"
               disabled={
                 (!isDomainDirty && !isFree) || savingMap.domain || fetching
               }
@@ -620,7 +618,7 @@ export default function WorkspaceShell() {
             <div className="flex flex-col gap-4">
               {isFree ? (
                 <Alert variant={"default"}>
-                  <AlertTitle className="flex gap-1 items-center">
+                  <AlertTitle className="flex items-center gap-1">
                     <Sparkles className="size-4" />
                     Custom domains are available on the Pro plan.
                   </AlertTitle>
@@ -630,33 +628,33 @@ export default function WorkspaceShell() {
                 </Alert>
               ) : (
                 <div className="rounded-lg border bg-muted/50 p-4">
-                  <h4 className="text-sm font-medium mb-2">
+                  <h4 className="mb-2 font-medium text-sm">
                     DNS Configuration
                   </h4>
-                  <p className="text-sm text-muted-foreground mb-4">
+                  <p className="mb-4 text-muted-foreground text-sm">
                     To use a custom domain, you need to add a CNAME record to
                     your DNS provider.
                   </p>
-                  <div className="flex flex-col gap-4 rounded-md border bg-background relative p-3">
+                  <div className="relative flex flex-col gap-4 rounded-md border bg-background p-3">
                     <div className="flex flex-col gap-1">
-                      <span className="text-xs font-medium text-muted-foreground">
+                      <span className="font-medium text-muted-foreground text-xs">
                         Type
                       </span>
-                      <code className="text-sm font-mono">CNAME</code>
+                      <code className="font-mono text-sm">CNAME</code>
                     </div>
                     <div className="flex flex-col gap-1">
-                      <span className="text-xs font-medium text-muted-foreground">
+                      <span className="font-medium text-muted-foreground text-xs">
                         Host
                       </span>
-                      <code className="text-sm font-mono">
+                      <code className="font-mono text-sm">
                         {getDnsHost(customDomain)}
                       </code>
                     </div>
                     <div className="flex flex-col gap-1">
-                      <span className="text-xs font-medium text-muted-foreground">
+                      <span className="font-medium text-muted-foreground text-xs">
                         Value
                       </span>
-                      <code className="text-sm font-mono">
+                      <code className="font-mono text-sm">
                         cname.openpolicyhq.com
                       </code>
                     </div>
@@ -664,7 +662,7 @@ export default function WorkspaceShell() {
                       type="button"
                       variant="outline"
                       size="sm"
-                      className="h-8 w-8 p-0 absolute top-2 right-2"
+                      className="absolute top-2 right-2 h-8 w-8 p-0"
                       onClick={handleCopy}
                     >
                       {copied ? (
@@ -683,7 +681,7 @@ export default function WorkspaceShell() {
 
               <Field>
                 <FieldLabel>Domain Name</FieldLabel>
-                <div className="flex gap-2 w-full">
+                <div className="flex w-full gap-2">
                   <InputGroup className="flex-1">
                     <InputGroupInput
                       type="text"
@@ -767,12 +765,12 @@ export default function WorkspaceShell() {
               Actions made here are irreversible.
             </FrameDescription>
           </FrameHeader>
-          <FramePanel className="flex justify-between items-center border-destructive/20">
+          <FramePanel className="flex items-center justify-between border-destructive/20">
             <div className="flex flex-col gap-0.5">
-              <div className="text-sm font-medium text-semibold">
+              <div className="font-medium text-semibold text-sm">
                 Delete Workspace
               </div>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-muted-foreground text-sm">
                 Once you delete a workspace, there is no going back. Please be
                 certain.
               </p>
@@ -800,7 +798,7 @@ export default function WorkspaceShell() {
                     render={
                       <Button
                         variant="destructive"
-                        onClick={(e) => {
+                        onClick={(_e) => {
                           performDelete();
                         }}
                         disabled={deleting}

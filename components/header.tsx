@@ -37,7 +37,7 @@ export function Header() {
   return (
     <header
       className={cn(
-        "fixed top-0 left-1/2 -translate-x-1/2 z-50 max-xl:bg-background max-xl:border-border border-x border-transparent border-b w-full max-w-6xl",
+        "-translate-x-1/2 fixed top-0 left-1/2 z-50 w-full max-w-6xl border-transparent border-x border-b max-xl:border-border max-xl:bg-background",
         {
           "border-border bg-background/95 backdrop-blur-lg supports-backdrop-filter:bg-background/50":
             scrolled,
@@ -46,20 +46,20 @@ export function Header() {
     >
       <nav className="flex h-14 w-full items-center justify-between px-4">
         <Link href="/">
-          <div className="flex gap-1 items-center">
+          <div className="flex items-center gap-1">
             <Image
               src="/icon-openpolicy.svg"
               alt="Logo"
               width={32}
               height={32}
-              className="h-7 min-h-7 max-h-7 w-full"
+              className="h-7 max-h-7 min-h-7 w-full"
             />
             <Image
               src="/logo.svg"
               alt="Logo"
               width={32}
               height={32}
-              className="h-6 min-h-6 max-h-6 w-full"
+              className="h-6 max-h-6 min-h-6 w-full"
             />
           </div>
         </Link>

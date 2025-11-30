@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
 export function SuccessWorkspaceHandler() {
@@ -78,7 +78,7 @@ export function SuccessWorkspaceHandler() {
   }, [router]);
 
   return (
-    <div className="text-sm text-muted-foreground mt-2 mb-5">
+    <div className="mt-2 mb-5 text-muted-foreground text-sm">
       {status === "checking" && "Setting up your workspace..."}
       {status === "found" && "Workspace ready! Redirecting..."}
       {status === "timeout" &&

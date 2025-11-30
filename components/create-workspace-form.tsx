@@ -17,7 +17,6 @@ import {
   FieldLabel,
 } from "@/components/ui/field-shadcn";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Tooltip,
   TooltipContent,
@@ -115,7 +114,7 @@ export function CreateWorkspaceForm({ products }: { products: Product[] }) {
         clearTimeout(slugCheckRef.current);
       }
     };
-  }, [slug, supabase]);
+  }, [slug]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -189,7 +188,7 @@ export function CreateWorkspaceForm({ products }: { products: Product[] }) {
       }
 
       let customerId: string | undefined;
-      let customerExternalId: string | undefined;
+      let _customerExternalId: string | undefined;
       try {
         const res = await fetch("/api/polar/customer", {
           method: "GET",
@@ -198,7 +197,7 @@ export function CreateWorkspaceForm({ products }: { products: Product[] }) {
         if (res.ok) {
           const body = await res.json();
           customerId = body?.customerId ?? undefined;
-          customerExternalId =
+          _customerExternalId =
             body?.externalId ?? body?.external_id ?? undefined;
         } else {
           const body = await res.text();
@@ -212,8 +211,7 @@ export function CreateWorkspaceForm({ products }: { products: Product[] }) {
         console.error("Error fetching Polar customer info:", fetchErr);
       }
       const selectedProduct = products.find((p) => p.id === planId);
-      const price = (selectedProduct?.prices &&
-        selectedProduct.prices[0]) as any;
+      const price = selectedProduct?.prices?.[0] as any;
       const isFreePlan = price ? price.amountType === "free" : false;
 
       try {
@@ -277,7 +275,7 @@ export function CreateWorkspaceForm({ products }: { products: Product[] }) {
           let respBody: any = null;
           try {
             respBody = await resp.json().catch(() => null);
-          } catch (e) {
+          } catch (_e) {
             respBody = null;
           }
           const newWorkspaceId =
@@ -372,7 +370,7 @@ export function CreateWorkspaceForm({ products }: { products: Product[] }) {
       className="w-full max-w-md rounded-xl border bg-accent"
     >
       <div className="flex flex-col items-center justify-center gap-6 rounded-t-xl border-b bg-background/60 py-12">
-        <div className="flex gap-1 items-center">
+        <div className="flex items-center gap-1">
           <Image
             src="/icon-openpolicy.svg"
             alt="Logo"
@@ -390,7 +388,7 @@ export function CreateWorkspaceForm({ products }: { products: Product[] }) {
         </div>
         <div className="flex flex-col items-center space-y-1">
           <h2 className="font-medium text-2xl">Create a workspace</h2>
-          <p className="text-muted-foreground text-sm max-w-[80%] text-center">
+          <p className="max-w-[80%] text-center text-muted-foreground text-sm">
             A workspace is a place where you can work on compliance, legal, and
             internal documentation (etc...).
           </p>
@@ -442,28 +440,28 @@ export function CreateWorkspaceForm({ products }: { products: Product[] }) {
             </InputGroupAddon>
             <InputGroupAddon align="inline-start">
               {checkingSlug ? (
-                <LoaderCircleIcon className="animate-spin size-4" />
+                <LoaderCircleIcon className="size-4 animate-spin" />
               ) : slugValid && slugAvailable ? (
-                <CircleCheckIcon className="text-green-500 size-4" />
+                <CircleCheckIcon className="size-4 text-green-500" />
               ) : !slugValid && slug.length > 0 ? (
-                <CircleAlertIcon className="text-rose-500 size-4" />
+                <CircleAlertIcon className="size-4 text-rose-500" />
               ) : slugValid && slugAvailable === false ? (
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <span className="inline-flex">
-                      <CircleAlertIcon className="text-rose-500 size-4" />
+                      <CircleAlertIcon className="size-4 text-rose-500" />
                     </span>
                   </TooltipTrigger>
                   <TooltipContent>Slug already in use</TooltipContent>
                 </Tooltip>
               ) : (
-                <CircleCheckIcon className="text-muted-foreground size-4" />
+                <CircleCheckIcon className="size-4 text-muted-foreground" />
               )}
             </InputGroupAddon>
           </InputGroup>
           <FieldDescription id="slug-desc">
             {slugErrorMessage ? (
-              <span className="text-sm mb-1 text-rose-500 block" role="alert">
+              <span className="mb-1 block text-rose-500 text-sm" role="alert">
                 {slugErrorMessage}
               </span>
             ) : null}
@@ -503,8 +501,7 @@ export function CreateWorkspaceForm({ products }: { products: Product[] }) {
                     );
                   }
 
-                  const p = (selectedProduct.prices &&
-                    selectedProduct.prices[0]) as any;
+                  const p = selectedProduct.prices?.[0] as any;
                   const priceLabel = (() => {
                     if (!p) {
                       return `(${selectedProduct.recurringInterval ?? ""})`;
@@ -544,7 +541,7 @@ export function CreateWorkspaceForm({ products }: { products: Product[] }) {
                       {item.name}{" "}
                       <span className="text-muted-foreground">
                         {(() => {
-                          const p = (item.prices && item.prices[0]) as any;
+                          const p = item.prices?.[0] as any;
                           if (!p) {
                             return `(${item.recurringInterval ?? ""})`;
                           }
@@ -560,7 +557,7 @@ export function CreateWorkspaceForm({ products }: { products: Product[] }) {
                         })()}
                       </span>
                     </span>
-                    <span className="truncate text-xs text-muted-foreground">
+                    <span className="truncate text-muted-foreground text-xs">
                       {item.description}
                     </span>
                   </span>
@@ -577,9 +574,9 @@ export function CreateWorkspaceForm({ products }: { products: Product[] }) {
         </Field>
       </FieldGroup>
 
-      <div className="rounded-b-xl border-t bg-background/60 p-4 w-full">
-        {error && <p className="text-sm text-red-500 mb-2">{error}</p>}
-        <div className="flex gap-2 w-full justify-end">
+      <div className="w-full rounded-b-xl border-t bg-background/60 p-4">
+        {error && <p className="mb-2 text-red-500 text-sm">{error}</p>}
+        <div className="flex w-full justify-end gap-2">
           <Link href={"/dashboard"}>
             <Button variant={"outline"}>Back</Button>
           </Link>

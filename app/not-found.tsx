@@ -9,9 +9,9 @@ export default function NotFound() {
     <>
       <Header />
 
-      <Section className="p-0! min-h-screen flex-col gap-8 justify-center items-center flex">
-        <div className="text-center gap-3">
-          <h1 className="text-8xl font-semibold">404</h1>
+      <Section className="flex min-h-screen flex-col items-center justify-center gap-8 p-0!">
+        <div className="gap-3 text-center">
+          <h1 className="font-semibold text-8xl">404</h1>
           <p className="text-muted-foreground">Page not found</p>
         </div>
         <Link href="/">

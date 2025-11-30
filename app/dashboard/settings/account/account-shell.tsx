@@ -225,7 +225,7 @@ export default function AccountShell() {
             },
           }),
         );
-      } catch (e) {}
+      } catch (_e) {}
 
       toastManager.add({
         title: "Success!",
@@ -316,7 +316,7 @@ export default function AccountShell() {
 
       <form onSubmit={handleSave}>
         <Frame>
-          <FrameHeader className="flex justify-between flex-row items-center">
+          <FrameHeader className="flex flex-row items-center justify-between">
             <div>
               <FrameTitle>Account</FrameTitle>
               <FrameDescription>Manage account settings.</FrameDescription>
@@ -324,7 +324,7 @@ export default function AccountShell() {
             <Button
               type="submit"
               size={"sm"}
-              className="w-fit ml-auto h-fit"
+              className="ml-auto h-fit w-fit"
               disabled={fetching || saving || !isDirty}
             >
               {saving ? "Saving..." : "Save"}
@@ -373,7 +373,7 @@ export default function AccountShell() {
             </Field>
 
             {errorMsg && (
-              <div className="text-sm text-destructive mt-3">{errorMsg}</div>
+              <div className="mt-3 text-destructive text-sm">{errorMsg}</div>
             )}
           </FramePanel>
         </Frame>
@@ -387,12 +387,12 @@ export default function AccountShell() {
               Actions made here are irreversible.
             </FrameDescription>
           </FrameHeader>
-          <FramePanel className="flex justify-between items-center border-destructive/20">
+          <FramePanel className="flex items-center justify-between border-destructive/20">
             <div className="flex flex-col gap-0.5">
-              <div className="text-sm font-medium text-semibold">
+              <div className="font-medium text-semibold text-sm">
                 Delete Account
               </div>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-muted-foreground text-sm">
                 Once you delete your account, there is no going back. You will
                 be signed out immediately.
               </p>
@@ -421,7 +421,7 @@ export default function AccountShell() {
                     render={
                       <Button
                         variant="destructive"
-                        onClick={(e) => {
+                        onClick={(_e) => {
                           handleDeleteAccount();
                         }}
                         disabled={deleting}
