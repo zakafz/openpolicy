@@ -12,7 +12,7 @@ import {
   AnnouncementTitle,
 } from "@/components/kibo-ui/announcement";
 import Section from "@/components/section";
-import { EditorShowcase } from "@/components/tiptap/editor/editor-showcase";
+// import { EditorShowcase } from "@/components/tiptap/editor/editor-showcase";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Safari } from "@/components/ui/safari";
@@ -147,7 +147,7 @@ export default function Home() {
               </div>
             </div>
           </Card>
-          <EditorShowcase
+          {/* <EditorShowcase
             initialContent={{
               type: "doc",
               content: [
@@ -313,7 +313,7 @@ export default function Home() {
               ],
             }}
             initialIsJson={true}
-          />
+          /> */}
         </div>
       </Section>
       <CTA />

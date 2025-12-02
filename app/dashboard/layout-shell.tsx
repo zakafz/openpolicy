@@ -21,6 +21,7 @@ import {
 import { createClient } from "@/lib/supabase/client";
 import { fetchWorkspacesForOwner } from "@/lib/workspace";
 import type { UsersRow } from "@/types/supabase";
+import { cn } from "@/lib/utils";
 
 export default function LayoutShell({
   children,
@@ -39,8 +40,7 @@ export default function LayoutShell({
   const [firstWorkspaceId, setFirstWorkspaceId] = useState<string | null>(null);
 
   const pathname = usePathname();
-  const isDocumentDetail = pathname?.startsWith("/dashboard/d/") ?? false;
-  const isDocumentEdit = pathname?.startsWith("/dashboard/edit/") ?? false;
+  const isDocument = pathname?.startsWith("/dashboard/d/") ?? false;
   const router = useRouter();
 
   function getBreadcrumbTitle(path: string) {
@@ -138,7 +138,7 @@ export default function LayoutShell({
         isAdmin={isAdmin}
       />
       <SidebarInset className="bg-card">
-        {!isDocumentEdit && (
+        {!isDocument && (
           <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-2 border-b bg-card transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
             <div className="flex items-center gap-2 px-4">
               <SidebarTrigger className="-ml-1" />
@@ -152,7 +152,7 @@ export default function LayoutShell({
               </Breadcrumb>
             </div>
             {pathname ===
-            "/dashboard/documents/new" ? null : isDocumentDetail ? null : (
+            "/dashboard/documents/new" ? null : isDocument ? null : (
               <Link
                 href={
                   firstWorkspaceId
@@ -166,7 +166,7 @@ export default function LayoutShell({
             )}
           </header>
         )}
-        <div className="flex h-full flex-1 flex-col gap-4 overflow-scroll px-4">
+        <div className={cn("flex h-full flex-1 flex-col gap-4 overflow-scroll", isDocument ? "" : "px-4")}>
           {children}
         </div>
       </SidebarInset>

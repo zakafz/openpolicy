@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Container from "@/components/dashboard-container";
 import DocumentShell from "./document-shell";
 
 export const metadata: Metadata = {
@@ -9,8 +8,8 @@ export const metadata: Metadata = {
 
 export default function Page() {
   return (
-    <Container>
+    <div className="w-[calc(100vw-16rem)] group-has-data-[state=collapsed]/sidebar-wrapper:w-[calc(100vw-3rem)] h-screen overflow-hidden flex flex-col">
       <DocumentShell />
-    </Container>
+    </div>
   );
 }

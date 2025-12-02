@@ -21,7 +21,7 @@ export default function GlobalError({
       <body>
         <div className="flex h-screen flex-col items-center justify-center gap-4">
           <div className="flex flex-col items-center gap-2 text-center">
-            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/20">
+            <div className="flex h-20 w-20 items-center justify-center rounded-lg bg-red-100 dark:bg-red-900/20">
               <AlertCircle className="h-10 w-10 text-red-600 dark:text-red-500" />
             </div>
             <h2 className="font-bold text-2xl tracking-tight">
