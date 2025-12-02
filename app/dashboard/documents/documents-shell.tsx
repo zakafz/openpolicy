@@ -14,6 +14,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import PageTitle from "@/components/dashboard-page-title";
 import { DocumentsTableSkeleton } from "@/components/skeletons";
+import { SubscriptionAlert } from "@/components/subscription-alert";
 import {
   AlertDialog,
   AlertDialogClose,
@@ -27,7 +28,6 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Frame, FramePanel } from "@/components/ui/frame";
-import { SubscriptionAlert } from "@/components/subscription-alert";
 import {
   Menu,
   MenuItem,
@@ -90,7 +90,7 @@ export default function DocumentsShell(props: {
       const id = readSelectedWorkspaceId();
       if (!id) return;
       setWorkspaceId(id);
-    } catch { }
+    } catch {}
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [workspaceId]);
 
@@ -213,12 +213,13 @@ export default function DocumentsShell(props: {
                     <TableCell>
                       <Badge variant="outline" className="capitalize">
                         <span
-                          className={`size-1.5 rounded-full ${d.status === "published"
-                            ? "bg-info"
-                            : d.status === "archived"
-                              ? "bg-muted-foreground/60"
-                              : "bg-amber-500"
-                            }`}
+                          className={`size-1.5 rounded-full ${
+                            d.status === "published"
+                              ? "bg-info"
+                              : d.status === "archived"
+                                ? "bg-muted-foreground/60"
+                                : "bg-amber-500"
+                          }`}
                           aria-hidden="true"
                         />
                         {d.status}

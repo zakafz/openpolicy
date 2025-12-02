@@ -5,7 +5,8 @@ export function isSubscriptionActive(workspace: WorkspaceRow): boolean {
 
   if (!status) return true;
 
-  if (status === "active" || status === "trialing" || status === "past_due") return true;
+  if (status === "active" || status === "trialing" || status === "past_due")
+    return true;
 
   if (status === "canceled" && workspace.subscription_current_period_end) {
     const periodEnd = new Date(workspace.subscription_current_period_end);

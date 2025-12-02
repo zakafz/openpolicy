@@ -1,6 +1,6 @@
+import { NextResponse } from "next/server";
 import { api } from "@/lib/polar";
 import { createClient } from "@/lib/supabase/server";
-import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
   try {
@@ -66,7 +66,10 @@ export async function POST(req: Request) {
   } catch (error: any) {
     console.error("Error in cancel-subscription:", error);
     return NextResponse.json(
-      { error: "Internal server error", detail: error?.message ?? String(error) },
+      {
+        error: "Internal server error",
+        detail: error?.message ?? String(error),
+      },
       { status: 500 },
     );
   }

@@ -24,23 +24,35 @@ export default async function MonitorsPage() {
 
   const svc = createServiceClient();
 
+  // Track query performance
+  const queryTimes: number[] = [];
+  const startTime = performance.now();
+
+  const startUsers = performance.now();
   const { count: totalUsers } = await svc
     .from("users")
     .select("*", { count: "exact", head: true });
+  queryTimes.push(performance.now() - startUsers);
 
+  const startGithub = performance.now();
   const { count: githubSignups } = await svc
     .from("users")
     .select("*", { count: "exact", head: true })
     .eq("provider", "github");
+  queryTimes.push(performance.now() - startGithub);
 
+  const startGoogle = performance.now();
   const { count: googleSignups } = await svc
     .from("users")
     .select("*", { count: "exact", head: true })
     .eq("provider", "google");
+  queryTimes.push(performance.now() - startGoogle);
 
+  const startWorkspaces = performance.now();
   const { data: allWorkspaces, count: totalWorkspaces } = await svc
     .from("workspaces")
     .select("id, plan", { count: "exact" });
+  queryTimes.push(performance.now() - startWorkspaces);
 
   const products = await api.products.list({ isArchived: false });
   const freePlanIds = new Set(
@@ -64,19 +76,36 @@ export default async function MonitorsPage() {
     }
   }
 
+  const startDocs = performance.now();
   const { count: totalDocuments } = await svc
     .from("documents")
     .select("*", { count: "exact", head: true });
+  queryTimes.push(performance.now() - startDocs);
 
+  const startPublished = performance.now();
   const { count: publishedDocuments } = await svc
     .from("documents")
     .select("*", { count: "exact", head: true })
     .eq("published", true);
+  queryTimes.push(performance.now() - startPublished);
 
+  const startDrafts = performance.now();
   const { count: draftDocuments } = await svc
     .from("documents")
     .select("*", { count: "exact", head: true })
     .eq("published", false);
+  queryTimes.push(performance.now() - startDrafts);
+
+  const totalTime = performance.now() - startTime;
+
+  // Calculate real performance metrics
+  const avgDbQueryTime =
+    queryTimes.reduce((a, b) => a + b, 0) / queryTimes.length;
+  const performanceMetrics = {
+    avgResponseTime: totalTime, // Total time for all queries
+    dbQueryTime: avgDbQueryTime, // Average individual query time
+    cacheHitRate: 0, // No caching implemented yet
+  };
 
   return (
     <Container>
@@ -96,6 +125,11 @@ export default async function MonitorsPage() {
             total: totalDocuments || 0,
             published: publishedDocuments || 0,
             drafts: draftDocuments || 0,
+          },
+          performance: {
+            avgResponseTime: performanceMetrics.avgResponseTime,
+            dbQueryTime: performanceMetrics.dbQueryTime,
+            cacheHitRate: performanceMetrics.cacheHitRate,
           },
         }}
       />

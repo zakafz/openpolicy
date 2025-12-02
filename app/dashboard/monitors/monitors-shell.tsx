@@ -28,6 +28,11 @@ interface MonitorsShellProps {
       published: number;
       drafts: number;
     };
+    performance: {
+      avgResponseTime: number;
+      dbQueryTime: number;
+      cacheHitRate: number;
+    };
   };
 }
 
@@ -44,6 +49,18 @@ export default function MonitorsShell({
     { name: "Total Documents", value: String(stats.documents.total) },
     { name: "Published Docs", value: String(stats.documents.published) },
     { name: "Draft Docs", value: String(stats.documents.drafts) },
+    {
+      name: "Avg Response Time",
+      value: `${stats.performance.avgResponseTime.toFixed(0)}ms`,
+    },
+    {
+      name: "DB Query Time",
+      value: `${stats.performance.dbQueryTime.toFixed(0)}ms`,
+    },
+    {
+      name: "Cache Hit Rate",
+      value: `${stats.performance.cacheHitRate.toFixed(1)}%`,
+    },
   ];
 
   const userChartData = [

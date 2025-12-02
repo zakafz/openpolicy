@@ -22,11 +22,11 @@ async function uploadRemoteImageToBucket(
 
   if (uploadError) throw uploadError;
 
-  const { publicURL } = supabaseServiceClient.storage
+  const { data: publicUrlData } = supabaseServiceClient.storage
     .from(bucketName)
     .getPublicUrl(destPath);
 
-  return { publicURL, path: destPath };
+  return { publicURL: publicUrlData.publicUrl, path: destPath };
 }
 
 async function finalizePendingWorkspace({
@@ -314,12 +314,12 @@ export const POST = Webhooks({
       null;
     const customer =
       payload?.data?.customer ?? payload?.data?.subscription?.customer ?? null;
-    
+
     const subscription = payload?.data?.subscription ?? payload?.data;
     const subscriptionId = subscription?.id ?? null;
     const status = subscription?.status ?? null;
     const currentPeriodEnd = subscription?.current_period_end ?? null;
-    
+
     await finalizePendingWorkspace({
       svc,
       pendingWorkspaceId,
@@ -327,7 +327,7 @@ export const POST = Webhooks({
       customerEmail: customer?.email ?? null,
       customerId: customer?.id ?? null,
     });
-    
+
     if (subscriptionId && customer?.externalId) {
       try {
         await svc
@@ -340,7 +340,10 @@ export const POST = Webhooks({
           .eq("owner_id", customer.externalId);
       } catch (err) {
         Sentry.captureException(err, {
-          tags: { context: "onSubscriptionCreated", step: "update_subscription" },
+          tags: {
+            context: "onSubscriptionCreated",
+            step: "update_subscription",
+          },
         });
       }
     }
@@ -354,12 +357,12 @@ export const POST = Webhooks({
       null;
     const customer =
       payload?.data?.customer ?? payload?.data?.subscription?.customer ?? null;
-    
+
     const subscription = payload?.data?.subscription ?? payload?.data;
     const subscriptionId = subscription?.id ?? null;
     const status = subscription?.status ?? null;
     const currentPeriodEnd = subscription?.current_period_end ?? null;
-    
+
     await finalizePendingWorkspace({
       svc,
       pendingWorkspaceId,
@@ -367,7 +370,7 @@ export const POST = Webhooks({
       customerEmail: customer?.email ?? null,
       customerId: customer?.id ?? null,
     });
-    
+
     if (subscriptionId) {
       try {
         await svc
@@ -393,11 +396,11 @@ export const POST = Webhooks({
       null;
     const customer =
       payload?.data?.customer ?? payload?.data?.subscription?.customer ?? null;
-    
+
     const subscription = payload?.data?.subscription ?? payload?.data;
     const subscriptionId = subscription?.id ?? null;
     const currentPeriodEnd = subscription?.current_period_end ?? null;
-    
+
     await finalizePendingWorkspace({
       svc,
       pendingWorkspaceId,
@@ -405,7 +408,7 @@ export const POST = Webhooks({
       customerEmail: customer?.email ?? null,
       customerId: customer?.id ?? null,
     });
-    
+
     if (subscriptionId) {
       try {
         await svc

@@ -226,7 +226,7 @@ export default function AccountShell() {
             },
           }),
         );
-      } catch (_e) { }
+      } catch (_e) {}
 
       toastManager.add({
         title: "Success!",

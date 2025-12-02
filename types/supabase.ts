@@ -32,4 +32,3 @@ export interface WorkspaceRow {
   subscription_status: string | null;
   subscription_current_period_end: string | null;
 }
-

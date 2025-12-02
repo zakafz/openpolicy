@@ -363,9 +363,7 @@ export default function WorkspaceShell() {
           if (!cancelResponse.ok) {
             const errorData = await cancelResponse.json();
             console.error("Failed to cancel subscription:", errorData);
-            throw new Error(
-              errorData.error || "Failed to cancel subscription",
-            );
+            throw new Error(errorData.error || "Failed to cancel subscription");
           }
         } catch (cancelError: any) {
           console.error("Error canceling subscription:", cancelError);

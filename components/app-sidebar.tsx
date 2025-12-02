@@ -321,7 +321,7 @@ export function AppSidebar(props: {
                 </a>
               </TooltipTrigger>
               <TooltipContent className="text-xs" side="bottom">
-                <>View your published domain</>
+                View your published domain
               </TooltipContent>
             </Tooltip>
             {previewHref && previewHref !== "#" && (
@@ -338,7 +338,7 @@ export function AppSidebar(props: {
                   </a>
                 </TooltipTrigger>
                 <TooltipContent className="text-xs" side="bottom">
-                  <>View OpenPolicy hosted workspace</>
+                  View OpenPolicy hosted workspace
                 </TooltipContent>
               </Tooltip>
             )}
@@ -373,11 +373,9 @@ export function AppSidebar(props: {
               )}
             </TooltipTrigger>
             <TooltipContent className="text-xs" side="bottom">
-              {previewHref && previewHref !== "#" ? (
-                <>View Your Workspace</>
-              ) : (
-                <>No Workspace Available</>
-              )}
+              {previewHref && previewHref !== "#"
+                ? "View Your Workspace"
+                : "No Workspace Available"}
             </TooltipContent>
           </Tooltip>
         )}
