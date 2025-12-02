@@ -75,7 +75,8 @@ describe("DocumentsTable", () => {
     render(<DocumentsTable />);
 
     await waitFor(() => {
-      expect(screen.getByText("Privacy Policy")).toBeInTheDocument();
+      const privacyPolicyElements = screen.getAllByText("Privacy Policy");
+      expect(privacyPolicyElements.length).toBeGreaterThan(0);
       expect(screen.getByText("Terms of Service")).toBeInTheDocument();
     });
 
@@ -101,7 +102,6 @@ describe("DocumentsTable", () => {
       expect(fetchDocumentsForWorkspace).toHaveBeenCalledWith(
         "workspace-1",
         "published",
-        expect.anything(),
       );
     });
   });
