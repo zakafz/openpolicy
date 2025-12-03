@@ -194,8 +194,15 @@ export default function NewDocumentShell({
           body: JSON.stringify(payload),
         });
 
-        if (res.ok) {
-          const data = await res.json();
+        const text = await res.text();
+        let data: any;
+        try {
+          data = JSON.parse(text);
+        } catch (e) {
+          // ignore
+        }
+
+        if (res.ok && data) {
           const docId = data?.id;
           const docSlug = data?.slug ?? slug;
           setSuccessUrl(`/dashboard/documents/${docId ?? docSlug}`);
@@ -223,17 +230,21 @@ export default function NewDocumentShell({
             );
           }
           router.push(`/dashboard/d/${docId ?? docSlug}`);
-        } else if (res.status === 409) {
-          const body = await res.json().catch(() => null);
-          setError(
-            body?.message ??
-              "Slug already in use. Pick a different slug and try again.",
-          );
         } else {
-          const body = await res.json().catch(() => null);
-          setError(body?.message ?? "Failed to create document.");
+          console.error("Create failed response:", data || text);
+          if (res.status === 409) {
+            setError(
+              data?.message ??
+                "Slug already in use. Pick a different slug and try again.",
+            );
+          } else {
+            setError(
+              data?.message ?? data?.error ?? "Failed to create document.",
+            );
+          }
         }
       } catch (err: any) {
+        console.error("Create error:", err);
         setError(err?.message ?? "Network error while creating document.");
       }
     });

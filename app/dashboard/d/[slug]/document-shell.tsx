@@ -1,15 +1,14 @@
 "use client";
 
-import {
-  Edit2,
-  Eye,
-  Notebook,
-  Pencil,
-} from "lucide-react";
+import { Archive, Edit2, MoreVertical, Notebook, Trash } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
 import * as React from "react";
+import { useEffect, useState } from "react";
+import {
+  DocumentEditor,
+  type DocumentEditorRef,
+} from "@/components/editor/document-editor";
 import { TextShimmer } from "@/components/motion-primitives/text-shimmer";
 import {
   AlertDialog,
@@ -21,6 +20,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge-coss";
 import { Button } from "@/components/ui/button";
 import {
   Empty,
@@ -30,16 +30,8 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
-import { toastManager } from "@/components/ui/toast";
-import useWorkspaceLoader from "@/hooks/use-workspace-loader";
-import { fetchDocumentBySlug } from "@/lib/documents";
-import { createClient } from "@/lib/supabase/client";
-import { readSelectedWorkspaceId } from "@/lib/workspace";
-import { DocumentEditor, type DocumentEditorRef } from "@/components/editor/document-editor";
 import { Input } from "@/components/ui/input";
-import { SidebarTrigger } from "@/components/ui/sidebar";
-import { Badge } from "@/components/ui/badge-coss";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Menu, MenuItem, MenuPopup, MenuTrigger } from "@/components/ui/menu";
 import {
   Select,
   SelectItem,
@@ -47,6 +39,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { SidebarTrigger } from "@/components/ui/sidebar";
+import { toastManager } from "@/components/ui/toast";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import useWorkspaceLoader from "@/hooks/use-workspace-loader";
+import { fetchDocumentBySlug } from "@/lib/documents";
+import { createClient } from "@/lib/supabase/client";
+import { readSelectedWorkspaceId } from "@/lib/workspace";
 
 export default function DocumentShell() {
   const pathname = usePathname();
@@ -65,9 +68,12 @@ export default function DocumentShell() {
   const [newTitle, setNewTitle] = useState("");
   const [renamingInProgress, setRenamingInProgress] = useState(false);
   const [renameError, setRenameError] = useState<string | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isDirty, setIsDirty] = useState(false);
   const editorRef = React.useRef<DocumentEditorRef>(null);
+  const ignoreNextChange = React.useRef(false);
 
   useEffect(() => {
     if (workspaceId) return;
@@ -75,7 +81,7 @@ export default function DocumentShell() {
     try {
       const id = readSelectedWorkspaceId();
       if (id) setWorkspaceId(id);
-    } catch { }
+    } catch {}
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [workspaceId]);
 
@@ -84,14 +90,14 @@ export default function DocumentShell() {
       if (e.key === "selectedWorkspace") {
         try {
           router.push("/dashboard");
-        } catch { }
+        } catch {}
       }
     };
 
     const handleWorkspaceChanged = (_e: Event) => {
       try {
         router.push("/dashboard");
-      } catch { }
+      } catch {}
     };
 
     if (typeof window !== "undefined") {
@@ -212,6 +218,35 @@ export default function DocumentShell() {
       cancelled = true;
     };
   }, [workspaceId, slug]);
+
+  const toggleEditMode = (enable: boolean) => {
+    if (enable) {
+      ignoreNextChange.current = true;
+      setIsEditMode(true);
+    } else {
+      setIsEditMode(false);
+      setIsDirty(false);
+    }
+  };
+
+  const handleContentChange = () => {
+    if (ignoreNextChange.current) {
+      ignoreNextChange.current = false;
+      return;
+    }
+    setIsDirty(true);
+  };
+
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isDirty) {
+        e.preventDefault();
+        e.returnValue = "";
+      }
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [isDirty]);
 
   const handleRename = async () => {
     const trimmedTitle = newTitle.trim();
@@ -374,7 +409,6 @@ export default function DocumentShell() {
     }
   }
 
-  // Save handler
   const handleSave = async () => {
     if (!editorRef.current) return;
     setIsSaving(true);
@@ -391,31 +425,121 @@ export default function DocumentShell() {
         }),
       });
 
-      if (res.ok) {
+      const text = await res.text();
+      let data: any;
+      try {
+        data = JSON.parse(text);
+      } catch (e) {
+        // ignore
+      }
+
+      if (res.ok && data) {
         toastManager.add({
           title: "Saved",
           description: "Document saved successfully",
           type: "success",
         });
         setIsEditMode(false);
+        setIsDirty(false);
         // Reload to get fresh content
         window.location.reload();
       } else {
-        const error = await res.json();
+        console.error("Save failed response:", data || text);
         toastManager.add({
           title: "Save failed",
-          description: error.error || "Failed to save document",
+          description:
+            data?.error ||
+            data?.message ||
+            "Failed to save document. Check console for details.",
           type: "error",
         });
       }
-    } catch (error) {
+    } catch (error: any) {
+      console.error("Save error:", error);
       toastManager.add({
         title: "Save failed",
-        description: "An error occurred while saving",
+        description: `An error occurred while saving: ${
+          error?.message || String(error)
+        }`,
         type: "error",
       });
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleArchive = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/documents", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: doc.id,
+          status: "archived",
+          published: false,
+        }),
+      });
+      const payload = await res.json();
+      if (res.ok && payload?.document) {
+        setDoc(payload.document);
+        toastManager.add({
+          title: "Archived",
+          description: "Document archived successfully",
+          type: "success",
+        });
+        window.dispatchEvent(new CustomEvent("document-updated"));
+      } else {
+        toastManager.add({
+          title: "Archive failed",
+          description: payload?.error ?? "Failed to archive document",
+          type: "error",
+        });
+      }
+    } catch (e: any) {
+      toastManager.add({
+        title: "Error",
+        description: String(e?.message ?? e),
+        type: "error",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/documents", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: doc.id }),
+      });
+      if (res.ok) {
+        toastManager.add({
+          title: "Deleted",
+          description: "Document deleted successfully",
+          type: "success",
+        });
+        window.dispatchEvent(new CustomEvent("document-updated"));
+        router.push("/dashboard");
+      } else {
+        const payload = await res.json();
+        toastManager.add({
+          title: "Delete failed",
+          description: payload?.error ?? "Failed to delete document",
+          type: "error",
+        });
+      }
+    } catch (e: any) {
+      toastManager.add({
+        title: "Error",
+        description: String(e?.message ?? e),
+        type: "error",
+      });
+    } finally {
+      setLoading(false);
+      setDeleteDialogOpen(false);
     }
   };
 
@@ -424,10 +548,9 @@ export default function DocumentShell() {
     { label: "Editing", value: "editing" },
   ];
 
-
   return (
     <>
-      <div className="py-2 px-4 border-b flex gap-4 items-center justify-between bg-sidebar">
+      <div className="flex items-center justify-between gap-4 border-b bg-sidebar px-4 py-2">
         <div className="flex gap-2">
           <SidebarTrigger />
           <AlertDialog
@@ -435,14 +558,16 @@ export default function DocumentShell() {
             onOpenChange={setRenameDialogOpen}
           >
             <AlertDialogTrigger className="ring-0!">
-              <h1 className="text-sm font-semibold flex cursor-pointer justify-center items-center gap-1 p-1 px-2 bg-border/40 hover:bg-border/60 rounded-lg">{doc.title} <Edit2 className="w-3 h-3" /></h1>
+              <h1 className="flex cursor-pointer items-center justify-center gap-1 rounded-lg bg-border/40 p-1 px-2 font-semibold text-sm hover:bg-border/60">
+                {doc.title} <Edit2 className="h-3 w-3" />
+              </h1>
             </AlertDialogTrigger>
             <AlertDialogPopup>
               <AlertDialogHeader>
                 <AlertDialogTitle>Rename Document</AlertDialogTitle>
                 <AlertDialogDescription>
-                  Enter a new name for "{doc.title}". Document names must
-                  be unique within the workspace.
+                  Enter a new name for "{doc.title}". Document names must be
+                  unique within the workspace.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <Input
@@ -462,9 +587,7 @@ export default function DocumentShell() {
                 autoFocus
               />
               {renameError && (
-                <p className="mt-2 text-destructive text-sm">
-                  {renameError}
-                </p>
+                <p className="mt-2 text-destructive text-sm">{renameError}</p>
               )}
               <AlertDialogFooter>
                 <AlertDialogClose render={<Button variant="ghost" />}>
@@ -480,14 +603,45 @@ export default function DocumentShell() {
             </AlertDialogPopup>
           </AlertDialog>
 
+          <AlertDialog
+            open={deleteDialogOpen}
+            onOpenChange={setDeleteDialogOpen}
+          >
+            <AlertDialogPopup>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete Document</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Are you sure you want to delete "{doc.title}"? This action
+                  cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogClose render={<Button variant="ghost" />}>
+                  Cancel
+                </AlertDialogClose>
+                <Button
+                  variant="destructive"
+                  onClick={handleDelete}
+                  disabled={loading}
+                >
+                  {loading ? "Deleting..." : "Delete"}
+                </Button>
+              </AlertDialogFooter>
+            </AlertDialogPopup>
+          </AlertDialog>
+
           <Select
             items={modes}
             value={isEditMode ? "editing" : "viewing"}
             onValueChange={(value) => {
-              if (value === "editing" && !isEditMode && doc.status !== "archived") {
-                setIsEditMode(true);
+              if (
+                value === "editing" &&
+                !isEditMode &&
+                doc.status !== "archived"
+              ) {
+                toggleEditMode(true);
               } else if (value === "viewing" && isEditMode) {
-                setIsEditMode(false);
+                toggleEditMode(false);
               }
             }}
           >
@@ -499,19 +653,16 @@ export default function DocumentShell() {
                 <SelectItem
                   key={value}
                   value={value}
-                  className="flex gap-2 flex-row items-center"
+                  className="flex flex-row items-center gap-2"
                   disabled={value === "editing" && doc.status === "archived"}
                 >
-                  <span className="flex gap-1.5 items-center">
-                    {label}
-                  </span>
+                  <span className="flex items-center gap-1.5">{label}</span>
                 </SelectItem>
               ))}
             </SelectPopup>
           </Select>
         </div>
-        <div className="flex gap-2 items-center">
-          {/* Document Status Badge */}
+        <div className="flex items-center gap-2">
           <Badge
             variant={
               doc.status === "published"
@@ -520,36 +671,59 @@ export default function DocumentShell() {
                   ? "secondary"
                   : "warning"
             }
-            className="capitalize rounded-lg"
+            className="rounded-lg capitalize"
             size="lg"
           >
             <span
-              className={`size-1.5 rounded-full ${doc.status === "published"
-                ? "bg-info"
-                : doc.status === "archived"
-                  ? "bg-muted-foreground/60"
-                  : "bg-warning"
-                }`}
+              className={`size-1.5 rounded-full ${
+                doc.status === "published"
+                  ? "bg-info"
+                  : doc.status === "archived"
+                    ? "bg-muted-foreground/60"
+                    : "bg-warning"
+              }`}
               aria-hidden="true"
             />
             {doc.status}
           </Badge>
 
-          {/* Slug Badge */}
           <Badge variant="outline" className="rounded-lg" size="lg">
             Slug: <span className="font-mono">{doc.slug ?? "—"}</span>
           </Badge>
 
-          {/* Edit Mode: Show Save and Cancel */}
+          {!isEditMode && (
+            <Menu>
+              <MenuTrigger render={<Button size="icon-sm" variant="ghost" />}>
+                <MoreVertical className="size-4" />
+              </MenuTrigger>
+              <MenuPopup>
+                {doc.status === "archived" ? (
+                  <MenuItem
+                    variant="destructive"
+                    onClick={() => setDeleteDialogOpen(true)}
+                  >
+                    <Trash className="size-4" />
+                    Delete
+                  </MenuItem>
+                ) : (
+                  <MenuItem onClick={handleArchive}>
+                    <Archive className="size-4" />
+                    Archive
+                  </MenuItem>
+                )}
+              </MenuPopup>
+            </Menu>
+          )}
+
           {isEditMode && doc.status !== "archived" && (
             <>
               <Tooltip>
-                <TooltipTrigger>
+                <TooltipTrigger asChild>
                   <Button
                     size="sm"
                     variant="outline"
                     onClick={() => {
-                      setIsEditMode(false);
+                      toggleEditMode(false);
                       window.location.reload();
                     }}
                     disabled={isSaving}
@@ -561,12 +735,8 @@ export default function DocumentShell() {
               </Tooltip>
 
               <Tooltip>
-                <TooltipTrigger>
-                  <Button
-                    size="sm"
-                    onClick={handleSave}
-                    disabled={isSaving}
-                  >
+                <TooltipTrigger asChild>
+                  <Button size="sm" onClick={handleSave} disabled={isSaving}>
                     {isSaving ? "Saving..." : "Save"}
                   </Button>
                 </TooltipTrigger>
@@ -575,12 +745,11 @@ export default function DocumentShell() {
             </>
           )}
 
-          {/* View Mode: Show Publish/Restore/Unpublish */}
           {!isEditMode && (
             <>
               {doc.status === "draft" && (
                 <Tooltip>
-                  <TooltipTrigger>
+                  <TooltipTrigger asChild>
                     <Button
                       size="sm"
                       onClick={async () => {
@@ -604,12 +773,13 @@ export default function DocumentShell() {
                               type: "success",
                             });
                             window.dispatchEvent(
-                              new CustomEvent("document-updated")
+                              new CustomEvent("document-updated"),
                             );
                           } else {
                             toastManager.add({
                               title: "Publish failed",
-                              description: payload?.error ?? "Failed to publish document",
+                              description:
+                                payload?.error ?? "Failed to publish document",
                               type: "error",
                             });
                           }
@@ -634,7 +804,7 @@ export default function DocumentShell() {
 
               {doc.status === "archived" && (
                 <Tooltip>
-                  <TooltipTrigger>
+                  <TooltipTrigger asChild>
                     <Button
                       size="sm"
                       onClick={async () => {
@@ -658,12 +828,13 @@ export default function DocumentShell() {
                               type: "success",
                             });
                             window.dispatchEvent(
-                              new CustomEvent("document-updated")
+                              new CustomEvent("document-updated"),
                             );
                           } else {
                             toastManager.add({
                               title: "Restore failed",
-                              description: payload?.error ?? "Failed to restore document",
+                              description:
+                                payload?.error ?? "Failed to restore document",
                               type: "error",
                             });
                           }
@@ -688,7 +859,7 @@ export default function DocumentShell() {
 
               {doc.status === "published" && (
                 <Tooltip>
-                  <TooltipTrigger>
+                  <TooltipTrigger asChild>
                     <Button
                       size="sm"
                       variant="outline"
@@ -713,12 +884,14 @@ export default function DocumentShell() {
                               type: "success",
                             });
                             window.dispatchEvent(
-                              new CustomEvent("document-updated")
+                              new CustomEvent("document-updated"),
                             );
                           } else {
                             toastManager.add({
                               title: "Unpublish failed",
-                              description: payload?.error ?? "Failed to unpublish document",
+                              description:
+                                payload?.error ??
+                                "Failed to unpublish document",
                               type: "error",
                             });
                           }
@@ -754,13 +927,14 @@ export default function DocumentShell() {
           docTitle={doc.title ?? undefined}
           documentSlug={doc.slug ?? null}
           readOnly={!isEditMode}
+          onContentChange={handleContentChange}
           doc={doc}
           isEditMode={isEditMode}
           isSaving={isSaving}
-          onEditModeToggle={() => setIsEditMode(!isEditMode)}
+          onEditModeToggle={() => toggleEditMode(!isEditMode)}
           onSave={handleSave}
           onCancel={() => {
-            setIsEditMode(false);
+            toggleEditMode(false);
             window.location.reload();
           }}
           onRename={() => {

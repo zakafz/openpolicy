@@ -24,20 +24,24 @@ export default async function middleware(request: NextRequest) {
       process.env.UPSTASH_REDIS_REST_TOKEN
     ) {
       const ip = request.headers.get("x-forwarded-for") ?? "127.0.0.1";
-      const { success, limit, reset, remaining } = await ratelimit.limit(ip);
+      try {
+        const { success, limit, reset, remaining } = await ratelimit.limit(ip);
 
-      if (!success) {
-        return NextResponse.json(
-          { error: "Too Many Requests" },
-          {
-            status: 429,
-            headers: {
-              "X-RateLimit-Limit": limit.toString(),
-              "X-RateLimit-Remaining": remaining.toString(),
-              "X-RateLimit-Reset": reset.toString(),
+        if (!success) {
+          return NextResponse.json(
+            { error: "Too Many Requests" },
+            {
+              status: 429,
+              headers: {
+                "X-RateLimit-Limit": limit.toString(),
+                "X-RateLimit-Remaining": remaining.toString(),
+                "X-RateLimit-Reset": reset.toString(),
+              },
             },
-          },
-        );
+          );
+        }
+      } catch (e) {
+        console.warn("Rate limiting failed:", e);
       }
     }
   }
@@ -73,8 +77,8 @@ export default async function middleware(request: NextRequest) {
 
         // Custom Domain Handling
         if (
-          !rootDomains.includes(potentialRoot) &&
-          !rootDomains.includes(hostname)
+          !rootDomains.includes(hostname) &&
+          !request.nextUrl.pathname.startsWith("/api")
         ) {
           let workspaceSlug: string | null = null;
           const cacheKey = `custom_domain:${hostname}`;
