@@ -84,7 +84,6 @@ const documentTypes: {
 
 export default function NewDocumentShell({
   workspaceId: propWorkspaceId,
-  ownerId: propOwnerId,
 }: {
   workspaceId?: string;
   ownerId?: string;

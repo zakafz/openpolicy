@@ -43,56 +43,56 @@ export const createEditorKit = ({
   disableAI?: boolean;
   disableToolbar?: boolean;
 } = {}) => [
-    ...(disableAI ? [] : CopilotKit),
-    ...(disableAI ? [] : AIKit),
+  ...(disableAI ? [] : CopilotKit),
+  ...(disableAI ? [] : AIKit),
 
-    // Elements
-    ...BasicBlocksKit,
-    ...CodeBlockKit,
-    ...TableKit,
-    ...ToggleKit,
-    ...TocKit,
-    ...MediaKit,
-    ...CalloutKit,
-    ...ColumnKit,
-    ...MathKit,
-    ...DateKit,
-    ...LinkKit,
-    ...MentionKit,
+  // Elements
+  ...BasicBlocksKit,
+  ...CodeBlockKit,
+  ...TableKit,
+  ...ToggleKit,
+  ...TocKit,
+  ...MediaKit,
+  ...CalloutKit,
+  ...ColumnKit,
+  ...MathKit,
+  ...DateKit,
+  ...LinkKit,
+  ...MentionKit,
 
-    // Marks
-    ...BasicMarksKit,
-    ...FontKit,
+  // Marks
+  ...BasicMarksKit,
+  ...FontKit,
 
-    // Block Style
-    ...ListKit,
-    ...AlignKit,
-    ...LineHeightKit,
+  // Block Style
+  ...ListKit,
+  ...AlignKit,
+  ...LineHeightKit,
 
-    // Collaboration
-    // ...DiscussionKit,
-    // ...CommentKit,
-    ...SuggestionKit,
+  // Collaboration
+  // ...DiscussionKit,
+  // ...CommentKit,
+  ...SuggestionKit,
 
-    // Editing
-    ...SlashKit,
-    ...AutoformatKit,
-    ...CursorOverlayKit,
-    ...BlockMenuKit,
-    ...DndKit,
-    ...EmojiKit,
-    ...ExitBreakKit,
-    TrailingBlockPlugin,
+  // Editing
+  ...SlashKit,
+  ...AutoformatKit,
+  ...CursorOverlayKit,
+  ...BlockMenuKit,
+  ...DndKit,
+  ...EmojiKit,
+  ...ExitBreakKit,
+  TrailingBlockPlugin,
 
-    // Parsers
-    ...DocxKit,
-    ...MarkdownKit,
+  // Parsers
+  ...DocxKit,
+  ...MarkdownKit,
 
-    // UI
-    ...BlockPlaceholderKit,
-    ...(disableToolbar ? [] : createFixedToolbarKit({ disableAI })),
-    ...(disableToolbar ? [] : createFloatingToolbarKit({ disableAI })),
-  ];
+  // UI
+  ...BlockPlaceholderKit,
+  ...(disableToolbar ? [] : createFixedToolbarKit({ disableAI })),
+  ...(disableToolbar ? [] : createFloatingToolbarKit({ disableAI })),
+];
 
 export const EditorKit = createEditorKit();
 

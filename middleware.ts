@@ -98,11 +98,22 @@ export default async function middleware(request: NextRequest) {
           // 2. Try Supabase
           if (!workspaceSlug) {
             try {
-              const supabase = createClient(
-                process.env.NEXT_PUBLIC_SUPABASE_URL!,
+              const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+              const serviceKey =
                 process.env.SUPABASE_SERVICE_ROLE_KEY ||
-                  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-              );
+                process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+              if (!url || !serviceKey) {
+                console.error("Missing Supabase environment variables");
+                return NextResponse.next({ request });
+              }
+
+              const supabase = createClient(url, serviceKey, {
+                auth: {
+                  autoRefreshToken: false,
+                  persistSession: false,
+                },
+              });
               const { data } = await supabase
                 .from("workspaces")
                 .select("slug")

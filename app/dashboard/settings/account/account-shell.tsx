@@ -178,7 +178,7 @@ export default function AccountShell() {
         },
       };
 
-      const { data: authUpdateData, error: authUpdateErr } =
+      const { error: authUpdateErr } =
         await supabase.auth.updateUser(updatePayload);
 
       if (authUpdateErr) {

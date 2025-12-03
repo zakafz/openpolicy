@@ -549,6 +549,7 @@ const emojiCategoryIcons: Record<
         viewBox="0 0 24 24"
         xmlns="http://www.w3.org/2000/svg"
       >
+        <title>Activity</title>
         <circle cx="12" cy="12" r="10" />
         <path d="M2.1 13.4A10.1 10.1 0 0 0 13.4 2.1" />
         <path d="m5 4.9 14 14.2" />

@@ -304,7 +304,7 @@ async function finalizePendingWorkspace({
 }
 
 export const POST = Webhooks({
-  webhookSecret: process.env.POLAR_WEBHOOK_SECRET!,
+  webhookSecret: process.env.POLAR_WEBHOOK_SECRET || "",
 
   onSubscriptionCreated: async (payload: any) => {
     const svc = createServiceClient();

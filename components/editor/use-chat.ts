@@ -136,7 +136,6 @@ export const useChat = () => {
     _abortFakeStream,
   };
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: chat object causes infinite loop
   React.useEffect(() => {
     editor.setOption(AIChatPlugin, "chat", chat as any);
     // eslint-disable-next-line react-hooks/exhaustive-deps

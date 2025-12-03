@@ -124,7 +124,7 @@ export default function Home() {
         <Safari url="policies.yourapp.com" imageSrc="/demo-2.png" />
       </Section>
 
-      <Section className="px-0! pt-8 pb-0!">
+      <Section className="px-0! pt-8 md:pb-0!">
         <h2 className="text-balance px-5 text-start font-medium text-3xl">
           A simple and straightforward editor
         </h2>
@@ -147,7 +147,7 @@ export default function Home() {
               </div>
             </div>
           </Card>
-          <div className="hidden max-w-[calc(1152px-2px)] border-t md:block">
+          <div className="hidden w-[calc(100vw-34px)] max-w-[calc(1152px-2px)] border-t md:block">
             <ShowcaseEditor
               initialContent={[
                 {

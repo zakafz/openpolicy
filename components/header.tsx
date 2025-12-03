@@ -64,11 +64,11 @@ export function Header() {
           </div>
         </Link>
         <div className="hidden items-center gap-2 md:flex">
-          {links.map((link, i) => (
+          {links.map((link) => (
             <a
               className={buttonVariants({ variant: "ghost" })}
               href={link.href}
-              key={i}
+              key={link.href}
             >
               {link.label}
             </a>

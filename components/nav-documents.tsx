@@ -22,14 +22,12 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  useSidebar,
 } from "@/components/ui/sidebar";
 import { useWorkspace } from "@/context/workspace";
 import { fetchDocumentsForWorkspace } from "@/lib/documents";
 import { createClient } from "@/lib/supabase/client";
 
 export function NavDocuments() {
-  const { isMobile } = useSidebar();
   const { selectedWorkspaceId } = useWorkspace();
   const [docs, setDocs] = useState<any[] | null>(null);
   const [loading, setLoading] = useState(true);

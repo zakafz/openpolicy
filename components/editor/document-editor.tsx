@@ -39,11 +39,11 @@ export const DocumentEditor = forwardRef<
 >(
   (
     {
-      docId,
-      docTitle,
+      docId: _docId,
+      docTitle: _docTitle,
       initialContent,
-      initialIsJson = true,
-      documentSlug,
+      initialIsJson: _initialIsJson = true,
+      documentSlug: _documentSlug,
       readOnly = false,
       onContentChange,
       doc,

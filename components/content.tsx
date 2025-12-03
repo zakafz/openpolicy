@@ -1,4 +1,5 @@
 import { ChevronRight } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
@@ -6,12 +7,12 @@ export default function ContentSection() {
   return (
     <section className="py-16">
       <div className="mx-auto space-y-8 md:space-y-12">
-        <img
+        <Image
           className="grayscale"
           src="/demo-4.png"
-          alt="team image"
-          height=""
-          width=""
+          alt="opengraph"
+          height={600}
+          width={1200}
           loading="lazy"
         />
 

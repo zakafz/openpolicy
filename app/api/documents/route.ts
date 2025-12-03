@@ -193,7 +193,7 @@ export async function POST(req: Request) {
       owner_id: user.id,
     };
 
-    let created;
+    let created: any;
     let insertErr: any = null;
 
     try {
