@@ -261,15 +261,18 @@ export default function WorkspaceShell() {
       if (!user) throw new Error("Not authenticated");
 
       if (section === "domain") {
-        const response = await fetch("/api/workspace/domain", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            workspaceId: workspace.id,
-            domain: customDomain || null,
-            oldDomain: initialValues.customDomain || null,
-          }),
-        });
+        const response = await fetch(
+          `/api/workspaces/${workspace.id}/domains`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              workspaceId: workspace.id,
+              domain: customDomain || null,
+              oldDomain: initialValues.customDomain || null,
+            }),
+          },
+        );
 
         const data = await response.json();
 

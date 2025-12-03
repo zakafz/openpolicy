@@ -44,7 +44,7 @@ export function useUploadFile({
         });
       }, 100);
 
-      const res = await fetch("/api/upload", {
+      const res = await fetch("/api/uploads", {
         method: "POST",
         body: formData,
       });
