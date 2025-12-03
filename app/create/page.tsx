@@ -49,7 +49,7 @@ export default async function Page() {
     <div className="relative flex min-h-screen w-full flex-col items-center justify-center gap-2 bg-card p-4">
       <div className="flex flex-col items-end">
         <CreateWorkspaceForm products={products.result.items} />
-        <span className="flex w-fit items-center pr-4 text-muted-foreground text-xs">
+        <span className="flex w-fit items-center whitespace-nowrap pr-4 text-muted-foreground text-xs">
           Want to{" "}
           <LogoutButton>
             <Button

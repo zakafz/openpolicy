@@ -66,7 +66,7 @@ export default function Home() {
         <div className="mx-auto flex max-w-[800px] flex-col items-center justify-center pt-32 pb-32">
           <Announcement className="pointer-events-none mb-3">
             <AnnouncementTag>Latest update</AnnouncementTag>
-            <AnnouncementTitle>OpenPolicy 1.0 is now live</AnnouncementTitle>
+            <AnnouncementTitle>OpenPolicy v0.1.0 is now live</AnnouncementTitle>
           </Announcement>
 
           <h1 className="mb-5 text-center font-medium text-5xl leading-15">

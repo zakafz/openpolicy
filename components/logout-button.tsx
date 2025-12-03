@@ -27,8 +27,8 @@ export function LogoutButton({ children }: React.PropsWithChildren) {
   };
 
   return (
-    <button type="button" onClick={logout} className="w-full text-left">
+    <div onClick={logout} className="w-full text-left">
       {children}
-    </button>
+    </div>
   );
 }

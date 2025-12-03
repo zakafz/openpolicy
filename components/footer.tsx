@@ -24,6 +24,10 @@ export function Footer() {
       title: "What's OpenPolicy?",
       href: "https://more.openpolicyhq.com/whats-openpolicy",
     },
+    {
+      title: "Open source",
+      href: "https://github.com/zakafz/openpolicy",
+    },
   ];
 
   const legal = [
