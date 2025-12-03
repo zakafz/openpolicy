@@ -312,6 +312,10 @@ export const POST = Webhooks({
       payload?.data?.metadata?.pendingWorkspaceId ??
       payload?.data?.subscription?.metadata?.pendingWorkspaceId ??
       null;
+    const workspaceId =
+      payload?.data?.metadata?.workspaceId ??
+      payload?.data?.subscription?.metadata?.workspaceId ??
+      null;
     const customer =
       payload?.data?.customer ?? payload?.data?.subscription?.customer ?? null;
 
@@ -328,7 +332,7 @@ export const POST = Webhooks({
       customerId: customer?.id ?? null,
     });
 
-    if (subscriptionId && customer?.externalId) {
+    if (workspaceId) {
       try {
         await svc
           .from("workspaces")
@@ -336,6 +340,26 @@ export const POST = Webhooks({
             subscription_id: subscriptionId,
             subscription_status: status,
             subscription_current_period_end: currentPeriodEnd,
+            plan: subscription.product_id,
+          })
+          .eq("id", workspaceId);
+      } catch (err) {
+        Sentry.captureException(err, {
+          tags: {
+            context: "onSubscriptionCreated",
+            step: "update_subscription_by_id",
+          },
+        });
+      }
+    } else if (subscriptionId && customer?.externalId) {
+      try {
+        await svc
+          .from("workspaces")
+          .update({
+            subscription_id: subscriptionId,
+            subscription_status: status,
+            subscription_current_period_end: currentPeriodEnd,
+            plan: subscription.product_id,
           })
           .eq("owner_id", customer.externalId);
       } catch (err) {
@@ -355,6 +379,10 @@ export const POST = Webhooks({
       payload?.data?.metadata?.pendingWorkspaceId ??
       payload?.data?.subscription?.metadata?.pendingWorkspaceId ??
       null;
+    const workspaceId =
+      payload?.data?.metadata?.workspaceId ??
+      payload?.data?.subscription?.metadata?.workspaceId ??
+      null;
     const customer =
       payload?.data?.customer ?? payload?.data?.subscription?.customer ?? null;
 
@@ -371,13 +399,32 @@ export const POST = Webhooks({
       customerId: customer?.id ?? null,
     });
 
-    if (subscriptionId) {
+    if (workspaceId) {
       try {
         await svc
           .from("workspaces")
           .update({
             subscription_status: status,
             subscription_current_period_end: currentPeriodEnd,
+            plan: subscription.product_id,
+          })
+          .eq("id", workspaceId);
+      } catch (err) {
+        Sentry.captureException(err, {
+          tags: {
+            context: "onSubscriptionUpdated",
+            step: "update_status_by_id",
+          },
+        });
+      }
+    } else if (subscriptionId) {
+      try {
+        await svc
+          .from("workspaces")
+          .update({
+            subscription_status: status,
+            subscription_current_period_end: currentPeriodEnd,
+            plan: subscription.product_id,
           })
           .eq("subscription_id", subscriptionId);
       } catch (err) {
@@ -394,6 +441,10 @@ export const POST = Webhooks({
       payload?.data?.metadata?.pendingWorkspaceId ??
       payload?.data?.subscription?.metadata?.pendingWorkspaceId ??
       null;
+    const workspaceId =
+      payload?.data?.metadata?.workspaceId ??
+      payload?.data?.subscription?.metadata?.workspaceId ??
+      null;
     const customer =
       payload?.data?.customer ?? payload?.data?.subscription?.customer ?? null;
 
@@ -409,13 +460,32 @@ export const POST = Webhooks({
       customerId: customer?.id ?? null,
     });
 
-    if (subscriptionId) {
+    if (workspaceId) {
       try {
         await svc
           .from("workspaces")
           .update({
             subscription_status: "active",
             subscription_current_period_end: currentPeriodEnd,
+            plan: subscription.product_id,
+          })
+          .eq("id", workspaceId);
+      } catch (err) {
+        Sentry.captureException(err, {
+          tags: {
+            context: "onSubscriptionActive",
+            step: "update_active_by_id",
+          },
+        });
+      }
+    } else if (subscriptionId) {
+      try {
+        await svc
+          .from("workspaces")
+          .update({
+            subscription_status: "active",
+            subscription_current_period_end: currentPeriodEnd,
+            plan: subscription.product_id,
           })
           .eq("subscription_id", subscriptionId);
       } catch (err) {
@@ -507,6 +577,17 @@ export const POST = Webhooks({
       payload?.data?.customer ?? payload?.data?.subscription?.customer ?? null;
     const subscription = payload?.data?.subscription ?? payload?.data;
     const subscriptionId = subscription?.id ?? null;
+    const currentPeriodEnd = subscription?.current_period_end
+      ? new Date(subscription.current_period_end)
+      : null;
+    const now = new Date();
+
+    if (currentPeriodEnd && currentPeriodEnd > now) {
+      console.log(
+        `Subscription ${subscriptionId} canceled but period ends at ${currentPeriodEnd}. Skipping immediate revocation.`,
+      );
+      return;
+    }
 
     if (subscriptionId) {
       try {
@@ -586,6 +667,17 @@ export const POST = Webhooks({
       payload?.data?.customer ?? payload?.data?.subscription?.customer ?? null;
     const subscription = payload?.data?.subscription ?? payload?.data;
     const subscriptionId = subscription?.id ?? null;
+    const currentPeriodEnd = subscription?.current_period_end
+      ? new Date(subscription.current_period_end)
+      : null;
+    const now = new Date();
+
+    if (currentPeriodEnd && currentPeriodEnd > now) {
+      console.log(
+        `Subscription ${subscriptionId} revoked but period ends at ${currentPeriodEnd}. Skipping immediate revocation.`,
+      );
+      return;
+    }
 
     if (subscriptionId) {
       try {
