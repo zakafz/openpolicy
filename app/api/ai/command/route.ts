@@ -68,7 +68,9 @@ export async function POST(req: NextRequest) {
   }
 
   const { checkAiUsage, incrementAiUsage } = await import("@/lib/ai/usage");
-  const canProceed = await checkAiUsage(user.id);
+
+  const isAdmin = user.id === process.env.ADMIN_USER_ID;
+  const canProceed = isAdmin ? true : await checkAiUsage(user.id);
 
   if (!canProceed) {
     return NextResponse.json(

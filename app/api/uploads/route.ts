@@ -36,7 +36,9 @@ export async function POST(req: Request) {
     const isFree = await isFreePlan(workspace.plan);
     const limit = isFree ? FREE_PLAN_LIMITS.storage : PRO_PLAN_LIMITS.storage;
 
-    if (currentStorage + file.size > limit) {
+    const isAdmin = user.id === process.env.ADMIN_USER_ID;
+
+    if (!isAdmin && currentStorage + file.size > limit) {
       return new NextResponse("Storage limit exceeded", { status: 403 });
     }
 
