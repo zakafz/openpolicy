@@ -21,7 +21,7 @@ OpenPolicy is a modern, open-source platform designed to simplify the creation, 
 - **Payments**: [Polar.sh](https://polar.sh/)
 - **Styling**: [Tailwind CSS](https://tailwindcss.com/)
 - **Components**: [Shadcn/UI](https://ui.shadcn.com/)
-- **Editor**: [Tiptap](https://tiptap.dev/)
+- **Editor**: [PlateJS](https://platejs.org/)
 - **Monitoring**: [Sentry](https://sentry.io/)
 
 ## Getting Started

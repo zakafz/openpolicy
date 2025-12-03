@@ -138,7 +138,7 @@ export default function Home() {
             <div className="mask-b-from-95% -ml-2 pt-2 pl-2">
               <div className="relative mx-auto h-96 overflow-hidden border border-border border-px border-r-0 border-b-0 bg-background">
                 <Image
-                  src="/demo-3.png"
+                  src="/demo-5.png"
                   alt="app screen"
                   width={2880}
                   height={1842}
