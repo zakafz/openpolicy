@@ -60,7 +60,7 @@ export default function DocumentShell() {
   const { workspace } = useWorkspaceLoader();
   const [workspaceId, setWorkspaceId] = useState<string | null>(null);
   const [doc, setDoc] = useState<any | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [_info, _setInfo] = useState<string | null>(null);
   const [blocked, setBlocked] = useState<boolean>(false);
