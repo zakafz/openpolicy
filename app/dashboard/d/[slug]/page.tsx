@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 
 export default function Page() {
   return (
-    <div className="w-[calc(100vw-16rem)] group-has-data-[state=collapsed]/sidebar-wrapper:w-[calc(100vw-3rem)] h-screen overflow-hidden flex flex-col">
+    <div className="flex h-screen w-[calc(100vw-16rem)] flex-col overflow-hidden group-has-data-[state=collapsed]/sidebar-wrapper:w-[calc(100vw-3rem)] max-md:w-screen">
       <DocumentShell />
     </div>
   );

@@ -1,18 +1,16 @@
-'use client';
+"use client";
 
-import * as React from 'react';
-
-import type { Alignment } from '@platejs/basic-styles';
-import type { DropdownMenuProps } from '@radix-ui/react-dropdown-menu';
-
-import { TextAlignPlugin } from '@platejs/basic-styles/react';
+import type { Alignment } from "@platejs/basic-styles";
+import { TextAlignPlugin } from "@platejs/basic-styles/react";
+import type { DropdownMenuProps } from "@radix-ui/react-dropdown-menu";
 import {
   AlignCenterIcon,
   AlignJustifyIcon,
   AlignLeftIcon,
   AlignRightIcon,
-} from 'lucide-react';
-import { useEditorPlugin, useSelectionFragmentProp } from 'platejs/react';
+} from "lucide-react";
+import { useEditorPlugin, useSelectionFragmentProp } from "platejs/react";
+import * as React from "react";
 
 import {
   DropdownMenu,
@@ -20,26 +18,26 @@ import {
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from "@/components/ui/dropdown-menu";
 
-import { ToolbarButton } from './toolbar';
+import { ToolbarButton } from "./toolbar";
 
 const items = [
   {
     icon: AlignLeftIcon,
-    value: 'left',
+    value: "left",
   },
   {
     icon: AlignCenterIcon,
-    value: 'center',
+    value: "center",
   },
   {
     icon: AlignRightIcon,
-    value: 'right',
+    value: "right",
   },
   {
     icon: AlignJustifyIcon,
-    value: 'justify',
+    value: "justify",
   },
 ];
 
@@ -47,9 +45,9 @@ export function AlignToolbarButton(props: DropdownMenuProps) {
   const { editor, tf } = useEditorPlugin(TextAlignPlugin);
   const value =
     useSelectionFragmentProp({
-      defaultValue: 'start',
+      defaultValue: "start",
       getProp: (node) => node.align,
-    }) ?? 'left';
+    }) ?? "left";
 
   const [open, setOpen] = React.useState(false);
   const IconValue =

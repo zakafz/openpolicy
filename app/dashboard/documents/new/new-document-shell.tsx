@@ -198,7 +198,7 @@ export default function NewDocumentShell({
         let data: any;
         try {
           data = JSON.parse(text);
-        } catch (e) {
+        } catch (_e) {
           // ignore
         }
 

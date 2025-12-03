@@ -20,38 +20,40 @@ interface SlateNode {
 /**
  * Convert Tiptap marks to Slate leaf properties
  */
-function convertMarks(marks?: Array<{ type: string; attrs?: Record<string, any> }>): Record<string, any> {
+function convertMarks(
+  marks?: Array<{ type: string; attrs?: Record<string, any> }>,
+): Record<string, any> {
   if (!marks || marks.length === 0) return {};
 
   const leafProps: Record<string, any> = {};
 
   for (const mark of marks) {
     switch (mark.type) {
-      case 'bold':
+      case "bold":
         leafProps.bold = true;
         break;
-      case 'italic':
+      case "italic":
         leafProps.italic = true;
         break;
-      case 'underline':
+      case "underline":
         leafProps.underline = true;
         break;
-      case 'strike':
+      case "strike":
         leafProps.strikethrough = true;
         break;
-      case 'code':
+      case "code":
         leafProps.code = true;
         break;
-      case 'link':
+      case "link":
         // Links in Slate are elements, not marks
         // We'll handle this in the parent
         break;
-      case 'textStyle':
+      case "textStyle":
         if (mark.attrs?.color) {
           leafProps.color = mark.attrs.color;
         }
         break;
-      case 'highlight':
+      case "highlight":
         if (mark.attrs?.color) {
           leafProps.backgroundColor = mark.attrs.color;
         }
@@ -68,29 +70,32 @@ function convertMarks(marks?: Array<{ type: string; attrs?: Record<string, any> 
 /**
  * Convert Tiptap node type to Slate node type
  */
-function convertNodeType(tiptapType: string, attrs?: Record<string, any>): string {
+function convertNodeType(
+  tiptapType: string,
+  attrs?: Record<string, any>,
+): string {
   switch (tiptapType) {
-    case 'doc':
-      return 'root';
-    case 'paragraph':
-      return 'p';
-    case 'heading':
+    case "doc":
+      return "root";
+    case "paragraph":
+      return "p";
+    case "heading":
       return `h${attrs?.level || 1}`;
-    case 'bulletList':
-    case 'orderedList':
-      return 'list';
-    case 'listItem':
-      return 'li';
-    case 'blockquote':
-      return 'blockquote';
-    case 'codeBlock':
-      return 'code_block';
-    case 'horizontalRule':
-      return 'hr';
-    case 'image':
-      return 'img';
-    case 'hardBreak':
-      return 'br';
+    case "bulletList":
+    case "orderedList":
+      return "list";
+    case "listItem":
+      return "li";
+    case "blockquote":
+      return "blockquote";
+    case "codeBlock":
+      return "code_block";
+    case "horizontalRule":
+      return "hr";
+    case "image":
+      return "img";
+    case "hardBreak":
+      return "br";
     default:
       return tiptapType;
   }
@@ -111,7 +116,7 @@ function convertNode(tiptapNode: TiptapNode): SlateNode | SlateNode[] {
 
   // Handle element nodes
   const slateType = convertNodeType(tiptapNode.type, tiptapNode.attrs);
-  
+
   // Convert children
   const children: SlateNode[] = [];
   if (tiptapNode.content && tiptapNode.content.length > 0) {
@@ -127,7 +132,7 @@ function convertNode(tiptapNode: TiptapNode): SlateNode | SlateNode[] {
 
   // If no children, add empty text node
   if (children.length === 0) {
-    children.push({ text: '' });
+    children.push({ text: "" });
   }
 
   const slateNode: SlateNode = {
@@ -166,14 +171,14 @@ export function convertTiptapToSlate(tiptapContent: any): any[] {
   }
 
   // If it's a string, try to parse it
-  if (typeof tiptapContent === 'string') {
+  if (typeof tiptapContent === "string") {
     try {
       tiptapContent = JSON.parse(tiptapContent);
     } catch {
       // If parsing fails, return a paragraph with the text
       return [
         {
-          type: 'p',
+          type: "p",
           children: [{ text: tiptapContent }],
         },
       ];
@@ -184,21 +189,25 @@ export function convertTiptapToSlate(tiptapContent: any): any[] {
   if (!tiptapContent) {
     return [
       {
-        type: 'p',
-        children: [{ text: '' }],
+        type: "p",
+        children: [{ text: "" }],
       },
     ];
   }
 
   // Check if it's Tiptap format (has type: "doc")
-  if (tiptapContent.type === 'doc' && tiptapContent.content) {
+  if (tiptapContent.type === "doc" && tiptapContent.content) {
     const converted = convertNode(tiptapContent);
-    
+
     // If the root is a doc, return its children
-    if (!Array.isArray(converted) && converted.type === 'root' && converted.children) {
+    if (
+      !Array.isArray(converted) &&
+      converted.type === "root" &&
+      converted.children
+    ) {
       return converted.children;
     }
-    
+
     // Otherwise wrap in array
     return Array.isArray(converted) ? converted : [converted];
   }
@@ -211,7 +220,7 @@ export function convertTiptapToSlate(tiptapContent: any): any[] {
   // Unknown format, wrap in paragraph
   return [
     {
-      type: 'p',
+      type: "p",
       children: [{ text: JSON.stringify(tiptapContent) }],
     },
   ];
@@ -221,7 +230,7 @@ export function convertTiptapToSlate(tiptapContent: any): any[] {
  * Check if content is in Tiptap format
  */
 export function isTiptapFormat(content: any): boolean {
-  if (typeof content === 'string') {
+  if (typeof content === "string") {
     try {
       content = JSON.parse(content);
     } catch {
@@ -229,5 +238,5 @@ export function isTiptapFormat(content: any): boolean {
     }
   }
 
-  return content && typeof content === 'object' && content.type === 'doc';
+  return content && typeof content === "object" && content.type === "doc";
 }

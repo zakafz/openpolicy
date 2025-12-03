@@ -62,7 +62,7 @@ export default function DocumentShell() {
   const [doc, setDoc] = useState<any | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [info, setInfo] = useState<string | null>(null);
+  const [_info, _setInfo] = useState<string | null>(null);
   const [blocked, setBlocked] = useState<boolean>(false);
   const [renameDialogOpen, setRenameDialogOpen] = useState(false);
   const [newTitle, setNewTitle] = useState("");
@@ -429,7 +429,7 @@ export default function DocumentShell() {
       let data: any;
       try {
         data = JSON.parse(text);
-      } catch (e) {
+      } catch (_e) {
         // ignore
       }
 

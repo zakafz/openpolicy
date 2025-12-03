@@ -19,9 +19,9 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { createClient } from "@/lib/supabase/client";
+import { cn } from "@/lib/utils";
 import { fetchWorkspacesForOwner } from "@/lib/workspace";
 import type { UsersRow } from "@/types/supabase";
-import { cn } from "@/lib/utils";
 
 export default function LayoutShell({
   children,
@@ -166,7 +166,12 @@ export default function LayoutShell({
             )}
           </header>
         )}
-        <div className={cn("flex h-full flex-1 flex-col gap-4 overflow-scroll", isDocument ? "" : "px-4")}>
+        <div
+          className={cn(
+            "flex h-full flex-1 flex-col gap-4 overflow-scroll",
+            isDocument ? "" : "px-4",
+          )}
+        >
           {children}
         </div>
       </SidebarInset>
