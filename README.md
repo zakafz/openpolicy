@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://openpolicyhq.com">
-    <img src="https://openpolicyhq.com/logo.svg" alt="OpenPolicy Logo" width="120" height="120">
+    <img src="https://openpolicyhq.com/icon-openpolicy.svg" alt="OpenPolicy Logo" width="140" height="140">
   </a>
 </p>
 
@@ -9,7 +9,7 @@
 <p align="center">
   The open-source platform for managing legal and public documents.
   <br />
-  <a href="https://openpolicyhq.com"><strong>Explore the website »</strong></a>
+  <a href="https://openpolicyhq.com"><strong>Explore the website</strong></a>
   <br />
   <br />
   <a href="https://github.com/zakafz/openpolicy/issues">Report Bug</a>
@@ -47,7 +47,6 @@ OpenPolicy is packed with features to help you manage your policies effectively.
 - [x] **Rich Text Editor**: Advanced editor with support for markdown, tables, and **Excalidraw** diagrams.
 - [x] **Multi-Workspace Support**: Organize documents by team, project, or client with isolated workspaces.
 - [x] **Custom Domains**: Connect your own domain (e.g., `docs.acme.com`) with automatic SSL.
-- [x] **Usage Analytics**: Real-time tracking of AI tokens and storage usage with plan-based limits.
 - [x] **Document Management**:
   - **Status Workflow**: Draft, Publish, and Archive states.
   - **SEO Optimized**: Automatic dynamic metadata generation for better discoverability.
@@ -86,21 +85,7 @@ Built with the best modern web technologies.
    ```
 
 3. **Set up environment variables:**
-   Create a `.env.local` file in the root directory and add the following variables:
-
-   ```bash
-   # Supabase
-   NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-   SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
-
-   # Polar (Payments)
-   POLAR_ACCESS_TOKEN=your_polar_access_token
-   POLAR_WEBHOOK_SECRET=your_polar_webhook_secret
-
-   # App
-   NEXT_PUBLIC_APP_URL=http://localhost:3000
-   ```
+   Create a `.env.local` file in the root directory and add the following variables. See `env.example` for more template.
 
 4. **Run the development server:**
    ```bash
@@ -122,7 +107,7 @@ Contributions are what make the open-source community such an amazing place to l
 
 ## License 
 
-Distributed under the MIT License. See `LICENSE` for more information.
+Distributed under the GPL-3.0 License. See `LICENSE` for more information.
 
 ## Contact 
 
