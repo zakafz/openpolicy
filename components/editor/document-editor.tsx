@@ -2,9 +2,9 @@
 
 import { normalizeNodeId } from "platejs";
 import { Plate, usePlateEditor } from "platejs/react";
-import { forwardRef, useEffect, useImperativeHandle, useMemo } from "react";
+import { forwardRef, useImperativeHandle, useMemo } from "react";
 import { EditorProvider } from "@/components/editor/editor-context";
-import { EditorKit } from "@/components/editor/editor-kit";
+import { createEditorKit } from "@/components/editor/editor-kit";
 import { Editor, EditorContainer } from "@/components/ui/editor";
 import { convertTiptapToSlate } from "@/lib/tiptap-to-slate-converter";
 
@@ -24,6 +24,8 @@ interface DocumentEditorProps {
   onCancel?: () => void;
   onRename?: () => void;
   workspace?: any;
+  disableAI?: boolean;
+  disableToolbar?: boolean;
 }
 
 export interface DocumentEditorRef {
@@ -52,6 +54,8 @@ export const DocumentEditor = forwardRef<
       onCancel,
       onRename,
       workspace,
+      disableAI = false,
+      disableToolbar = false,
     },
     ref,
   ) => {
@@ -70,7 +74,7 @@ export const DocumentEditor = forwardRef<
     }, [initialContent]);
 
     const editor = usePlateEditor({
-      plugins: EditorKit,
+      plugins: createEditorKit({ disableAI, disableToolbar }),
       value: parsedInitialValue,
       readOnly,
     });
@@ -81,12 +85,6 @@ export const DocumentEditor = forwardRef<
         return Promise.resolve();
       },
     }));
-
-    useEffect(() => {
-      if (!readOnly && onContentChange) {
-        onContentChange(editor.children);
-      }
-    }, [editor.children, onContentChange, readOnly]);
 
     return (
       <EditorProvider
@@ -101,9 +99,23 @@ export const DocumentEditor = forwardRef<
           workspace,
         }}
       >
-        <Plate editor={editor} readOnly={readOnly}>
+        <Plate
+          editor={editor}
+          readOnly={readOnly}
+          onChange={({ value }) => {
+            if (!readOnly && onContentChange) {
+              onContentChange(value);
+            }
+          }}
+        >
           <EditorContainer variant="default">
-            <Editor variant="default" readOnly={readOnly} />
+            <Editor
+              variant="default"
+              readOnly={readOnly}
+              className={
+                readOnly && disableToolbar ? "px-0 py-0 sm:px-0" : undefined
+              }
+            />
           </EditorContainer>
         </Plate>
       </EditorProvider>

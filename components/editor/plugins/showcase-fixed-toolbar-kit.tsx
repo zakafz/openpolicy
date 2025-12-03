@@ -3,23 +3,17 @@
 import { createPlatePlugin } from "platejs/react";
 
 import { FixedToolbar } from "@/components/ui/fixed-toolbar";
-import { FixedToolbarButtons } from "@/components/ui/fixed-toolbar-buttons";
+import { ShowcaseToolbarButtons } from "@/components/ui/showcase-toolbar-buttons";
 
-export const createFixedToolbarKit = ({
-  disableAI = false,
-}: {
-  disableAI?: boolean;
-} = {}) => [
+export const ShowcaseFixedToolbarKit = [
   createPlatePlugin({
     key: "fixed-toolbar",
     render: {
       beforeEditable: () => (
         <FixedToolbar>
-          <FixedToolbarButtons disableAI={disableAI} />
+          <ShowcaseToolbarButtons />
         </FixedToolbar>
       ),
     },
   }),
 ];
-
-export const FixedToolbarKit = createFixedToolbarKit();

@@ -1,5 +1,5 @@
 import { createOpenAI } from "@ai-sdk/openai";
-import { streamText } from "ai";
+import { convertToCoreMessages, streamText } from "ai";
 
 export const runtime = "edge";
 
@@ -8,13 +8,28 @@ const openai = createOpenAI({
 });
 
 export async function POST(req: Request) {
-  const { messages, system } = await req.json();
+  try {
+    const { messages, system } = await req.json();
 
-  const result = streamText({
-    model: openai("gpt-4o-mini"),
-    messages,
-    system: system || "You are a helpful writing assistant.",
-  });
+    const coreMessages = convertToCoreMessages(messages);
 
-  return result.toTextStreamResponse();
+    const result = streamText({
+      model: openai("gpt-4o-mini"),
+      messages: coreMessages,
+      system: system || "You are a helpful writing assistant.",
+    });
+
+    return result.toTextStreamResponse();
+  } catch (error) {
+    return new Response(
+      JSON.stringify({
+        error: "Internal Server Error",
+        details: String(error),
+      }),
+      {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      },
+    );
+  }
 }

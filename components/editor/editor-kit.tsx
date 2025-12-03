@@ -20,8 +20,8 @@ import { DndKit } from "@/components/editor/plugins/dnd-kit";
 import { DocxKit } from "@/components/editor/plugins/docx-kit";
 import { EmojiKit } from "@/components/editor/plugins/emoji-kit";
 import { ExitBreakKit } from "@/components/editor/plugins/exit-break-kit";
-import { FixedToolbarKit } from "@/components/editor/plugins/fixed-toolbar-kit";
-import { FloatingToolbarKit } from "@/components/editor/plugins/floating-toolbar-kit";
+import { createFixedToolbarKit } from "@/components/editor/plugins/fixed-toolbar-kit";
+import { createFloatingToolbarKit } from "@/components/editor/plugins/floating-toolbar-kit";
 import { FontKit } from "@/components/editor/plugins/font-kit";
 import { LineHeightKit } from "@/components/editor/plugins/line-height-kit";
 import { LinkKit } from "@/components/editor/plugins/link-kit";
@@ -36,57 +36,65 @@ import { TableKit } from "@/components/editor/plugins/table-kit";
 import { TocKit } from "@/components/editor/plugins/toc-kit";
 import { ToggleKit } from "@/components/editor/plugins/toggle-kit";
 
-export const EditorKit = [
-  ...CopilotKit,
-  ...AIKit,
+export const createEditorKit = ({
+  disableAI = false,
+  disableToolbar = false,
+}: {
+  disableAI?: boolean;
+  disableToolbar?: boolean;
+} = {}) => [
+    ...(disableAI ? [] : CopilotKit),
+    ...(disableAI ? [] : AIKit),
 
-  // Elements
-  ...BasicBlocksKit,
-  ...CodeBlockKit,
-  ...TableKit,
-  ...ToggleKit,
-  ...TocKit,
-  ...MediaKit,
-  ...CalloutKit,
-  ...ColumnKit,
-  ...MathKit,
-  ...DateKit,
-  ...LinkKit,
-  ...MentionKit,
+    // Elements
+    ...BasicBlocksKit,
+    ...CodeBlockKit,
+    ...TableKit,
+    ...ToggleKit,
+    ...TocKit,
+    ...MediaKit,
+    ...CalloutKit,
+    ...ColumnKit,
+    ...MathKit,
+    ...DateKit,
+    ...LinkKit,
+    ...MentionKit,
 
-  // Marks
-  ...BasicMarksKit,
-  ...FontKit,
+    // Marks
+    ...BasicMarksKit,
+    ...FontKit,
 
-  // Block Style
-  ...ListKit,
-  ...AlignKit,
-  ...LineHeightKit,
+    // Block Style
+    ...ListKit,
+    ...AlignKit,
+    ...LineHeightKit,
 
-  // Collaboration
-  // ...DiscussionKit,
-  // ...CommentKit,
-  ...SuggestionKit,
+    // Collaboration
+    // ...DiscussionKit,
+    // ...CommentKit,
+    ...SuggestionKit,
 
-  // Editing
-  ...SlashKit,
-  ...AutoformatKit,
-  ...CursorOverlayKit,
-  ...BlockMenuKit,
-  ...DndKit,
-  ...EmojiKit,
-  ...ExitBreakKit,
-  TrailingBlockPlugin,
+    // Editing
+    ...SlashKit,
+    ...AutoformatKit,
+    ...CursorOverlayKit,
+    ...BlockMenuKit,
+    ...DndKit,
+    ...EmojiKit,
+    ...ExitBreakKit,
+    TrailingBlockPlugin,
 
-  // Parsers
-  ...DocxKit,
-  ...MarkdownKit,
+    // Parsers
+    ...DocxKit,
+    ...MarkdownKit,
 
-  // UI
-  ...BlockPlaceholderKit,
-  ...FixedToolbarKit,
-  ...FloatingToolbarKit,
-];
+    // UI
+    ...BlockPlaceholderKit,
+    ...(disableToolbar ? [] : createFixedToolbarKit({ disableAI })),
+    ...(disableToolbar ? [] : createFloatingToolbarKit({ disableAI })),
+  ];
+
+export const EditorKit = createEditorKit();
 
 export type MyEditor = TPlateEditor<Value, (typeof EditorKit)[number]>;
 

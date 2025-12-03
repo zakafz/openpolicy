@@ -74,6 +74,39 @@ export default function DocumentShell() {
   const [isDirty, setIsDirty] = useState(false);
   const editorRef = React.useRef<DocumentEditorRef>(null);
   const ignoreNextChange = React.useRef(false);
+  const [isFreePlan, setIsFreePlan] = useState(false);
+
+  useEffect(() => {
+    if (!workspace?.plan) {
+      if (workspace) {
+        setIsFreePlan(true);
+      }
+      return;
+    }
+
+    async function checkPlan() {
+      try {
+        console.log(
+          "[DocumentShell] Checking plan for workspace:",
+          workspace?.id,
+          "Plan:",
+          workspace?.plan,
+        );
+        const res = await fetch(`/api/plans/check?planId=${workspace?.plan}`);
+        if (res.ok) {
+          const data = await res.json();
+          console.log("[DocumentShell] Plan check result:", data);
+          setIsFreePlan(data.isFree);
+        } else {
+          console.error("[DocumentShell] Plan check failed:", res.status);
+        }
+      } catch (e) {
+        console.error("Failed to check plan status", e);
+      }
+    }
+
+    checkPlan();
+  }, [workspace]);
 
   useEffect(() => {
     if (workspaceId) return;
@@ -441,8 +474,10 @@ export default function DocumentShell() {
         });
         setIsEditMode(false);
         setIsDirty(false);
-        // Reload to get fresh content
-        window.location.reload();
+        // Update local doc state with saved data if available
+        if (data.document) {
+          setDoc(data.document);
+        }
       } else {
         console.error("Save failed response:", data || text);
         toastManager.add({
@@ -728,7 +763,7 @@ export default function DocumentShell() {
                     }}
                     disabled={isSaving}
                   >
-                    Cancel
+                    Exit
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>Cancel editing</TooltipContent>
@@ -736,7 +771,11 @@ export default function DocumentShell() {
 
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button size="sm" onClick={handleSave} disabled={isSaving}>
+                  <Button
+                    size="sm"
+                    onClick={handleSave}
+                    disabled={isSaving || !isDirty}
+                  >
                     {isSaving ? "Saving..." : "Save"}
                   </Button>
                 </TooltipTrigger>
@@ -943,6 +982,8 @@ export default function DocumentShell() {
             setRenameDialogOpen(true);
           }}
           workspace={workspace}
+          disableAI={isFreePlan}
+          key={isFreePlan ? "free" : "pro"}
         />
       ) : (
         <div className="flex h-full items-center justify-center text-muted-foreground text-sm">

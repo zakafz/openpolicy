@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { DocumentEditor } from "@/components/editor/document-editor";
 import { Badge } from "@/components/ui/badge";
 import {
   Frame,
@@ -105,18 +106,18 @@ export default async function Page({ params }: Props) {
 
   if (!doc || doc.status !== "published" || !doc.published) return notFound();
 
-  // let parsedInitialContent: any = null;
-  // if (doc.content) {
-  //   if (typeof doc.content === "string") {
-  //     try {
-  //       parsedInitialContent = JSON.parse(doc.content);
-  //     } catch {
-  //       parsedInitialContent = doc.content;
-  //     }
-  //   } else {
-  //     parsedInitialContent = doc.content;
-  //   }
-  // }
+  let parsedInitialContent: any = null;
+  if (doc.content) {
+    if (typeof doc.content === "string") {
+      try {
+        parsedInitialContent = JSON.parse(doc.content);
+      } catch {
+        parsedInitialContent = doc.content;
+      }
+    } else {
+      parsedInitialContent = doc.content;
+    }
+  }
 
   return (
     <Frame className="w-full border">
@@ -128,15 +129,16 @@ export default async function Page({ params }: Props) {
           </Badge>
         </FrameDescription>
       </FrameHeader>
-      <FramePanel className="py-10! md:py-20!">
-        {/* <TiptapEditor
+      <FramePanel className="px-10!">
+        <DocumentEditor
           docId={doc.id}
           initialContent={parsedInitialContent}
           initialIsJson={typeof parsedInitialContent !== "string"}
           docTitle={doc.title}
           documentSlug={doc.slug}
           readOnly={true}
-        /> */}
+          disableToolbar={true}
+        />
       </FramePanel>
     </Frame>
   );

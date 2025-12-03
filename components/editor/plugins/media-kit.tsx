@@ -26,9 +26,18 @@ export const MediaKit = [
     render: { afterEditable: MediaPreviewDialog, node: ImageElement },
   }),
   MediaEmbedPlugin.withComponent(MediaEmbedElement),
-  VideoPlugin.withComponent(VideoElement),
-  AudioPlugin.withComponent(AudioElement),
-  FilePlugin.withComponent(FileElement),
+  VideoPlugin.configure({
+    options: { disableUploadInsert: true },
+    render: { node: VideoElement },
+  }),
+  AudioPlugin.configure({
+    options: { disableUploadInsert: true },
+    render: { node: AudioElement },
+  }),
+  FilePlugin.configure({
+    options: { disableUploadInsert: true },
+    render: { node: FileElement },
+  }),
   PlaceholderPlugin.configure({
     options: { disableEmptyPlaceholder: true },
     render: { afterEditable: MediaUploadToast, node: PlaceholderElement },

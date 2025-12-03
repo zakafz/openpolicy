@@ -1,10 +1,6 @@
 "use client";
 
-import {
-  PlaceholderPlugin,
-  PlaceholderProvider,
-  updateUploadHistory,
-} from "@platejs/media/react";
+import { PlaceholderPlugin, PlaceholderProvider } from "@platejs/media/react";
 import { AudioLines, FileUp, Film, ImageIcon, Loader2Icon } from "lucide-react";
 import type { TPlaceholderElement } from "platejs";
 import { KEYS } from "platejs";
@@ -107,7 +103,7 @@ export const PlaceholderElement = withHOC(
 
         editor.tf.insertNodes(node, { at: path });
 
-        updateUploadHistory(editor, node);
+        // updateUploadHistory(editor, node);
       });
 
       api.placeholder.removeUploadingFile(element.id as string);

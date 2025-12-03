@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
       temperature: 0.7,
     });
 
-    return NextResponse.json(result);
+    return NextResponse.json({ text: result.text });
   } catch (error) {
     console.error("AI Copilot Error:", error);
     if (error instanceof Error && error.name === "AbortError") {

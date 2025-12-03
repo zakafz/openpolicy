@@ -37,7 +37,7 @@ export function Header() {
   return (
     <header
       className={cn(
-        "-translate-x-1/2 fixed top-0 left-1/2 z-50 w-full max-w-6xl border-transparent border-x border-b max-xl:border-border max-xl:bg-background",
+        "-translate-x-1/2 fixed top-0 left-1/2 z-51 w-full max-w-6xl border-transparent border-x border-b max-xl:border-border max-xl:bg-background",
         {
           "border-border bg-background/95 backdrop-blur-lg supports-backdrop-filter:bg-background/50":
             scrolled,
