@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://openpolicyhq.com">
-    <img src="https://openpolicyhq.com/icon-openpolicy.svg" alt="OpenPolicy Logo" width="140" height="140">
+    <img src="https://openpolicyhq.com/icon-openpolicy.svg" style="filter: invert(100%);" alt="OpenPolicy Logo" width="140" height="140">
   </a>
 </p>
 
@@ -112,4 +112,5 @@ Distributed under the GPL-3.0 License. See `LICENSE` for more information.
 ## Contact 
 
 Support: [support@openpolicyhq.com](mailto:support@openpolicyhq.com)
-Contact page: [https://openpolicyhq.com/contact](https://openpolicyhq.com/contact)
+
+Contact page: [contact](https://openpolicyhq.com/contact)
