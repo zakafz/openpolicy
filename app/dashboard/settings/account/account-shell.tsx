@@ -251,56 +251,16 @@ export default function AccountShell() {
     setErrorMsg(null);
     setDeleting(true);
     try {
-      const {
-        data: { user },
-        error: authError,
-      } = await supabase.auth.getUser();
+      const response = await fetch("/api/account/delete", {
+        method: "POST",
+      });
 
-      if (authError) throw authError;
-      if (!user) throw new Error("Not authenticated");
-
-      const { data: ownedWorkspaces, error: workspacesErr } = await supabase
-        .from("workspaces")
-        .select("id")
-        .eq("owner_id", user.id);
-
-      if (workspacesErr) throw workspacesErr;
-
-      if (ownedWorkspaces && ownedWorkspaces.length > 0) {
-        const workspaceIds = ownedWorkspaces.map((w) => w.id);
-
-        const { error: docsErr } = await supabase
-          .from("documents")
-          .delete()
-          .in("workspace_id", workspaceIds);
-
-        if (docsErr) throw docsErr;
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "Failed to delete account");
       }
 
-      const { error: workspacesDeleteErr } = await supabase
-        .from("workspaces")
-        .delete()
-        .eq("owner_id", user.id);
-
-      if (workspacesDeleteErr) throw workspacesDeleteErr;
-
-      const { error: pendingErr } = await supabase
-        .from("pending_workspaces")
-        .delete()
-        .eq("owner_id", user.id);
-
-      if (pendingErr) throw pendingErr;
-
-      const { error: deleteErr } = await supabase
-        .from("users")
-        .delete()
-        .eq("auth_id", user.id);
-
-      if (deleteErr) throw deleteErr;
-
-      const { error: signOutErr } = await supabase.auth.signOut();
-      if (signOutErr) throw signOutErr;
-
+      await supabase.auth.signOut();
       router.push("/");
     } catch (err: any) {
       setErrorMsg(err?.message ?? String(err));
