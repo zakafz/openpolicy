@@ -15,10 +15,8 @@ const ratelimit = new Ratelimit({
   analytics: true,
 });
 
-export default async function middleware(request: NextRequest) {
-  // 1. Rate Limiting (API routes only)
+export default async function proxy(request: NextRequest) {
   if (request.nextUrl.pathname.startsWith("/api")) {
-    // Skip rate limiting if Redis is not configured (dev mode fallback)
     if (
       process.env.UPSTASH_REDIS_REST_URL &&
       process.env.UPSTASH_REDIS_REST_TOKEN
@@ -46,15 +44,12 @@ export default async function middleware(request: NextRequest) {
     }
   }
 
-  // 2. Supabase Session & Subdomain Rewrites
-  // Let session proxy run first (it may set cookies on the response)
   const supabaseResponse = await updateSession(request);
 
   try {
     const host = request.headers.get("host") ?? "";
     const hostname = host.split(":")[0]; // strip port if present
 
-    // Domains considered "root" for which we interpret the first label as workspace
     const rootDomains = [
       "openpolicyhq.com",
       "localhost",
@@ -66,16 +61,13 @@ export default async function middleware(request: NextRequest) {
     if (hostname) {
       const parts = hostname.split(".");
       if (parts.length >= 2) {
-        let potentialRoot = parts.slice(-2).join("."); // try last two labels first
+        let potentialRoot = parts.slice(-2).join(".");
         let subdomain = parts.slice(0, -2).join(".") || null;
 
         if (!rootDomains.includes(potentialRoot)) {
-          // try last label as root
           potentialRoot = parts.slice(-1).join(".");
           subdomain = parts.slice(0, -1).join(".") || null;
         }
-
-        // Custom Domain Handling
         if (
           !rootDomains.includes(hostname) &&
           !request.nextUrl.pathname.startsWith("/api")
@@ -83,7 +75,6 @@ export default async function middleware(request: NextRequest) {
           let workspaceSlug: string | null = null;
           const cacheKey = `custom_domain:${hostname}`;
 
-          // 1. Try Redis Cache
           if (
             process.env.UPSTASH_REDIS_REST_URL &&
             process.env.UPSTASH_REDIS_REST_TOKEN
@@ -95,7 +86,6 @@ export default async function middleware(request: NextRequest) {
             }
           }
 
-          // 2. Try Supabase
           if (!workspaceSlug) {
             try {
               const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -144,15 +134,10 @@ export default async function middleware(request: NextRequest) {
 
         const pathname = request.nextUrl.pathname;
 
-        // Skip API routes for rewrites
         if (pathname.startsWith("/api")) {
           return supabaseResponse;
         }
 
-        // Only rewrite when:
-        // - we detected a subdomain
-        // - the root domain is one we want to handle
-        // - the path does not already start with /{subdomain}
         if (
           subdomain &&
           rootDomains.includes(potentialRoot) &&
@@ -165,7 +150,6 @@ export default async function middleware(request: NextRequest) {
 
           const rewriteRes = NextResponse.rewrite(target, { request });
 
-          // Copy cookies
           try {
             const cookieList = supabaseResponse.cookies.getAll();
             cookieList.forEach(({ name, value, ...rest }) => {

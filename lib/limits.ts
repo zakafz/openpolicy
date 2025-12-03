@@ -1,6 +1,6 @@
 export const FREE_PLAN_LIMITS = {
   documents: 3,
-  storage: 100 * 1024 * 1024, // 100 MB
+  storage: 50 * 1024 * 1024, // 50 MB
   ai: 0,
 };
 
