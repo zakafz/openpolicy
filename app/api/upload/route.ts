@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { FREE_PLAN_LIMITS, PRO_PLAN_LIMITS } from "@/lib/limits";
+import { isFreePlan } from "@/lib/plans";
 import { createClient } from "@/lib/supabase/server";
 
 export async function POST(req: Request) {
@@ -19,6 +21,25 @@ export async function POST(req: Request) {
       return new NextResponse("No file provided", { status: 400 });
     }
 
+    // Check storage limits
+    const { data: workspace } = await supabase
+      .from("workspaces")
+      .select("id, metadata, plan")
+      .eq("owner_id", user.id)
+      .single();
+
+    if (!workspace) {
+      return new NextResponse("Workspace not found", { status: 404 });
+    }
+
+    const currentStorage = (workspace.metadata?.storage_usage as number) || 0;
+    const isFree = await isFreePlan(workspace.plan);
+    const limit = isFree ? FREE_PLAN_LIMITS.storage : PRO_PLAN_LIMITS.storage;
+
+    if (currentStorage + file.size > limit) {
+      return new NextResponse("Storage limit exceeded", { status: 403 });
+    }
+
     const fileExt = file.name.split(".").pop();
     const fileName = `${user.id}/${Date.now()}-${Math.random()
       .toString(36)
@@ -34,6 +55,21 @@ export async function POST(req: Request) {
     if (uploadError) {
       console.error("Upload error:", uploadError);
       return new NextResponse("Upload failed", { status: 500 });
+    }
+
+    // Update storage usage
+    const { error: updateError } = await supabase
+      .from("workspaces")
+      .update({
+        metadata: {
+          ...workspace.metadata,
+          storage_usage: currentStorage + file.size,
+        },
+      })
+      .eq("id", workspace.id);
+
+    if (updateError) {
+      console.error("Failed to update workspace metadata:", updateError);
     }
 
     // Since the user requested a private bucket, we use a signed URL.

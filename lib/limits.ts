@@ -1,23 +1,11 @@
-import { api } from "@/lib/polar";
-
 export const FREE_PLAN_LIMITS = {
   documents: 3,
+  storage: 100 * 1024 * 1024, // 100 MB
+  ai: 0,
 };
 
 export const PRO_PLAN_LIMITS = {
   documents: Infinity,
+  storage: 1 * 1024 * 1024 * 1024, // 1 GB
+  ai: 50,
 };
-
-export async function isFreePlan(planId: string | null): Promise<boolean> {
-  if (!planId) {
-    return true;
-  }
-
-  try {
-    const product = await api.products.get({ id: planId });
-    const isFree = product.prices.some((price) => price.amountType === "free");
-    return isFree;
-  } catch (_e) {
-    return true;
-  }
-}

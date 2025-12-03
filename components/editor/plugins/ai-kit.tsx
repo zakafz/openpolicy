@@ -46,9 +46,7 @@ export const aiChatPlugin = AIChatPlugin.extend({
                 type: getPluginType(editor, KEYS.aiChat),
               },
               {
-                at: PathApi.next(
-                  editor.selection?.focus.path.slice(0, 1) || [0],
-                ),
+                at: PathApi.next(editor.selection!.focus.path.slice(0, 1)),
               },
             );
           });

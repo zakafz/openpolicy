@@ -6,6 +6,7 @@ import PageTitle from "@/components/dashboard-page-title";
 import { FreePlanLimitAlert } from "@/components/free-plan-limit-alert";
 import RecentDocumentsTable from "@/components/recent-documents-table";
 import { StatsSkeleton } from "@/components/skeletons";
+import { StorageLimitAlert } from "@/components/storage-limit-alert";
 import { SubscriptionAlert } from "@/components/subscription-alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -142,6 +143,14 @@ export default function OverviewShell(): React.ReactElement {
       {isFreePlanState && planLimit !== null && (
         <FreePlanLimitAlert documentCount={stats.all} limit={planLimit} />
       )}
+      {workspace?.metadata?.storage_usage !== undefined && (
+        <StorageLimitAlert
+          usage={workspace.metadata.storage_usage}
+          limit={
+            isFreePlanState ? FREE_PLAN_LIMITS.storage : PRO_PLAN_LIMITS.storage
+          }
+        />
+      )}
       {planLimit !== null && (
         <div
           className={cn(
@@ -157,7 +166,7 @@ export default function OverviewShell(): React.ReactElement {
               <p className="text-muted-foreground text-sm">
                 {isFreePlanState
                   ? "You are on the Free plan. Upgrade to Pro for more documents."
-                  : `Your Pro plan is limited to ${planLimit} documents.`}
+                  : `Your Scale plan is limited to ${planLimit} documents.`}
               </p>
             </div>
             {isFreePlanState && (

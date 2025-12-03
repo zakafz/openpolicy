@@ -10,7 +10,8 @@ import {
   normalizeSlug,
   updateDocument,
 } from "@/lib/documents";
-import { FREE_PLAN_LIMITS, isFreePlan, PRO_PLAN_LIMITS } from "@/lib/limits";
+import { FREE_PLAN_LIMITS, PRO_PLAN_LIMITS } from "@/lib/limits";
+import { isFreePlan } from "@/lib/plans";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { fetchWorkspaceByIdServer } from "@/lib/workspace";

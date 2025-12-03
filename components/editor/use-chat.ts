@@ -12,9 +12,7 @@ import { aiChatPlugin } from "@/components/editor/plugins/ai-kit";
 
 export type ToolName = "edit" | "generate";
 
-export type MessageDataPart = {
-  toolName: ToolName;
-};
+export type MessageDataPart = any;
 
 export type Chat = UseChatHelpers<ChatMessage>;
 
@@ -23,15 +21,6 @@ export type ChatMessage = UIMessage<{}, MessageDataPart>;
 export const useChat = () => {
   const editor = useEditorRef();
   const options = usePluginOption(aiChatPlugin, "chatOptions");
-
-  // remove when you implement the route /api/ai/command
-  const abortControllerRef = React.useRef<AbortController | null>(null);
-  const _abortFakeStream = React.useCallback(() => {
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-      abortControllerRef.current = null;
-    }
-  }, []);
 
   const baseChat = useBaseChat<ChatMessage>({
     id: "editor",
@@ -57,7 +46,6 @@ export const useChat = () => {
 
   const chat = {
     ...baseChat,
-    _abortFakeStream,
   };
 
   React.useEffect(() => {

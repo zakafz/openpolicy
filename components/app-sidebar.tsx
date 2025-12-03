@@ -31,7 +31,7 @@ import {
 } from "@/components/ui/tooltip";
 import { useWorkspace } from "@/context/workspace";
 import { fetchWorkspaceDocumentCounts } from "@/lib/documents";
-import { isFreePlan } from "@/lib/limits";
+import { isFreePlan } from "@/lib/plans";
 import { createClient } from "@/lib/supabase/client";
 import { fetchWorkspaceById, readSelectedWorkspaceId } from "@/lib/workspace";
 import type { WorkspaceRow } from "@/types/supabase";
