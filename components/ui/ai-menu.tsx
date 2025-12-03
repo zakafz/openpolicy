@@ -6,7 +6,7 @@ import {
   useEditorChat,
   useLastAssistantMessage,
 } from "@platejs/ai/react";
-import { getTransientCommentKey } from "@platejs/comment";
+
 import { BlockSelectionPlugin, useIsSelecting } from "@platejs/selection/react";
 import { getTransientSuggestionKey } from "@platejs/suggestion";
 import { Command as CommandPrimitive } from "cmdk";
@@ -33,7 +33,6 @@ import {
   NodeApi,
   type NodeEntry,
   type SlateEditor,
-  TextApi,
 } from "platejs";
 import {
   type PlateEditor,
@@ -44,7 +43,7 @@ import {
   usePluginOption,
 } from "platejs/react";
 import * as React from "react";
-import { commentPlugin } from "@/components/editor/plugins/comment-kit";
+
 import { Button } from "@/components/ui/button";
 import {
   Command,
@@ -181,8 +180,6 @@ export function AIMenu() {
 
   if (isLoading && mode === "insert") return null;
 
-  if (toolName === "comment") return null;
-
   if (toolName === "edit" && mode === "chat" && isLoading) return null;
 
   return (
@@ -264,27 +261,6 @@ type EditorChatState =
   | "selectionCommand"
   | "selectionSuggestion";
 
-const AICommentIcon = () => (
-  <svg
-    fill="none"
-    height="24"
-    stroke="currentColor"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    strokeWidth="2"
-    viewBox="0 0 24 24"
-    width="24"
-    xmlns="http://www.w3.org/2000/svg"
-  >
-    <title>AI Comment</title>
-    <path d="M0 0h24v24H0z" fill="none" stroke="none" />
-    <path d="M8 9h8" />
-    <path d="M8 13h4.5" />
-    <path d="M10 19l-1 -1h-3a3 3 0 0 1 -3 -3v-8a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v4.5" />
-    <path d="M17.8 20.817l-2.172 1.138a.392 .392 0 0 1 -.568 -.41l.415 -2.411l-1.757 -1.707a.389 .389 0 0 1 .217 -.665l2.428 -.352l1.086 -2.193a.392 .392 0 0 1 .702 0l1.086 2.193l2.428 .352a.39 .39 0 0 1 .217 .665l-1.757 1.707l.414 2.41a.39 .39 0 0 1 -.567 .411l-2.172 -1.138z" />
-  </svg>
-);
-
 const aiChatItems = {
   accept: {
     icon: <Check />,
@@ -303,20 +279,7 @@ const aiChatItems = {
       editor.tf.focus({ edge: "end" });
     },
   },
-  comment: {
-    icon: <AICommentIcon />,
-    label: "Comment",
-    value: "comment",
-    onSelect: ({ editor, input }) => {
-      editor.setOption(AIChatPlugin, "toolName", "comment");
-      editor.getApi(AIChatPlugin).aiChat.submit(input, {
-        mode: "insert",
-        prompt:
-          "Please comment on the following content and provide reasonable and meaningful feedback.",
-        toolName: "comment",
-      });
-    },
-  },
+
   continueWrite: {
     icon: <PenLine />,
     label: "Continue writing",
@@ -543,7 +506,6 @@ const menuStateItems: Record<
   cursorCommand: [
     {
       items: [
-        aiChatItems.comment,
         aiChatItems.generateMdxSample,
         aiChatItems.generateMarkdownSample,
         aiChatItems.continueWrite,
@@ -561,7 +523,7 @@ const menuStateItems: Record<
     {
       items: [
         aiChatItems.improveWriting,
-        aiChatItems.comment,
+
         aiChatItems.emojify,
         aiChatItems.makeLonger,
         aiChatItems.makeShorter,
@@ -645,8 +607,6 @@ export const AIMenuItems = ({
 };
 
 export function AILoadingBar() {
-  const editor = useEditorRef();
-
   const toolName = usePluginOption(AIChatPlugin, "toolName");
   const chat = usePluginOption(AIChatPlugin, "chat");
   const mode = usePluginOption(AIChatPlugin, "mode");
@@ -657,32 +617,13 @@ export function AILoadingBar() {
 
   const isLoading = status === "streaming" || status === "submitted";
 
-  const handleComments = (type: "accept" | "reject") => {
-    if (type === "accept") {
-      editor.tf.unsetNodes([getTransientCommentKey()], {
-        at: [],
-        match: (n) => TextApi.isText(n) && !!n[KEYS.comment],
-      });
-    }
-
-    if (type === "reject") {
-      editor
-        .getTransforms(commentPlugin)
-        .comment.unsetMark({ transient: true });
-    }
-
-    api.aiChat.hide();
-  };
-
   useHotkeys("esc", () => {
     api.aiChat.stop();
   });
 
   if (
     isLoading &&
-    (mode === "insert" ||
-      toolName === "comment" ||
-      (toolName === "edit" && mode === "chat"))
+    (mode === "insert" || (toolName === "edit" && mode === "chat"))
   ) {
     return (
       <div
@@ -704,38 +645,6 @@ export function AILoadingBar() {
             Esc
           </kbd>
         </Button>
-      </div>
-    );
-  }
-
-  if (toolName === "comment" && status === "ready") {
-    return (
-      <div
-        className={cn(
-          "-translate-x-1/2 absolute bottom-4 left-1/2 z-50 flex flex-col items-center gap-0 rounded-xl border border-border/50 bg-popover p-1 text-muted-foreground text-sm shadow-xl backdrop-blur-sm",
-          "p-3",
-        )}
-      >
-        {/* Header with controls */}
-        <div className="flex w-full items-center justify-between gap-3">
-          <div className="flex items-center gap-5">
-            <Button
-              size="sm"
-              disabled={isLoading}
-              onClick={() => handleComments("accept")}
-            >
-              Accept
-            </Button>
-
-            <Button
-              size="sm"
-              disabled={isLoading}
-              onClick={() => handleComments("reject")}
-            >
-              Reject
-            </Button>
-          </div>
-        </div>
       </div>
     );
   }

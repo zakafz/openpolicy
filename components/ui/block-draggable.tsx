@@ -434,11 +434,13 @@ const createDragPreviewElements = (
 
       const domNodeRect = domNode.parentElement?.getBoundingClientRect();
 
-      const distance = domNodeRect.top - lastDomNodeRect.bottom;
+      if (lastDomNodeRect && domNodeRect) {
+        const distance = domNodeRect.top - lastDomNodeRect.bottom;
 
-      // Check if the two elements are adjacent (touching each other)
-      if (distance > 15) {
-        wrapper.style.marginTop = `${distance}px`;
+        // Check if the two elements are adjacent (touching each other)
+        if (distance > 15) {
+          wrapper.style.marginTop = `${distance}px`;
+        }
       }
     }
 

@@ -7,7 +7,6 @@ import type {
   TBasicMarks,
   TCaptionProps,
   TComboboxInputElement,
-  TCommentText,
   TElement,
   TFontMarks,
   TImageElement,
@@ -141,7 +140,7 @@ export interface MyToggleElement extends MyTextBlockElement {
   type: typeof KEYS.toggle;
 }
 
-export interface RichText extends TBasicMarks, TCommentText, TFontMarks, TText {
+export interface RichText extends TBasicMarks, TFontMarks, TText {
   kbd?: boolean;
 }
 

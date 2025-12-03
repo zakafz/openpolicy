@@ -4,7 +4,7 @@ import { BaseBasicMarksKit } from "./plugins/basic-marks-base-kit";
 import { BaseCalloutKit } from "./plugins/callout-base-kit";
 import { BaseCodeBlockKit } from "./plugins/code-block-base-kit";
 import { BaseColumnKit } from "./plugins/column-base-kit";
-import { BaseCommentKit } from "./plugins/comment-base-kit";
+
 import { BaseDateKit } from "./plugins/date-base-kit";
 import { BaseFontKit } from "./plugins/font-base-kit";
 import { BaseLineHeightKit } from "./plugins/line-height-base-kit";
@@ -37,7 +37,7 @@ export const BaseEditorKit = [
   ...BaseListKit,
   ...BaseAlignKit,
   ...BaseLineHeightKit,
-  ...BaseCommentKit,
+
   ...BaseSuggestionKit,
   ...MarkdownKit,
 ];

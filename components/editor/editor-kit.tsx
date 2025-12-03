@@ -70,8 +70,7 @@ export const createEditorKit = ({
   ...LineHeightKit,
 
   // Collaboration
-  // ...DiscussionKit,
-  // ...CommentKit,
+
   ...SuggestionKit,
 
   // Editing
