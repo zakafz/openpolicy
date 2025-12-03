@@ -41,12 +41,12 @@ export const useChat = () => {
 
   // remove when you implement the route /api/ai/command
   const abortControllerRef = React.useRef<AbortController | null>(null);
-  const _abortFakeStream = () => {
+  const _abortFakeStream = React.useCallback(() => {
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
       abortControllerRef.current = null;
     }
-  };
+  }, []);
 
   const baseChat = useBaseChat<ChatMessage>({
     id: "editor",
@@ -185,10 +185,11 @@ export const useChat = () => {
     _abortFakeStream,
   };
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: chat object causes infinite loop
   React.useEffect(() => {
     editor.setOption(AIChatPlugin, "chat", chat as any);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [chat.status, chat.messages, chat.error, chat, editor.setOption]);
+  }, [chat.status, chat.messages, chat.error, editor.setOption]);
 
   return chat;
 };

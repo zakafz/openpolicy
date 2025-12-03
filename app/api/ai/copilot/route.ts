@@ -1,3 +1,4 @@
+import { createOpenAI } from "@ai-sdk/openai";
 import { generateText } from "ai";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
@@ -10,20 +11,24 @@ export async function POST(req: NextRequest) {
     system,
   } = await req.json();
 
-  const apiKey = key || process.env.AI_GATEWAY_API_KEY;
+  const apiKey = key || process.env.OPENAI_API_KEY;
 
   if (!apiKey) {
     return NextResponse.json(
-      { error: "Missing ai gateway API key." },
+      { error: "Missing OpenAI API key." },
       { status: 401 },
     );
   }
+
+  const openai = createOpenAI({
+    apiKey,
+  });
 
   try {
     const result = await generateText({
       abortSignal: req.signal,
       maxOutputTokens: 50,
-      model: `openai/${model}`,
+      model: openai(model),
       prompt,
       system,
       temperature: 0.7,
@@ -31,12 +36,13 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(result);
   } catch (error) {
+    console.error("AI Copilot Error:", error);
     if (error instanceof Error && error.name === "AbortError") {
       return NextResponse.json(null, { status: 408 });
     }
 
     return NextResponse.json(
-      { error: "Failed to process AI request" },
+      { error: "Failed to process AI request", details: String(error) },
       { status: 500 },
     );
   }
