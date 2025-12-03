@@ -106,12 +106,15 @@ export default function NewDocumentShell({
     const base = contentTemplates[t] ?? contentTemplates.other;
     const copy = JSON.parse(JSON.stringify(base));
     try {
-      if (copy && Array.isArray(copy.content) && copy.content.length > 0) {
-        const first = copy.content[0];
-        if (first && first.type === "heading") {
-          first.content = [
-            { type: "text", text: titleText || "Document name" },
-          ];
+      if (Array.isArray(copy) && copy.length > 0) {
+        const first = copy[0];
+        if (
+          first &&
+          first.type === "h1" &&
+          Array.isArray(first.children) &&
+          first.children.length > 0
+        ) {
+          first.children[0].text = titleText || "Document";
         }
       }
     } catch {

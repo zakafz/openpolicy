@@ -1,10 +1,19 @@
 "use client";
 
 import type { Product } from "@polar-sh/sdk/models/components/product.js";
-import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AppSidebar } from "@/components/app-sidebar";
+import { SafeLink } from "@/components/safe-link";
+import {
+  AlertDialog,
+  AlertDialogClose,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -18,10 +27,107 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
+import {
+  UnsavedChangesProvider,
+  useUnsavedChanges,
+} from "@/context/unsaved-changes";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import { fetchWorkspacesForOwner } from "@/lib/workspace";
 import type { UsersRow } from "@/types/supabase";
+
+function LayoutContent({
+  children,
+  products,
+  isAdmin,
+  profile,
+  ownerWorkspaces,
+  isDocument,
+  breadcrumbTitle,
+  firstWorkspaceId,
+  pathname,
+}: {
+  children: React.ReactNode;
+  products: Product[];
+  isAdmin?: boolean;
+  profile: UsersRow | null;
+  ownerWorkspaces: any[] | null;
+  isDocument: boolean;
+  breadcrumbTitle: string;
+  firstWorkspaceId: string | null;
+  pathname: string | null;
+}) {
+  const { showDialog, cancelLeave, confirmLeave } = useUnsavedChanges();
+
+  return (
+    <SidebarProvider>
+      <AppSidebar
+        user={profile}
+        products={products}
+        workspaces={ownerWorkspaces ?? []}
+        isAdmin={isAdmin}
+      />
+      <SidebarInset className="bg-card">
+        {!isDocument && (
+          <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-2 border-b bg-card transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
+            <div className="flex items-center gap-2 px-4">
+              <SidebarTrigger className="-ml-1" />
+              <Breadcrumb>
+                <BreadcrumbList>
+                  <BreadcrumbSeparator className="hidden md:block" />
+                  <BreadcrumbItem>
+                    <BreadcrumbPage>{breadcrumbTitle}</BreadcrumbPage>
+                  </BreadcrumbItem>
+                </BreadcrumbList>
+              </Breadcrumb>
+            </div>
+            {pathname ===
+            "/dashboard/documents/new" ? null : isDocument ? null : (
+              <SafeLink
+                href={
+                  firstWorkspaceId
+                    ? `/dashboard/documents/new?workspaceId=${firstWorkspaceId}`
+                    : "/dashboard/documents/new"
+                }
+                className="mr-4 ml-auto"
+              >
+                <Button size={"sm"}>Create Document</Button>
+              </SafeLink>
+            )}
+          </header>
+        )}
+        <div
+          className={cn(
+            "flex h-full flex-1 flex-col gap-4 overflow-scroll",
+            isDocument ? "" : "px-4",
+          )}
+        >
+          {children}
+        </div>
+      </SidebarInset>
+
+      <AlertDialog open={showDialog} onOpenChange={cancelLeave}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Unsaved Changes</AlertDialogTitle>
+            <AlertDialogDescription>
+              You have unsaved changes. Are you sure you want to leave? Your
+              changes will be lost.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogClose render={<Button variant="ghost" />}>
+              Cancel
+            </AlertDialogClose>
+            <Button onClick={confirmLeave} variant="destructive">
+              Leave
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </SidebarProvider>
+  );
+}
 
 export default function LayoutShell({
   children,
@@ -129,52 +235,22 @@ export default function LayoutShell({
 
   if (error) throw error;
 
+  if (error) throw error;
+
   return (
-    <SidebarProvider>
-      <AppSidebar
-        user={profile}
+    <UnsavedChangesProvider>
+      <LayoutContent
         products={products}
-        workspaces={ownerWorkspaces ?? []}
         isAdmin={isAdmin}
-      />
-      <SidebarInset className="bg-card">
-        {!isDocument && (
-          <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-2 border-b bg-card transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
-            <div className="flex items-center gap-2 px-4">
-              <SidebarTrigger className="-ml-1" />
-              <Breadcrumb>
-                <BreadcrumbList>
-                  <BreadcrumbSeparator className="hidden md:block" />
-                  <BreadcrumbItem>
-                    <BreadcrumbPage>{breadcrumbTitle}</BreadcrumbPage>
-                  </BreadcrumbItem>
-                </BreadcrumbList>
-              </Breadcrumb>
-            </div>
-            {pathname ===
-            "/dashboard/documents/new" ? null : isDocument ? null : (
-              <Link
-                href={
-                  firstWorkspaceId
-                    ? `/dashboard/documents/new?workspaceId=${firstWorkspaceId}`
-                    : "/dashboard/documents/new"
-                }
-                className="mr-4 ml-auto"
-              >
-                <Button size={"sm"}>Create Document</Button>
-              </Link>
-            )}
-          </header>
-        )}
-        <div
-          className={cn(
-            "flex h-full flex-1 flex-col gap-4 overflow-scroll",
-            isDocument ? "" : "px-4",
-          )}
-        >
-          {children}
-        </div>
-      </SidebarInset>
-    </SidebarProvider>
+        profile={profile}
+        ownerWorkspaces={ownerWorkspaces}
+        isDocument={isDocument}
+        breadcrumbTitle={breadcrumbTitle}
+        firstWorkspaceId={firstWorkspaceId}
+        pathname={pathname}
+      >
+        {children}
+      </LayoutContent>
+    </UnsavedChangesProvider>
   );
 }

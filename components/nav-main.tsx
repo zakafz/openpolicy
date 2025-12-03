@@ -1,8 +1,8 @@
 "use client";
 
 import type { LucideIcon } from "lucide-react";
-import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { SafeLink } from "@/components/safe-link";
 import {
   Collapsible,
   CollapsibleContent,
@@ -54,10 +54,10 @@ export function NavMain({
                     `${pathname}/` === item.url ? "bg-sidebar-accent" : ""
                   }
                 >
-                  <Link href={item.url}>
+                  <SafeLink href={item.url}>
                     {item.icon && <item.icon />}
                     <span>{item.title}</span>
-                  </Link>
+                  </SafeLink>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             );
@@ -97,7 +97,7 @@ export function NavMain({
                               : ""
                           }
                         >
-                          <Link
+                          <SafeLink
                             href={subItem.url}
                             className="flex w-full items-center gap-2"
                           >
@@ -111,7 +111,7 @@ export function NavMain({
                                 return counts[key] ?? null;
                               })()}
                             </span>
-                          </Link>
+                          </SafeLink>
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>
                     ))}

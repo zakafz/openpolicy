@@ -46,6 +46,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useUnsavedChanges } from "@/context/unsaved-changes";
 import useWorkspaceLoader from "@/hooks/use-workspace-loader";
 import { fetchDocumentBySlug } from "@/lib/documents";
 import { createClient } from "@/lib/supabase/client";
@@ -72,6 +73,15 @@ export default function DocumentShell() {
   const [isEditMode, setIsEditMode] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
+  const { setIsDirty: setGlobalDirty } = useUnsavedChanges();
+
+  useEffect(() => {
+    setGlobalDirty(isDirty);
+    return () => setGlobalDirty(false);
+  }, [isDirty, setGlobalDirty]);
+
+  const [unsavedChangesDialogOpen, setUnsavedChangesDialogOpen] =
+    useState(false);
   const editorRef = React.useRef<DocumentEditorRef>(null);
   const ignoreNextChange = React.useRef(false);
   const [isFreePlan, setIsFreePlan] = useState(false);
@@ -442,8 +452,8 @@ export default function DocumentShell() {
     }
   }
 
-  const handleSave = async () => {
-    if (!editorRef.current) return;
+  const handleSave = async (): Promise<boolean> => {
+    if (!editorRef.current) return false;
     setIsSaving(true);
     try {
       const content = editorRef.current.getContent();
@@ -478,6 +488,7 @@ export default function DocumentShell() {
         if (data.document) {
           setDoc(data.document);
         }
+        return true;
       } else {
         console.error("Save failed response:", data || text);
         toastManager.add({
@@ -489,6 +500,7 @@ export default function DocumentShell() {
           type: "error",
         });
       }
+      return false;
     } catch (error: any) {
       console.error("Save error:", error);
       toastManager.add({
@@ -501,6 +513,7 @@ export default function DocumentShell() {
     } finally {
       setIsSaving(false);
     }
+    return false;
   };
 
   const handleArchive = async () => {
@@ -665,6 +678,47 @@ export default function DocumentShell() {
             </AlertDialogPopup>
           </AlertDialog>
 
+          <AlertDialog
+            open={unsavedChangesDialogOpen}
+            onOpenChange={setUnsavedChangesDialogOpen}
+          >
+            <AlertDialogPopup>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Unsaved Changes</AlertDialogTitle>
+                <AlertDialogDescription>
+                  You have unsaved changes. Do you want to save them before
+                  switching to view mode?
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogClose render={<Button variant="ghost" />}>
+                  Cancel
+                </AlertDialogClose>
+                <Button
+                  variant="destructive"
+                  onClick={() => {
+                    toggleEditMode(false);
+                    setUnsavedChangesDialogOpen(false);
+                    window.location.reload();
+                  }}
+                >
+                  Discard
+                </Button>
+                <Button
+                  onClick={async () => {
+                    const success = await handleSave();
+                    if (success) {
+                      setUnsavedChangesDialogOpen(false);
+                    }
+                  }}
+                  disabled={isSaving}
+                >
+                  {isSaving ? "Saving..." : "Save"}
+                </Button>
+              </AlertDialogFooter>
+            </AlertDialogPopup>
+          </AlertDialog>
+
           <Select
             items={modes}
             value={isEditMode ? "editing" : "viewing"}
@@ -676,7 +730,11 @@ export default function DocumentShell() {
               ) {
                 toggleEditMode(true);
               } else if (value === "viewing" && isEditMode) {
-                toggleEditMode(false);
+                if (isDirty) {
+                  setUnsavedChangesDialogOpen(true);
+                } else {
+                  toggleEditMode(false);
+                }
               }
             }}
           >
