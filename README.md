@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://openpolicyhq.com">
-    <img src="https://openpolicyhq.com/icon-openpolicy.svg" style="filter: invert(100%);" alt="OpenPolicy Logo" width="140" height="140">
+    <img src="https://openpolicyhq.com/icon-openpolicy-white.svg" alt="OpenPolicy Logo" width="140" height="140">
   </a>
 </p>
 
