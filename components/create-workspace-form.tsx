@@ -9,6 +9,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { createPendingWorkspace } from "@/app/actions/create-pending-workspace";
 import { Button } from "@/components/ui/button";
 import {
   Field,
@@ -279,7 +280,7 @@ export function CreateWorkspaceForm({ products }: { products: Product[] }) {
             console.error(
               "Failed to create free workspace:",
               resp.status,
-              body,
+              JSON.stringify(body),
             );
             setError(
               body?.error ??
@@ -327,9 +328,9 @@ export function CreateWorkspaceForm({ products }: { products: Product[] }) {
         .toLowerCase()
         .replace(/-+/g, "-")
         .replace(/^-+|-+$/g, "");
-      const { data: pending, error: pendingError } = await supabase
-        .from("pending_workspaces")
-        .insert({
+
+      const { data: pending, error: pendingError } =
+        await createPendingWorkspace({
           name: name.trim(),
           owner_id,
           plan: planId,
@@ -338,28 +339,18 @@ export function CreateWorkspaceForm({ products }: { products: Product[] }) {
           customer_email: customerEmail ?? null,
           customer_external_id: owner_id,
           slug: normalizedSlugForInsert || null,
-        })
-        .select()
-        .single();
+        });
+
       if (pendingError) {
-        const msg =
-          pendingError?.message ??
-          (pendingError?.details ? String(pendingError.details) : null) ??
-          "Failed to create pending workspace.";
+        const msg = String(pendingError);
         if (
-          String(msg).toLowerCase().includes("unique") &&
-          String(msg).toLowerCase().includes("slug")
+          msg.toLowerCase().includes("unique") &&
+          msg.toLowerCase().includes("slug")
         ) {
           setError("That slug is already taken. Try another.");
         } else {
           setError(msg);
         }
-        setLoading(false);
-        return;
-      }
-
-      if (pendingError) {
-        setError(pendingError || "Failed to create pending workspace.");
         setLoading(false);
         return;
       }
