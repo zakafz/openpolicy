@@ -598,7 +598,7 @@ export default function DocumentShell() {
 
   return (
     <>
-      <div className="flex items-center justify-between gap-4 border-b bg-sidebar px-4 py-2">
+      <div className="flex items-center justify-between gap-4 border-b bg-sidebar px-4 py-2 max-md:flex-col max-md:items-start max-md:justify-start">
         <div className="flex gap-2">
           <SidebarTrigger />
           <AlertDialog
@@ -606,7 +606,7 @@ export default function DocumentShell() {
             onOpenChange={setRenameDialogOpen}
           >
             <AlertDialogTrigger className="ring-0!">
-              <h1 className="flex cursor-pointer items-center justify-center gap-1 rounded-lg bg-border/40 p-1 px-2 font-semibold text-sm hover:bg-border/60">
+              <h1 className="flex cursor-pointer items-center justify-center gap-1 truncate whitespace-nowrap rounded-lg bg-border/40 p-1 px-2 font-semibold text-sm hover:bg-border/60">
                 {doc.title} <Edit2 className="h-3 w-3" />
               </h1>
             </AlertDialogTrigger>
