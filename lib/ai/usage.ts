@@ -30,7 +30,7 @@ export async function checkAiUsage(userId: string) {
   const supabase = await createClient();
   const { data: workspace } = await supabase
     .from("workspaces")
-    .select("id, plan, metadata")
+    .select("id, plan, metadata, subscription_current_period_end")
     .eq("owner_id", userId)
     .single();
 
@@ -39,17 +39,21 @@ export async function checkAiUsage(userId: string) {
   const isFree = await isFreePlan(workspace.plan);
   const limit = isFree ? FREE_PLAN_LIMITS.ai : PRO_PLAN_LIMITS.ai;
 
-  const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
+  let currentPeriodKey = new Date().toISOString().slice(0, 7); // Default: YYYY-MM
+
+  if (!isFree && workspace.subscription_current_period_end) {
+    currentPeriodKey = workspace.subscription_current_period_end;
+  }
+
   const metadata = workspace.metadata || {};
 
-  // Reset usage if month changed
-  if (metadata.ai_usage_period !== currentMonth) {
+  if (metadata.ai_usage_period !== currentPeriodKey) {
     await supabase
       .from("workspaces")
       .update({
         metadata: {
           ...metadata,
-          ai_usage_period: currentMonth,
+          ai_usage_period: currentPeriodKey,
           ai_usage_count: 0,
         },
       })

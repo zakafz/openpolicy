@@ -1,5 +1,6 @@
 import { Webhooks } from "@polar-sh/nextjs";
 import * as Sentry from "@sentry/nextjs";
+import { api as polar } from "@/lib/polar";
 import { createServiceClient } from "@/lib/supabase/service";
 import { fetchWorkspacesForOwner } from "@/lib/workspace";
 
@@ -322,7 +323,18 @@ export const POST = Webhooks({
     const subscription = payload?.data?.subscription ?? payload?.data;
     const subscriptionId = subscription?.id ?? null;
     const status = subscription?.status ?? null;
-    const currentPeriodEnd = subscription?.current_period_end ?? null;
+    let currentPeriodEnd = subscription?.current_period_end ?? null;
+
+    if (!currentPeriodEnd && subscriptionId) {
+      try {
+        const fetchedSubscription = await polar.subscriptions.get({
+          id: subscriptionId,
+        });
+        currentPeriodEnd = fetchedSubscription.currentPeriodEnd;
+      } catch (e) {
+        console.error("Failed to fetch subscription from Polar:", e);
+      }
+    }
 
     await finalizePendingWorkspace({
       svc,
@@ -389,7 +401,18 @@ export const POST = Webhooks({
     const subscription = payload?.data?.subscription ?? payload?.data;
     const subscriptionId = subscription?.id ?? null;
     const status = subscription?.status ?? null;
-    const currentPeriodEnd = subscription?.current_period_end ?? null;
+    let currentPeriodEnd = subscription?.current_period_end ?? null;
+
+    if (!currentPeriodEnd && subscriptionId) {
+      try {
+        const fetchedSubscription = await polar.subscriptions.get({
+          id: subscriptionId,
+        });
+        currentPeriodEnd = fetchedSubscription.currentPeriodEnd;
+      } catch (e) {
+        console.error("Failed to fetch subscription from Polar:", e);
+      }
+    }
 
     await finalizePendingWorkspace({
       svc,
@@ -450,7 +473,18 @@ export const POST = Webhooks({
 
     const subscription = payload?.data?.subscription ?? payload?.data;
     const subscriptionId = subscription?.id ?? null;
-    const currentPeriodEnd = subscription?.current_period_end ?? null;
+    let currentPeriodEnd = subscription?.current_period_end ?? null;
+
+    if (!currentPeriodEnd && subscriptionId) {
+      try {
+        const fetchedSubscription = await polar.subscriptions.get({
+          id: subscriptionId,
+        });
+        currentPeriodEnd = fetchedSubscription.currentPeriodEnd;
+      } catch (e) {
+        console.error("Failed to fetch subscription from Polar:", e);
+      }
+    }
 
     await finalizePendingWorkspace({
       svc,

@@ -16,7 +16,7 @@ export function AiUsageCard({ usage, limit, isFreePlan }: AiUsageCardProps) {
   return (
     <div
       className={cn(
-        "mb-8 rounded-xl p-6",
+        "mb-5 rounded-xl p-6",
         percentage >= 100 ? "bg-destructive/5" : "bg-accent",
       )}
     >

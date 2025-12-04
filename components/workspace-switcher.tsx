@@ -110,7 +110,7 @@ export function WorkspaceSwitcher({
                   </div>
                 )}
               </div>
-              <div className="flex flex-col leading-4">
+              <div className="flex flex-col truncate leading-4">
                 <span className="truncate font-medium">{workspace.name}</span>
                 <span className="truncate font-mono text-muted-foreground text-xs">
                   {products.find((product) => product.id === workspace.plan)
@@ -173,7 +173,7 @@ export function WorkspaceSwitcher({
                     </div>
                   )}
                 </div>
-                <div className="ml-1 flex w-full flex-col leading-4">
+                <div className="ml-1 flex w-full flex-col truncate leading-4">
                   <span className="truncate font-medium">{item.name}</span>
                   <span className="truncate font-mono text-muted-foreground text-xs">
                     {products.find((product) => product.id === item.plan)

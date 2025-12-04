@@ -358,7 +358,7 @@ export default function WorkspaceShell() {
       if (workspace.subscription_id) {
         try {
           const cancelResponse = await fetch(
-            "/api/workspace/cancel-subscription",
+            "/api/workspaces/cancel-subscription",
             {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -495,13 +495,11 @@ export default function WorkspaceShell() {
         description="Manage your workspace settings."
       />
       <SubscriptionAlert workspace={workspace} />
-      {workspace?.metadata?.storage_usage !== undefined && (
-        <StorageUsageCard
-          usage={workspace.metadata.storage_usage}
-          limit={isFree ? FREE_PLAN_LIMITS.storage : PRO_PLAN_LIMITS.storage}
-          isFreePlan={isFree}
-        />
-      )}
+      <StorageUsageCard
+        usage={workspace?.metadata?.storage_usage || 0}
+        limit={isFree ? FREE_PLAN_LIMITS.storage : PRO_PLAN_LIMITS.storage}
+        isFreePlan={isFree}
+      />
       <AiUsageCard
         usage={workspace?.metadata?.ai_usage_count || 0}
         limit={isFree ? FREE_PLAN_LIMITS.ai : PRO_PLAN_LIMITS.ai}

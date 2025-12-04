@@ -21,7 +21,7 @@ export function NoSelectedWorkspace() {
           </EmptyMedia>
           <EmptyTitle>No workspace selected</EmptyTitle>
           <EmptyDescription>
-            Select or create a workspace to see its dashboard.
+            Select or create a workspace to get started.
           </EmptyDescription>
         </EmptyHeader>
       </Empty>
@@ -71,6 +71,15 @@ export function ErrorWorkspace({ error }: { error: string }) {
 }
 
 export function NoWorkspace() {
+  const _handleTryAgain = () => {
+    try {
+      localStorage.clear();
+      window.location.reload();
+    } catch (e) {
+      console.error("Failed to clear localStorage:", e);
+      window.location.reload();
+    }
+  };
   return (
     <div className="flex h-full w-full items-center justify-center">
       <Empty>
@@ -80,16 +89,19 @@ export function NoWorkspace() {
           </EmptyMedia>
           <EmptyTitle>No Workspace</EmptyTitle>
           <EmptyDescription>
-            Create a workspace to get started.
+            Try refreshing, or create a new workspace.
           </EmptyDescription>
         </EmptyHeader>
         <EmptyContent>
           <div className="flex gap-2">
             <Link href="/create">
-              <Button variant="default" size="sm">
+              <Button variant="outline" size="sm">
                 Create Workspace
               </Button>
             </Link>
+            <Button variant="default" size="sm" onClick={_handleTryAgain}>
+              Refresh
+            </Button>
           </div>
         </EmptyContent>
       </Empty>
