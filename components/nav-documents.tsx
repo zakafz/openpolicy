@@ -13,8 +13,8 @@ import {
   TicketX,
   Truck,
 } from "lucide-react";
-import Link from "next/link";
 import { useEffect, useState } from "react";
+import { SafeLink } from "@/components/safe-link";
 import { Badge } from "@/components/ui/badge";
 import {
   SidebarGroup,
@@ -22,14 +22,12 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  useSidebar,
 } from "@/components/ui/sidebar";
 import { useWorkspace } from "@/context/workspace";
 import { fetchDocumentsForWorkspace } from "@/lib/documents";
 import { createClient } from "@/lib/supabase/client";
 
 export function NavDocuments() {
-  const { isMobile } = useSidebar();
   const { selectedWorkspaceId } = useWorkspace();
   const [docs, setDocs] = useState<any[] | null>(null);
   const [loading, setLoading] = useState(true);
@@ -134,7 +132,7 @@ export function NavDocuments() {
           docs.map((d) => (
             <SidebarMenuItem key={d.id}>
               <SidebarMenuButton asChild>
-                <Link
+                <SafeLink
                   href={`/dashboard/d/${d.slug}`}
                   className="flex w-full items-center justify-between gap-2"
                 >
@@ -171,7 +169,7 @@ export function NavDocuments() {
                   >
                     {d.status || "draft"}
                   </Badge>
-                </Link>
+                </SafeLink>
               </SidebarMenuButton>
             </SidebarMenuItem>
           ))
@@ -179,13 +177,13 @@ export function NavDocuments() {
 
         <SidebarMenuItem>
           <SidebarMenuButton asChild>
-            <Link
+            <SafeLink
               href="/dashboard/documents/all"
               className="flex items-center gap-2 text-sidebar-foreground/80"
             >
               <MoreHorizontal />
               <span>All documents</span>
-            </Link>
+            </SafeLink>
           </SidebarMenuButton>
         </SidebarMenuItem>
       </SidebarMenu>

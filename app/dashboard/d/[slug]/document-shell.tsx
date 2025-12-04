@@ -1,25 +1,15 @@
 "use client";
 
-import {
-  Archive,
-  BookCheck,
-  BookDashed,
-  ChevronDownIcon,
-  Edit,
-  ExternalLink,
-  FileEdit,
-  MoreVertical,
-  Notebook,
-  PackageOpen,
-  Trash,
-} from "lucide-react";
+import { Archive, Edit2, MoreVertical, Notebook, Trash } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import * as React from "react";
 import { useEffect, useState } from "react";
-import PageTitle from "@/components/dashboard-page-title";
+import {
+  DocumentEditor,
+  type DocumentEditorRef,
+} from "@/components/editor/document-editor";
 import { TextShimmer } from "@/components/motion-primitives/text-shimmer";
-import { Editor as TiptapEditor } from "@/components/tiptap/editor/editor";
-import { Alert, AlertTitle } from "@/components/ui/alert";
 import {
   AlertDialog,
   AlertDialogClose,
@@ -30,14 +20,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Badge } from "@/components/ui/badge";
-import { Badge as BadgeCoss } from "@/components/ui/badge-coss";
+import { Badge } from "@/components/ui/badge-coss";
 import { Button } from "@/components/ui/button";
-import {
-  Collapsible,
-  CollapsiblePanel,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
 import {
   Empty,
   EmptyContent,
@@ -46,25 +30,26 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
-import {
-  Frame,
-  FrameFooter,
-  FrameHeader,
-  FramePanel,
-} from "@/components/ui/frame";
 import { Input } from "@/components/ui/input";
+import { Menu, MenuItem, MenuPopup, MenuTrigger } from "@/components/ui/menu";
 import {
-  Menu,
-  MenuItem,
-  MenuPopup,
-  MenuSeparator,
-  MenuTrigger,
-} from "@/components/ui/menu";
+  Select,
+  SelectItem,
+  SelectPopup,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 import { toastManager } from "@/components/ui/toast";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { useUnsavedChanges } from "@/context/unsaved-changes";
 import useWorkspaceLoader from "@/hooks/use-workspace-loader";
 import { fetchDocumentBySlug } from "@/lib/documents";
 import { createClient } from "@/lib/supabase/client";
-import { fmtAbsolute, timeAgo } from "@/lib/utils";
 import { readSelectedWorkspaceId } from "@/lib/workspace";
 
 export default function DocumentShell() {
@@ -76,14 +61,62 @@ export default function DocumentShell() {
   const { workspace } = useWorkspaceLoader();
   const [workspaceId, setWorkspaceId] = useState<string | null>(null);
   const [doc, setDoc] = useState<any | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [info, setInfo] = useState<string | null>(null);
+  const [_info, _setInfo] = useState<string | null>(null);
   const [blocked, setBlocked] = useState<boolean>(false);
   const [renameDialogOpen, setRenameDialogOpen] = useState(false);
   const [newTitle, setNewTitle] = useState("");
   const [renamingInProgress, setRenamingInProgress] = useState(false);
   const [renameError, setRenameError] = useState<string | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isDirty, setIsDirty] = useState(false);
+  const { setIsDirty: setGlobalDirty } = useUnsavedChanges();
+
+  useEffect(() => {
+    setGlobalDirty(isDirty);
+    return () => setGlobalDirty(false);
+  }, [isDirty, setGlobalDirty]);
+
+  const [unsavedChangesDialogOpen, setUnsavedChangesDialogOpen] =
+    useState(false);
+  const editorRef = React.useRef<DocumentEditorRef>(null);
+  const ignoreNextChange = React.useRef(false);
+  const [isFreePlan, setIsFreePlan] = useState(false);
+
+  useEffect(() => {
+    if (!workspace?.plan) {
+      if (workspace) {
+        setIsFreePlan(true);
+      }
+      return;
+    }
+
+    async function checkPlan() {
+      try {
+        console.log(
+          "[DocumentShell] Checking plan for workspace:",
+          workspace?.id,
+          "Plan:",
+          workspace?.plan,
+        );
+        const res = await fetch(`/api/plans/check?planId=${workspace?.plan}`);
+        if (res.ok) {
+          const data = await res.json();
+          console.log("[DocumentShell] Plan check result:", data);
+          setIsFreePlan(data.isFree);
+        } else {
+          console.error("[DocumentShell] Plan check failed:", res.status);
+        }
+      } catch (e) {
+        console.error("Failed to check plan status", e);
+      }
+    }
+
+    checkPlan();
+  }, [workspace]);
 
   useEffect(() => {
     if (workspaceId) return;
@@ -228,6 +261,35 @@ export default function DocumentShell() {
       cancelled = true;
     };
   }, [workspaceId, slug]);
+
+  const toggleEditMode = (enable: boolean) => {
+    if (enable) {
+      ignoreNextChange.current = true;
+      setIsEditMode(true);
+    } else {
+      setIsEditMode(false);
+      setIsDirty(false);
+    }
+  };
+
+  const handleContentChange = () => {
+    if (ignoreNextChange.current) {
+      ignoreNextChange.current = false;
+      return;
+    }
+    setIsDirty(true);
+  };
+
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isDirty) {
+        e.preventDefault();
+        e.returnValue = "";
+      }
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [isDirty]);
 
   const handleRename = async () => {
     const trimmedTitle = newTitle.trim();
@@ -390,486 +452,602 @@ export default function DocumentShell() {
     }
   }
 
+  const handleSave = async (): Promise<boolean> => {
+    if (!editorRef.current) return false;
+    setIsSaving(true);
+    try {
+      const content = editorRef.current.getContent();
+      const contentJson = JSON.stringify(content);
+
+      const res = await fetch("/api/documents", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: doc.id,
+          content: contentJson,
+        }),
+      });
+
+      const text = await res.text();
+      let data: any;
+      try {
+        data = JSON.parse(text);
+      } catch (_e) {
+        // ignore
+      }
+
+      if (res.ok && data) {
+        toastManager.add({
+          title: "Saved",
+          description: "Document saved successfully",
+          type: "success",
+        });
+        setIsEditMode(false);
+        setIsDirty(false);
+        // Update local doc state with saved data if available
+        if (data.document) {
+          setDoc(data.document);
+        }
+        return true;
+      } else {
+        console.error("Save failed response:", data || text);
+        toastManager.add({
+          title: "Save failed",
+          description:
+            data?.error ||
+            data?.message ||
+            "Failed to save document. Check console for details.",
+          type: "error",
+        });
+      }
+      return false;
+    } catch (error: any) {
+      console.error("Save error:", error);
+      toastManager.add({
+        title: "Save failed",
+        description: `An error occurred while saving: ${
+          error?.message || String(error)
+        }`,
+        type: "error",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+    return false;
+  };
+
+  const handleArchive = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/documents", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: doc.id,
+          status: "archived",
+          published: false,
+        }),
+      });
+      const payload = await res.json();
+      if (res.ok && payload?.document) {
+        setDoc(payload.document);
+        toastManager.add({
+          title: "Archived",
+          description: "Document archived successfully",
+          type: "success",
+        });
+        window.dispatchEvent(new CustomEvent("document-updated"));
+      } else {
+        toastManager.add({
+          title: "Archive failed",
+          description: payload?.error ?? "Failed to archive document",
+          type: "error",
+        });
+      }
+    } catch (e: any) {
+      toastManager.add({
+        title: "Error",
+        description: String(e?.message ?? e),
+        type: "error",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/documents", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: doc.id }),
+      });
+      if (res.ok) {
+        toastManager.add({
+          title: "Deleted",
+          description: "Document deleted successfully",
+          type: "success",
+        });
+        window.dispatchEvent(new CustomEvent("document-updated"));
+        router.push("/dashboard");
+      } else {
+        const payload = await res.json();
+        toastManager.add({
+          title: "Delete failed",
+          description: payload?.error ?? "Failed to delete document",
+          type: "error",
+        });
+      }
+    } catch (e: any) {
+      toastManager.add({
+        title: "Error",
+        description: String(e?.message ?? e),
+        type: "error",
+      });
+    } finally {
+      setLoading(false);
+      setDeleteDialogOpen(false);
+    }
+  };
+
+  const modes = [
+    { label: "Viewing", value: "viewing" },
+    { label: "Editing", value: "editing" },
+  ];
+
   return (
     <>
-      <PageTitle
-        title={doc.title.charAt(0).toUpperCase() + doc.title.slice(1)}
-      />
-      {info ? (
-        <Alert
-          variant={
-            doc?.status === "archived"
-              ? "error"
-              : doc.status === "draft"
-                ? "warning"
-                : "info"
-          }
-          className="mb-5"
-        >
-          {doc?.status === "archived" ? (
-            <PackageOpen />
-          ) : doc.status === "draft" ? (
-            <BookDashed />
-          ) : (
-            <BookCheck />
+      <div className="flex items-center justify-between gap-4 border-b bg-sidebar px-4 py-2">
+        <div className="flex gap-2">
+          <SidebarTrigger />
+          <AlertDialog
+            open={renameDialogOpen}
+            onOpenChange={setRenameDialogOpen}
+          >
+            <AlertDialogTrigger className="ring-0!">
+              <h1 className="flex cursor-pointer items-center justify-center gap-1 rounded-lg bg-border/40 p-1 px-2 font-semibold text-sm hover:bg-border/60">
+                {doc.title} <Edit2 className="h-3 w-3" />
+              </h1>
+            </AlertDialogTrigger>
+            <AlertDialogPopup>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Rename Document</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Enter a new name for "{doc.title}". Document names must be
+                  unique within the workspace.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <Input
+                type="text"
+                value={newTitle}
+                onChange={(e) => {
+                  setNewTitle(e.target.value);
+                  setRenameError(null);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !renamingInProgress) {
+                    e.preventDefault();
+                    handleRename();
+                  }
+                }}
+                placeholder={doc.title}
+                autoFocus
+              />
+              {renameError && (
+                <p className="mt-2 text-destructive text-sm">{renameError}</p>
+              )}
+              <AlertDialogFooter>
+                <AlertDialogClose render={<Button variant="ghost" />}>
+                  Cancel
+                </AlertDialogClose>
+                <Button
+                  onClick={handleRename}
+                  disabled={renamingInProgress || !newTitle.trim()}
+                >
+                  {renamingInProgress ? "Renaming..." : "Rename"}
+                </Button>
+              </AlertDialogFooter>
+            </AlertDialogPopup>
+          </AlertDialog>
+
+          <AlertDialog
+            open={deleteDialogOpen}
+            onOpenChange={setDeleteDialogOpen}
+          >
+            <AlertDialogPopup>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete Document</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Are you sure you want to delete "{doc.title}"? This action
+                  cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogClose render={<Button variant="ghost" />}>
+                  Cancel
+                </AlertDialogClose>
+                <Button
+                  variant="destructive"
+                  onClick={handleDelete}
+                  disabled={loading}
+                >
+                  {loading ? "Deleting..." : "Delete"}
+                </Button>
+              </AlertDialogFooter>
+            </AlertDialogPopup>
+          </AlertDialog>
+
+          <AlertDialog
+            open={unsavedChangesDialogOpen}
+            onOpenChange={setUnsavedChangesDialogOpen}
+          >
+            <AlertDialogPopup>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Unsaved Changes</AlertDialogTitle>
+                <AlertDialogDescription>
+                  You have unsaved changes. Do you want to save them before
+                  switching to view mode?
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogClose render={<Button variant="ghost" />}>
+                  Cancel
+                </AlertDialogClose>
+                <Button
+                  variant="destructive"
+                  onClick={() => {
+                    toggleEditMode(false);
+                    setUnsavedChangesDialogOpen(false);
+                    window.location.reload();
+                  }}
+                >
+                  Discard
+                </Button>
+                <Button
+                  onClick={async () => {
+                    const success = await handleSave();
+                    if (success) {
+                      setUnsavedChangesDialogOpen(false);
+                    }
+                  }}
+                  disabled={isSaving}
+                >
+                  {isSaving ? "Saving..." : "Save"}
+                </Button>
+              </AlertDialogFooter>
+            </AlertDialogPopup>
+          </AlertDialog>
+
+          <Select
+            items={modes}
+            value={isEditMode ? "editing" : "viewing"}
+            onValueChange={(value) => {
+              if (
+                value === "editing" &&
+                !isEditMode &&
+                doc.status !== "archived"
+              ) {
+                toggleEditMode(true);
+              } else if (value === "viewing" && isEditMode) {
+                if (isDirty) {
+                  setUnsavedChangesDialogOpen(true);
+                } else {
+                  toggleEditMode(false);
+                }
+              }
+            }}
+          >
+            <SelectTrigger size="sm">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectPopup>
+              {modes.map(({ label, value }) => (
+                <SelectItem
+                  key={value}
+                  value={value}
+                  className="flex flex-row items-center gap-2"
+                  disabled={value === "editing" && doc.status === "archived"}
+                >
+                  <span className="flex items-center gap-1.5">{label}</span>
+                </SelectItem>
+              ))}
+            </SelectPopup>
+          </Select>
+        </div>
+        <div className="flex items-center gap-2">
+          <Badge
+            variant={
+              doc.status === "published"
+                ? "info"
+                : doc.status === "archived"
+                  ? "secondary"
+                  : "warning"
+            }
+            className="rounded-lg capitalize"
+            size="lg"
+          >
+            <span
+              className={`size-1.5 rounded-full ${
+                doc.status === "published"
+                  ? "bg-info"
+                  : doc.status === "archived"
+                    ? "bg-muted-foreground/60"
+                    : "bg-warning"
+              }`}
+              aria-hidden="true"
+            />
+            {doc.status}
+          </Badge>
+
+          <Badge variant="outline" className="rounded-lg" size="lg">
+            Slug: <span className="font-mono">{doc.slug ?? "—"}</span>
+          </Badge>
+
+          {!isEditMode && (
+            <Menu>
+              <MenuTrigger render={<Button size="icon-sm" variant="ghost" />}>
+                <MoreVertical className="size-4" />
+              </MenuTrigger>
+              <MenuPopup>
+                {doc.status === "archived" ? (
+                  <MenuItem
+                    variant="destructive"
+                    onClick={() => setDeleteDialogOpen(true)}
+                  >
+                    <Trash className="size-4" />
+                    Delete
+                  </MenuItem>
+                ) : (
+                  <MenuItem onClick={handleArchive}>
+                    <Archive className="size-4" />
+                    Archive
+                  </MenuItem>
+                )}
+              </MenuPopup>
+            </Menu>
           )}
 
-          <AlertTitle>{info}</AlertTitle>
-        </Alert>
-      ) : null}
-      <Frame className="w-full">
-        <Collapsible defaultOpen>
-          <FrameHeader className="flex-row justify-between px-2 py-2 max-lg:flex-col lg:items-center">
-            <div className="flex w-full items-center justify-between gap-2">
-              <div className="flex items-center gap-2">
-                <CollapsibleTrigger
-                  className="capitalize data-panel-open:[&_svg]:rotate-180"
-                  render={<Button variant="ghost" />}
-                >
-                  <ChevronDownIcon className="size-4" />
-                  {doc.title}
-                </CollapsibleTrigger>
+          {isEditMode && doc.status !== "archived" && (
+            <>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      toggleEditMode(false);
+                      window.location.reload();
+                    }}
+                    disabled={isSaving}
+                  >
+                    Exit
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Cancel editing</TooltipContent>
+              </Tooltip>
 
-                <BadgeCoss
-                  variant={
-                    doc.status === "published"
-                      ? "info"
-                      : doc.status === "archived"
-                        ? "secondary"
-                        : "warning"
-                  }
-                  className="capitalize max-lg:hidden"
-                  size={"lg"}
-                >
-                  <span
-                    className={`size-1.5 rounded-full ${
-                      doc.status === "published"
-                        ? "bg-info"
-                        : doc.status === "archived"
-                          ? "bg-muted-foreground/60"
-                          : "bg-warning"
-                    }`}
-                    aria-hidden="true"
-                  />
-                  {doc.status}
-                </BadgeCoss>
-                <BadgeCoss
-                  variant={"outline"}
-                  size={"lg"}
-                  className="max-lg:hidden"
-                >
-                  Slug: <span className="font-semibold">{doc.slug ?? "—"}</span>
-                </BadgeCoss>
-              </div>
-              <div className="flex items-center gap-2">
-                <AlertDialog>
-                  <Menu openOnHover>
-                    <MenuTrigger
-                      render={<Button size="icon-sm" variant="ghost" />}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    size="sm"
+                    onClick={handleSave}
+                    disabled={isSaving || !isDirty}
+                  >
+                    {isSaving ? "Saving..." : "Save"}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Save changes</TooltipContent>
+              </Tooltip>
+            </>
+          )}
+
+          {!isEditMode && (
+            <>
+              {doc.status === "draft" && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      size="sm"
+                      onClick={async () => {
+                        setLoading(true);
+                        try {
+                          const res = await fetch("/api/documents", {
+                            method: "PUT",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                              id: doc.id,
+                              status: "published",
+                              published: true,
+                            }),
+                          });
+                          const payload = await res.json();
+                          if (res.ok && payload?.document) {
+                            setDoc(payload.document);
+                            toastManager.add({
+                              title: "Published",
+                              description: "Document published successfully",
+                              type: "success",
+                            });
+                            window.dispatchEvent(
+                              new CustomEvent("document-updated"),
+                            );
+                          } else {
+                            toastManager.add({
+                              title: "Publish failed",
+                              description:
+                                payload?.error ?? "Failed to publish document",
+                              type: "error",
+                            });
+                          }
+                        } catch (e: any) {
+                          toastManager.add({
+                            title: "Error",
+                            description: String(e?.message ?? e),
+                            type: "error",
+                          });
+                        } finally {
+                          setLoading(false);
+                        }
+                      }}
+                      disabled={loading}
                     >
-                      <MoreVertical />
-                    </MenuTrigger>
-                    <MenuPopup>
-                      {/*<MenuItem>
-                      <Eye /> Preview
-                    </MenuItem>*/}
-                      {blocked ? (
-                        <MenuItem aria-label="Edit" disabled>
-                          <Edit />
-                          Edit
-                        </MenuItem>
-                      ) : (
-                        <Link href={`/dashboard/edit/${doc.slug}`}>
-                          <MenuItem aria-label="Edit">
-                            <Edit />
-                            Edit
-                          </MenuItem>
-                        </Link>
-                      )}
-                      {doc.status !== "archived" && (
-                        <MenuItem
-                          onClick={() => {
-                            setNewTitle(doc.title);
-                            setRenameError(null);
-                            setRenameDialogOpen(true);
-                          }}
-                        >
-                          <FileEdit />
-                          Rename
-                        </MenuItem>
-                      )}
-                      {doc.status === "published" && workspace?.slug && (
-                        <MenuItem
-                          onClick={() => {
-                            const workspaceSlug = workspace.slug;
-                            let url: string;
-
-                            if (process.env.NODE_ENV === "production") {
-                              url = `https://${workspaceSlug}.openpolicyhq.com/${doc.slug}`;
-                            } else {
-                              url = `http://${workspaceSlug}.localhost:3000/${doc.slug}`;
-                            }
-
-                            window.open(url, "_blank");
-                          }}
-                        >
-                          <ExternalLink />
-                          Open
-                        </MenuItem>
-                      )}
-                      <MenuSeparator />
-                      <AlertDialogTrigger
-                        nativeButton={false}
-                        render={<MenuItem variant="destructive" />}
-                      >
-                        {doc.status === "archived" ? (
-                          <div className="flex items-center gap-2">
-                            <Trash />
-                            Delete
-                          </div>
-                        ) : (
-                          <div className="flex items-center gap-2">
-                            <Archive />
-                            Archive
-                          </div>
-                        )}
-                      </AlertDialogTrigger>
-                    </MenuPopup>
-                  </Menu>
-
-                  <AlertDialogPopup>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>
-                        {doc.status === "archived" ? "Delete" : "Archive"} "
-                        {doc.title}"
-                      </AlertDialogTitle>
-                      <AlertDialogDescription>
-                        This will{" "}
-                        {doc.status === "archived" ? "delete" : "archive"} "
-                        {doc.title}"{" "}
-                        {doc.status === "archived"
-                          ? "and delete it permanently from this workspace"
-                          : "and remove it from your drafts"}
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogClose render={<Button variant="ghost" />}>
-                        Cancel
-                      </AlertDialogClose>
-                      {doc.status === "archived" ? (
-                        <AlertDialogClose
-                          render={
-                            <Button
-                              variant="destructive-outline"
-                              onClick={async () => {
-                                setLoading(true);
-                                try {
-                                  const res = await fetch("/api/documents", {
-                                    method: "DELETE",
-                                    headers: {
-                                      "Content-Type": "application/json",
-                                    },
-                                    body: JSON.stringify({ id: doc.id }),
-                                  });
-                                  const payload = await res.json();
-                                  if (res.ok && payload?.ok) {
-                                    window.dispatchEvent(
-                                      new CustomEvent("document-updated"),
-                                    );
-                                    try {
-                                      router.push("/dashboard/documents/all");
-                                    } catch {
-                                      setDoc(null);
-                                    }
-                                  } else {
-                                    setInfo(
-                                      payload?.error ??
-                                        "Failed to delete document",
-                                    );
-                                  }
-                                } catch (e: any) {
-                                  setInfo(String(e?.message ?? e));
-                                } finally {
-                                  setLoading(false);
-                                }
-                              }}
-                            />
-                          }
-                        >
-                          Delete
-                        </AlertDialogClose>
-                      ) : (
-                        <AlertDialogClose
-                          render={
-                            <Button
-                              variant="destructive-outline"
-                              onClick={async () => {
-                                setLoading(true);
-                                try {
-                                  const res = await fetch("/api/documents", {
-                                    method: "PUT",
-                                    headers: {
-                                      "Content-Type": "application/json",
-                                    },
-                                    body: JSON.stringify({
-                                      id: doc.id,
-                                      status: "archived",
-                                      published: false,
-                                    }),
-                                  });
-                                  const payload = await res.json();
-                                  if (res.ok && payload?.document) {
-                                    setDoc(payload.document);
-                                    setInfo("Document archived");
-                                    window.dispatchEvent(
-                                      new CustomEvent("document-updated"),
-                                    );
-                                  } else {
-                                    setInfo(
-                                      payload?.error ??
-                                        "Failed to archive document",
-                                    );
-                                  }
-                                } catch (e: any) {
-                                  setInfo(String(e?.message ?? e));
-                                } finally {
-                                  setLoading(false);
-                                }
-                              }}
-                            />
-                          }
-                        >
-                          Archive
-                        </AlertDialogClose>
-                      )}
-                    </AlertDialogFooter>
-                  </AlertDialogPopup>
-                </AlertDialog>
-
-                {/* Rename Dialog */}
-                <AlertDialog
-                  open={renameDialogOpen}
-                  onOpenChange={setRenameDialogOpen}
-                >
-                  <AlertDialogPopup>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Rename Document</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        Enter a new name for "{doc.title}". Document names must
-                        be unique within the workspace.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <Input
-                      type="text"
-                      value={newTitle}
-                      onChange={(e) => {
-                        setNewTitle(e.target.value);
-                        setRenameError(null);
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" && !renamingInProgress) {
-                          e.preventDefault();
-                          handleRename();
-                        }
-                      }}
-                      placeholder={doc.title}
-                      autoFocus
-                    />
-                    {renameError && (
-                      <p className="mt-2 text-destructive text-sm">
-                        {renameError}
-                      </p>
-                    )}
-                    <AlertDialogFooter>
-                      <AlertDialogClose render={<Button variant="ghost" />}>
-                        Cancel
-                      </AlertDialogClose>
-                      <Button
-                        onClick={handleRename}
-                        disabled={renamingInProgress || !newTitle.trim()}
-                      >
-                        {renamingInProgress ? "Renaming..." : "Rename"}
-                      </Button>
-                    </AlertDialogFooter>
-                  </AlertDialogPopup>
-                </AlertDialog>
-
-                {doc.status === "draft" ? (
-                  <Button
-                    aria-label="Publish"
-                    className="mr-2"
-                    size={"sm"}
-                    onClick={async () => {
-                      setLoading(true);
-                      try {
-                        const res = await fetch("/api/documents", {
-                          method: "PUT",
-                          headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify({
-                            id: doc.id,
-                            status: "published",
-                            published: true,
-                          }),
-                        });
-                        const payload = await res.json();
-                        if (res.ok && payload?.document) {
-                          setDoc(payload.document);
-                          setInfo("Document published");
-                          window.dispatchEvent(
-                            new CustomEvent("document-updated"),
-                          );
-                        } else {
-                          setInfo(
-                            payload?.error ?? "Failed to publish document",
-                          );
-                        }
-                      } catch (e: any) {
-                        setInfo(String(e?.message ?? e));
-                      } finally {
-                        setLoading(false);
-                      }
-                    }}
-                  >
-                    Publish
-                  </Button>
-                ) : doc.status === "archived" ? (
-                  <Button
-                    aria-label="Restore"
-                    className="mr-2"
-                    size={"sm"}
-                    onClick={async () => {
-                      setLoading(true);
-                      try {
-                        const res = await fetch("/api/documents", {
-                          method: "PUT",
-                          headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify({
-                            id: doc.id,
-                            status: "draft",
-                            published: false,
-                          }),
-                        });
-                        const payload = await res.json();
-                        if (res.ok && payload?.document) {
-                          setDoc(payload.document);
-                          setInfo("Document restored to draft");
-                          window.dispatchEvent(
-                            new CustomEvent("document-updated"),
-                          );
-                        } else {
-                          setInfo(
-                            payload?.error ?? "Failed to restore document",
-                          );
-                        }
-                      } catch (e: any) {
-                        setInfo(String(e?.message ?? e));
-                      } finally {
-                        setLoading(false);
-                      }
-                    }}
-                  >
-                    Restore
-                  </Button>
-                ) : (
-                  <Button
-                    aria-label="Unpublish"
-                    className="mr-2"
-                    size={"sm"}
-                    onClick={async () => {
-                      setLoading(true);
-                      try {
-                        const res = await fetch("/api/documents", {
-                          method: "PUT",
-                          headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify({
-                            id: doc.id,
-                            status: "draft",
-                            published: false,
-                          }),
-                        });
-                        const payload = await res.json();
-                        if (res.ok && payload?.document) {
-                          setDoc(payload.document);
-                          setInfo("Document unpublished");
-                          window.dispatchEvent(
-                            new CustomEvent("document-updated"),
-                          );
-                        } else {
-                          setInfo(
-                            payload?.error ?? "Failed to unpublish document",
-                          );
-                        }
-                      } catch (e: any) {
-                        setInfo(String(e?.message ?? e));
-                      } finally {
-                        setLoading(false);
-                      }
-                    }}
-                  >
-                    Unpublish
-                  </Button>
-                )}
-              </div>
-            </div>
-            <div className="mt-2 flex items-center gap-2 lg:hidden">
-              <BadgeCoss
-                variant={
-                  doc.status === "published"
-                    ? "info"
-                    : doc.status === "archived"
-                      ? "secondary"
-                      : "warning"
-                }
-                className="capitalize"
-                size={"lg"}
-              >
-                <span
-                  className={`size-1.5 rounded-full ${
-                    doc.status === "published"
-                      ? "bg-info"
-                      : doc.status === "archived"
-                        ? "bg-muted-foreground/60"
-                        : "bg-warning"
-                  }`}
-                  aria-hidden="true"
-                />
-                {doc.status}
-              </BadgeCoss>
-              <BadgeCoss variant={"outline"} size={"lg"}>
-                Slug: <span className="font-semibold">{doc.slug ?? "—"}</span>
-              </BadgeCoss>
-            </div>
-          </FrameHeader>
-          <CollapsiblePanel>
-            <FramePanel className="py-10!">
-              {doc.content ? (
-                <TiptapEditor
-                  docId={doc.id ?? null}
-                  initialContent={parsedInitialContent}
-                  initialIsJson={typeof parsedInitialContent !== "string"}
-                  docTitle={doc.title ?? undefined}
-                  documentSlug={doc.slug ?? null}
-                  readOnly={true}
-                />
-              ) : (
-                <div className="text-muted-foreground text-sm">
-                  No content yet.
-                </div>
+                      Publish
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Publish document</TooltipContent>
+                </Tooltip>
               )}
-            </FramePanel>
-          </CollapsiblePanel>
-        </Collapsible>
-        <FrameFooter className="flex flex-row justify-between max-lg:flex-col">
-          <div className="font-mono text-muted-foreground text-xs">
-            Last updated:{" "}
-            <Badge variant={"secondary"}>{timeAgo(doc.updated_at)}</Badge>
-          </div>
-          <div className="font-mono text-muted-foreground text-xs">
-            Created:{" "}
-            <Badge variant={"secondary"}>{fmtAbsolute(doc.created_at)}</Badge>
-          </div>
-        </FrameFooter>
-      </Frame>
+
+              {doc.status === "archived" && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      size="sm"
+                      onClick={async () => {
+                        setLoading(true);
+                        try {
+                          const res = await fetch("/api/documents", {
+                            method: "PUT",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                              id: doc.id,
+                              status: "draft",
+                              published: false,
+                            }),
+                          });
+                          const payload = await res.json();
+                          if (res.ok && payload?.document) {
+                            setDoc(payload.document);
+                            toastManager.add({
+                              title: "Restored",
+                              description: "Document restored to draft",
+                              type: "success",
+                            });
+                            window.dispatchEvent(
+                              new CustomEvent("document-updated"),
+                            );
+                          } else {
+                            toastManager.add({
+                              title: "Restore failed",
+                              description:
+                                payload?.error ?? "Failed to restore document",
+                              type: "error",
+                            });
+                          }
+                        } catch (e: any) {
+                          toastManager.add({
+                            title: "Error",
+                            description: String(e?.message ?? e),
+                            type: "error",
+                          });
+                        } finally {
+                          setLoading(false);
+                        }
+                      }}
+                      disabled={loading}
+                    >
+                      Restore
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Restore to draft</TooltipContent>
+                </Tooltip>
+              )}
+
+              {doc.status === "published" && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={async () => {
+                        setLoading(true);
+                        try {
+                          const res = await fetch("/api/documents", {
+                            method: "PUT",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                              id: doc.id,
+                              status: "draft",
+                              published: false,
+                            }),
+                          });
+                          const payload = await res.json();
+                          if (res.ok && payload?.document) {
+                            setDoc(payload.document);
+                            toastManager.add({
+                              title: "Unpublished",
+                              description: "Document unpublished",
+                              type: "success",
+                            });
+                            window.dispatchEvent(
+                              new CustomEvent("document-updated"),
+                            );
+                          } else {
+                            toastManager.add({
+                              title: "Unpublish failed",
+                              description:
+                                payload?.error ??
+                                "Failed to unpublish document",
+                              type: "error",
+                            });
+                          }
+                        } catch (e: any) {
+                          toastManager.add({
+                            title: "Error",
+                            description: String(e?.message ?? e),
+                            type: "error",
+                          });
+                        } finally {
+                          setLoading(false);
+                        }
+                      }}
+                      disabled={loading}
+                    >
+                      Unpublish
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Unpublish document</TooltipContent>
+                </Tooltip>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+
+      {doc.content ? (
+        <DocumentEditor
+          ref={editorRef}
+          docId={doc.id ?? undefined}
+          initialContent={parsedInitialContent}
+          initialIsJson={typeof parsedInitialContent !== "string"}
+          docTitle={doc.title ?? undefined}
+          documentSlug={doc.slug ?? null}
+          readOnly={!isEditMode}
+          onContentChange={handleContentChange}
+          doc={doc}
+          isEditMode={isEditMode}
+          isSaving={isSaving}
+          onEditModeToggle={() => toggleEditMode(!isEditMode)}
+          onSave={handleSave}
+          onCancel={() => {
+            toggleEditMode(false);
+            window.location.reload();
+          }}
+          onRename={() => {
+            setNewTitle(doc.title);
+            setRenameError(null);
+            setRenameDialogOpen(true);
+          }}
+          workspace={workspace}
+          disableAI={isFreePlan}
+          key={isFreePlan ? "free" : "pro"}
+        />
+      ) : (
+        <div className="flex h-full items-center justify-center text-muted-foreground text-sm">
+          No content yet.
+        </div>
+      )}
     </>
   );
 }

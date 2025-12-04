@@ -6,7 +6,7 @@ const polarServer = (() => {
 })();
 
 export const GET = CustomerPortal({
-  accessToken: process.env.POLAR_ACCESS_TOKEN!,
+  accessToken: process.env.POLAR_ACCESS_TOKEN || "",
   returnUrl:
     polarServer === "sandbox"
       ? "http://localhost:3000/dashboard"
@@ -36,5 +36,5 @@ export const GET = CustomerPortal({
       return null;
     }
   },
-  server: polarServer!,
+  server: (polarServer || "production") as "production" | "sandbox",
 });

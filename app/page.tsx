@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import CTA from "@/components/cta";
+import { ShowcaseEditor } from "@/components/editor/showcase-editor";
 import { FeatureCard } from "@/components/feature-card";
 import FeaturesSection from "@/components/features";
 import { Footer } from "@/components/footer";
@@ -12,7 +13,6 @@ import {
   AnnouncementTitle,
 } from "@/components/kibo-ui/announcement";
 import Section from "@/components/section";
-import { EditorShowcase } from "@/components/tiptap/editor/editor-showcase";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Safari } from "@/components/ui/safari";
@@ -66,7 +66,7 @@ export default function Home() {
         <div className="mx-auto flex max-w-[800px] flex-col items-center justify-center pt-32 pb-32">
           <Announcement className="pointer-events-none mb-3">
             <AnnouncementTag>Latest update</AnnouncementTag>
-            <AnnouncementTitle>OpenPolicy 1.0 is now live</AnnouncementTitle>
+            <AnnouncementTitle>OpenPolicy v0.1.0 is now live</AnnouncementTitle>
           </Announcement>
 
           <h1 className="mb-5 text-center font-medium text-5xl leading-15">
@@ -124,21 +124,21 @@ export default function Home() {
         <Safari url="policies.yourapp.com" imageSrc="/demo-2.png" />
       </Section>
 
-      <Section className="py-8">
-        <h2 className="text-balance text-start font-medium text-3xl">
+      <Section className="px-0! pt-8 md:pb-0!">
+        <h2 className="text-balance px-5 text-start font-medium text-3xl">
           A simple and straightforward editor
         </h2>
-        <p className="mt-2 mb-7 text-balance text-start text-muted-foreground text-sm">
+        <p className="mt-2 mb-7 text-balance px-5 text-start text-muted-foreground text-sm">
           Focus on the content, not the formatting. Our intuitive text editor
           provides all the tools you need to write comprehensive, easy-to-read
           document.
         </p>
         <div className="mx-auto flex w-full items-center justify-center">
-          <Card className="col-span-full overflow-hidden rounded-none pl-6 shadow-none md:hidden">
+          <Card className="col-span-full mx-5 overflow-hidden rounded-none pl-6 shadow-none md:hidden">
             <div className="mask-b-from-95% -ml-2 pt-2 pl-2">
               <div className="relative mx-auto h-96 overflow-hidden border border-border border-px border-r-0 border-b-0 bg-background">
                 <Image
-                  src="/demo-3.png"
+                  src="/demo-5.png"
                   alt="app screen"
                   width={2880}
                   height={1842}
@@ -147,51 +147,40 @@ export default function Home() {
               </div>
             </div>
           </Card>
-          <EditorShowcase
-            initialContent={{
-              type: "doc",
-              content: [
+          <div className="hidden w-[calc(100vw-34px)] max-w-[calc(1152px-2px)] border-t md:block">
+            <ShowcaseEditor
+              initialContent={[
                 {
-                  type: "heading",
-                  attrs: { textAlign: null, level: 1 },
-                  content: [{ type: "text", text: "What is OpenPolicy?" }],
+                  type: "h1",
+                  children: [{ text: "What is OpenPolicy?" }],
                 },
                 {
-                  type: "paragraph",
-                  attrs: { textAlign: null },
-                  content: [
+                  type: "p",
+                  children: [
                     {
-                      type: "text",
                       text: "OpenPolicy is a modern platform designed to simplify how organizations create, manage, and publish their legal documents and policies. We believe that policy management shouldn't require complex systems or technical expertise.",
                     },
                   ],
                 },
                 {
-                  type: "paragraph",
-                  attrs: { textAlign: null },
+                  type: "p",
+                  children: [{ text: "" }],
                 },
                 {
-                  type: "heading",
-                  attrs: { textAlign: null, level: 2 },
-                  content: [{ type: "text", text: "Key Features" }],
+                  type: "h2",
+                  children: [{ text: "Key Features" }],
                 },
                 {
-                  type: "bulletList",
-                  content: [
+                  type: "ul",
+                  children: [
                     {
-                      type: "listItem",
-                      content: [
+                      type: "li",
+                      children: [
                         {
-                          type: "paragraph",
-                          attrs: { textAlign: null },
-                          content: [
+                          type: "p",
+                          children: [
+                            { text: "Rich Text Editor", bold: true },
                             {
-                              type: "text",
-                              marks: [{ type: "bold" }],
-                              text: "Rich Text Editor",
-                            },
-                            {
-                              type: "text",
                               text: " - Write policies with a powerful, easy-to-use editor that supports formatting, lists, and more",
                             },
                           ],
@@ -199,19 +188,13 @@ export default function Home() {
                       ],
                     },
                     {
-                      type: "listItem",
-                      content: [
+                      type: "li",
+                      children: [
                         {
-                          type: "paragraph",
-                          attrs: { textAlign: null },
-                          content: [
+                          type: "p",
+                          children: [
+                            { text: "Instant Publishing", bold: true },
                             {
-                              type: "text",
-                              marks: [{ type: "bold" }],
-                              text: "Instant Publishing",
-                            },
-                            {
-                              type: "text",
                               text: " - Your documents go live immediately with SEO optimization built-in",
                             },
                           ],
@@ -219,19 +202,13 @@ export default function Home() {
                       ],
                     },
                     {
-                      type: "listItem",
-                      content: [
+                      type: "li",
+                      children: [
                         {
-                          type: "paragraph",
-                          attrs: { textAlign: null },
-                          content: [
+                          type: "p",
+                          children: [
+                            { text: "Centralized Management", bold: true },
                             {
-                              type: "text",
-                              marks: [{ type: "bold" }],
-                              text: "Centralized Management",
-                            },
-                            {
-                              type: "text",
                               text: " - Keep all your documents organized in one secure location",
                             },
                           ],
@@ -241,79 +218,55 @@ export default function Home() {
                   ],
                 },
                 {
-                  type: "heading",
-                  attrs: { textAlign: null, level: 2 },
-                  content: [{ type: "text", text: "Perfect For" }],
+                  type: "h2",
+                  children: [{ text: "Perfect For" }],
                 },
                 {
-                  type: "paragraph",
-                  attrs: { textAlign: null },
-                  content: [
+                  type: "p",
+                  children: [
                     {
-                      type: "text",
                       text: "OpenPolicy is ideal for startups, small businesses, and enterprises that need to maintain ",
                     },
+                    { text: "privacy policies", italic: true },
+                    { text: ", " },
+                    { text: "terms of service", italic: true },
+                    { text: ", " },
+                    { text: "acceptable use policies", italic: true },
                     {
-                      type: "text",
-                      marks: [{ type: "italic" }],
-                      text: "privacy policies",
-                    },
-                    { type: "text", text: ", " },
-                    {
-                      type: "text",
-                      marks: [{ type: "italic" }],
-                      text: "terms of service",
-                    },
-                    { type: "text", text: ", " },
-                    {
-                      type: "text",
-                      marks: [{ type: "italic" }],
-                      text: "acceptable use policies",
-                    },
-                    {
-                      type: "text",
                       text: ", and other legal documentation without the hassle.",
                     },
                   ],
                 },
                 {
                   type: "blockquote",
-                  content: [
+                  children: [
                     {
-                      type: "paragraph",
-                      attrs: { textAlign: null },
-                      content: [
+                      type: "p",
+                      children: [
                         {
-                          type: "text",
-                          marks: [{ type: "italic" }],
                           text: '"Stop wrestling with PDFs and complex CMSs. Start managing your policies the modern way."',
+                          italic: true,
                         },
                       ],
                     },
                   ],
                 },
                 {
-                  type: "paragraph",
-                  attrs: { textAlign: null },
-                  content: [
+                  type: "p",
+                  children: [
                     {
-                      type: "text",
                       text: "Get started today and experience the difference of ",
                     },
                     {
-                      type: "text",
-                      marks: [
-                        { type: "highlight", attrs: { color: "#fef08a" } },
-                      ],
                       text: "streamlined policy management",
+                      backgroundColor: "#fef08a",
                     },
-                    { type: "text", text: "." },
+                    { text: "." },
                   ],
                 },
-              ],
-            }}
-            initialIsJson={true}
-          />
+              ]}
+            />
+          </div>
         </div>
       </Section>
       <CTA />

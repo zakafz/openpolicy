@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { Editor as TiptapEditor } from "@/components/tiptap/editor/editor";
+import { DocumentEditor } from "@/components/editor/document-editor";
 import { Badge } from "@/components/ui/badge";
 import {
   Frame,
@@ -129,14 +129,15 @@ export default async function Page({ params }: Props) {
           </Badge>
         </FrameDescription>
       </FrameHeader>
-      <FramePanel className="py-10! md:py-20!">
-        <TiptapEditor
+      <FramePanel className="px-10! pt-0! pb-10! md:pb-20!">
+        <DocumentEditor
           docId={doc.id}
           initialContent={parsedInitialContent}
           initialIsJson={typeof parsedInitialContent !== "string"}
           docTitle={doc.title}
           documentSlug={doc.slug}
           readOnly={true}
+          disableToolbar={true}
         />
       </FramePanel>
     </Frame>

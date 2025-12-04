@@ -84,7 +84,6 @@ const documentTypes: {
 
 export default function NewDocumentShell({
   workspaceId: propWorkspaceId,
-  ownerId: propOwnerId,
 }: {
   workspaceId?: string;
   ownerId?: string;
@@ -107,12 +106,15 @@ export default function NewDocumentShell({
     const base = contentTemplates[t] ?? contentTemplates.other;
     const copy = JSON.parse(JSON.stringify(base));
     try {
-      if (copy && Array.isArray(copy.content) && copy.content.length > 0) {
-        const first = copy.content[0];
-        if (first && first.type === "heading") {
-          first.content = [
-            { type: "text", text: titleText || "Document name" },
-          ];
+      if (Array.isArray(copy) && copy.length > 0) {
+        const first = copy[0];
+        if (
+          first &&
+          first.type === "h1" &&
+          Array.isArray(first.children) &&
+          first.children.length > 0
+        ) {
+          first.children[0].text = titleText || "Document";
         }
       }
     } catch {
@@ -194,8 +196,15 @@ export default function NewDocumentShell({
           body: JSON.stringify(payload),
         });
 
-        if (res.ok) {
-          const data = await res.json();
+        const text = await res.text();
+        let data: any;
+        try {
+          data = JSON.parse(text);
+        } catch (_e) {
+          // ignore
+        }
+
+        if (res.ok && data) {
           const docId = data?.id;
           const docSlug = data?.slug ?? slug;
           setSuccessUrl(`/dashboard/documents/${docId ?? docSlug}`);
@@ -223,17 +232,21 @@ export default function NewDocumentShell({
             );
           }
           router.push(`/dashboard/d/${docId ?? docSlug}`);
-        } else if (res.status === 409) {
-          const body = await res.json().catch(() => null);
-          setError(
-            body?.message ??
-              "Slug already in use. Pick a different slug and try again.",
-          );
         } else {
-          const body = await res.json().catch(() => null);
-          setError(body?.message ?? "Failed to create document.");
+          console.error("Create failed response:", data || text);
+          if (res.status === 409) {
+            setError(
+              data?.message ??
+                "Slug already in use. Pick a different slug and try again.",
+            );
+          } else {
+            setError(
+              data?.message ?? data?.error ?? "Failed to create document.",
+            );
+          }
         }
       } catch (err: any) {
+        console.error("Create error:", err);
         setError(err?.message ?? "Network error while creating document.");
       }
     });

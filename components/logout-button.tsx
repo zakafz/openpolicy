@@ -26,5 +26,9 @@ export function LogoutButton({ children }: React.PropsWithChildren) {
     router.push("/auth/login");
   };
 
-  return <div onClick={logout}>{children}</div>;
+  return (
+    <div onClick={logout} className="w-full text-left">
+      {children}
+    </div>
+  );
 }

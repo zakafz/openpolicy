@@ -27,6 +27,7 @@ export function FrequencyToggle({
     >
       {frequencies.map((freq) => (
         <button
+          type="button"
           className="relative px-4 py-1 text-sm capitalize"
           key={freq}
           onClick={() => setFrequency(freq)}

@@ -15,7 +15,7 @@ export function StatsSkeleton() {
     <div className="mx-auto mb-10 grid grid-cols-1 gap-px rounded-xl bg-border sm:grid-cols-2 lg:grid-cols-4">
       {[...Array(4)].map((_, index) => (
         <Card
-          key={index}
+          key={`stat-skeleton-${index}`}
           className={cn(
             "rounded-none border-0 bg-muted py-0 shadow-none",
             index === 0 && "rounded-l-xl",
@@ -47,7 +47,7 @@ export function RecentDocumentsSkeleton() {
       </TableHeader>
       <TableBody>
         {[...Array(5)].map((_, i) => (
-          <TableRow key={i}>
+          <TableRow key={`recent-doc-skeleton-${i}`}>
             <TableCell>
               <div className="flex items-center gap-2">
                 <Skeleton className="h-4 w-4" />
@@ -86,7 +86,7 @@ export function DocumentsTableSkeleton() {
       </TableHeader>
       <TableBody>
         {[...Array(5)].map((_, i) => (
-          <TableRow key={i}>
+          <TableRow key={`doc-table-skeleton-${i}`}>
             <TableCell>
               <div className="flex items-center gap-2">
                 <Skeleton className="h-4 w-4" />

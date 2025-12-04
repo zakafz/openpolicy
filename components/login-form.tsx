@@ -8,8 +8,7 @@ import { GithubLight } from "./ui/svgs/githubLight";
 import { Google } from "./ui/svgs/google";
 
 export function LoginForm({
-  className,
-  ...props
+  className: _className,
 }: React.ComponentPropsWithoutRef<"div">) {
   const [error, setError] = useState<string | null>(null);
   const [loadingProvider, setLoadingProvider] = useState<
@@ -94,11 +93,11 @@ export function LoginForm({
 
         <p className="mt-4 text-muted-foreground text-xs">
           By signing in, you agree to our{" "}
-          <a href="#" className="underline underline-offset-4">
+          <a href="/terms" className="underline underline-offset-4">
             terms of service
           </a>{" "}
           and{" "}
-          <a href="#" className="underline underline-offset-4">
+          <a href="/privacy" className="underline underline-offset-4">
             privacy policy
           </a>
           .

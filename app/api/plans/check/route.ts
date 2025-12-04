@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { api } from "@/lib/polar";
+import { isFreePlan } from "@/lib/plans";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -10,11 +10,9 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const product = await api.products.get({ id: planId });
-    const isFree = product.prices.some((price) => price.amountType === "free");
+    const isFree = await isFreePlan(planId);
     return NextResponse.json({ isFree });
-  } catch (error) {
-    console.error("Error checking plan status:", error);
-    return NextResponse.json({ isFree: false }, { status: 500 });
+  } catch (_error) {
+    return NextResponse.json({ isFree: true });
   }
 }

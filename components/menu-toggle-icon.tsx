@@ -36,6 +36,7 @@ export function MenuToggleIcon({
       viewBox="0 0 32 32"
       {...props}
     >
+      <title>Menu Toggle</title>
       <path
         className={cn(
           "transition-all ease-in-out",

@@ -82,7 +82,7 @@ export function SuccessWorkspaceHandler() {
       {status === "checking" && "Setting up your workspace..."}
       {status === "found" && "Workspace ready! Redirecting..."}
       {status === "timeout" &&
-        "Taking longer than expected. Click the button above to continue."}
+        "Taking longer than expected. Click the button below to continue."}
     </div>
   );
 }

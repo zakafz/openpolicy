@@ -38,7 +38,7 @@ import {
 } from "./ui/select";
 
 export function CreateWorkspaceForm({ products }: { products: Product[] }) {
-  const supabase = createClient();
+  const [supabase] = useState(() => createClient());
   const router = useRouter();
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
@@ -56,6 +56,23 @@ export function CreateWorkspaceForm({ products }: { products: Product[] }) {
     );
     return (freePlan ?? products[0])?.id ?? undefined;
   });
+
+  useEffect(() => {
+    async function loadUser() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (user) {
+        const userName =
+          user.user_metadata?.full_name ||
+          user.user_metadata?.name ||
+          user.email?.split("@")[0] ||
+          "My";
+        setName(`${userName}'s Workspace`);
+      }
+    }
+    loadUser();
+  }, []);
 
   useEffect(() => {
     if (!slug || slug.length === 0) {
@@ -465,7 +482,9 @@ export function CreateWorkspaceForm({ products }: { products: Product[] }) {
                 {slugErrorMessage}
               </span>
             ) : null}
-            This is your workspace's unique slug on OpenPolicy.
+            This is your workspace's unique slug on OpenPolicy. You will need to
+            contact us if you want to change it. It will be used to access your
+            workspace from URL. Choose it wisely.
           </FieldDescription>
         </Field>
 

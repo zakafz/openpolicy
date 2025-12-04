@@ -6,11 +6,11 @@ const polarServer = (() => {
 })();
 
 export const GET = Checkout({
-  accessToken: process.env.POLAR_ACCESS_TOKEN!,
+  accessToken: process.env.POLAR_ACCESS_TOKEN || "",
   successUrl:
     polarServer === "sandbox"
       ? "http://localhost:3000/success?checkout_id={CHECKOUT_ID}"
       : "https://openpolicyhq.com/success?checkout_id={CHECKOUT_ID}",
-  server: "sandbox",
+  server: (polarServer || "production") as "production" | "sandbox",
   theme: "light",
 });

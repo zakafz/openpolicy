@@ -178,7 +178,10 @@ export function PricingCard({
             b.name ?? b.title ?? b.description ?? String(b) ?? "Benefit";
           const tooltip = b.tooltip ?? b.description ?? undefined;
           return (
-            <div className="flex items-center gap-2" key={index}>
+            <div
+              className="flex items-center gap-2"
+              key={`benefit-${plan.id}-${index}`}
+            >
               <CheckCircleIcon className="h-4 w-4 text-foreground" />
               <p className={cn(tooltip && "cursor-default!")}>{text}</p>
             </div>

@@ -3,7 +3,9 @@
 import { Check, Copy, InfoIcon, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import * as React from "react";
+import { AiUsageCard } from "@/components/ai-usage-card";
 import PageTitle from "@/components/dashboard-page-title";
+import { StorageUsageCard } from "@/components/storage-usage-card";
 import { SubscriptionAlert } from "@/components/subscription-alert";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
@@ -48,6 +50,7 @@ import {
 } from "@/components/workspace-states";
 import { useWorkspace } from "@/context/workspace";
 import useWorkspaceLoader from "@/hooks/use-workspace-loader";
+import { FREE_PLAN_LIMITS, PRO_PLAN_LIMITS } from "@/lib/limits";
 import { createClient } from "@/lib/supabase/client";
 
 export default function WorkspaceShell() {
@@ -258,15 +261,18 @@ export default function WorkspaceShell() {
       if (!user) throw new Error("Not authenticated");
 
       if (section === "domain") {
-        const response = await fetch("/api/workspace/domain", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            workspaceId: workspace.id,
-            domain: customDomain || null,
-            oldDomain: initialValues.customDomain || null,
-          }),
-        });
+        const response = await fetch(
+          `/api/workspaces/${workspace.id}/domains`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              workspaceId: workspace.id,
+              domain: customDomain || null,
+              oldDomain: initialValues.customDomain || null,
+            }),
+          },
+        );
 
         const data = await response.json();
 
@@ -352,7 +358,7 @@ export default function WorkspaceShell() {
       if (workspace.subscription_id) {
         try {
           const cancelResponse = await fetch(
-            "/api/workspace/cancel-subscription",
+            "/api/workspaces/cancel-subscription",
             {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -489,6 +495,16 @@ export default function WorkspaceShell() {
         description="Manage your workspace settings."
       />
       <SubscriptionAlert workspace={workspace} />
+      <StorageUsageCard
+        usage={workspace?.metadata?.storage_usage || 0}
+        limit={isFree ? FREE_PLAN_LIMITS.storage : PRO_PLAN_LIMITS.storage}
+        isFreePlan={isFree}
+      />
+      <AiUsageCard
+        usage={workspace?.metadata?.ai_usage_count || 0}
+        limit={isFree ? FREE_PLAN_LIMITS.ai : PRO_PLAN_LIMITS.ai}
+        isFreePlan={isFree}
+      />
       {/*Workspace name*/}
       <form onSubmit={(e) => handleSave("general", e)}>
         <Frame>
@@ -653,7 +669,7 @@ export default function WorkspaceShell() {
                 <Alert variant={"default"}>
                   <AlertTitle className="flex items-center gap-1">
                     <Sparkles className="size-4" />
-                    Custom domains are available on the Pro plan.
+                    Custom domains are available on the Scale plan.
                   </AlertTitle>
                   <AlertDescription>
                     Upgrade your workspace to connect your own domain.
