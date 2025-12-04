@@ -13,6 +13,21 @@ const tableData = [
     scale: "Unlimited documents",
   },
   {
+    feature: "Storage",
+    free: "50MB of cloud storage",
+    scale: "1GB of cloud storage",
+  },
+  {
+    feature: "AI-Powered Writing",
+    free: false,
+    scale: "50 requests per month",
+  },
+  {
+    feature: "Custom domain",
+    free: false,
+    scale: true,
+  },
+  {
     feature: "Rich Text Editor",
     free: true,
     scale: true,
@@ -20,11 +35,6 @@ const tableData = [
   {
     feature: "Instant publishing",
     free: true,
-    scale: true,
-  },
-  {
-    feature: "Custom domain",
-    free: false,
     scale: true,
   },
   {
