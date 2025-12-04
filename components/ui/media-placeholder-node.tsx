@@ -249,7 +249,7 @@ function formatBytes(
 
   return `${(bytes / 1024 ** i).toFixed(decimals)} ${
     sizeType === "accurate"
-      ? (accurateSizes[i] ?? "Bytest")
+      ? (accurateSizes[i] ?? "Bytes")
       : (sizes[i] ?? "Bytes")
   }`;
 }
