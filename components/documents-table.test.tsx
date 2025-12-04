@@ -9,7 +9,7 @@ vi.mock("@/context/workspace", () => ({
 }));
 
 vi.mock("@/lib/supabase/client", () => ({
-  createClient: vi.fn(),
+  createClient: vi.fn(() => ({})),
 }));
 
 vi.mock("@/lib/documents", () => ({
@@ -74,11 +74,10 @@ describe("DocumentsTable", () => {
 
     render(<DocumentsTable />);
 
-    await waitFor(() => {
-      const privacyPolicyElements = screen.getAllByText("Privacy Policy");
-      expect(privacyPolicyElements.length).toBeGreaterThan(0);
-      expect(screen.getByText("Terms of Service")).toBeInTheDocument();
-    });
+    const privacyPolicyElements = await screen.findAllByText("Privacy Policy");
+    expect(privacyPolicyElements.length).toBeGreaterThan(0);
+    const termsElements = await screen.findAllByText("Terms of Service");
+    expect(termsElements.length).toBeGreaterThan(0);
 
     expect(screen.getByText("2 documents")).toBeInTheDocument();
   });
@@ -102,6 +101,7 @@ describe("DocumentsTable", () => {
       expect(fetchDocumentsForWorkspace).toHaveBeenCalledWith(
         "workspace-1",
         "published",
+        expect.anything(),
       );
     });
   });

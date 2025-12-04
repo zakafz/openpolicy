@@ -45,7 +45,7 @@ OpenPolicy is packed with features to help you manage your policies effectively.
 
 - [x] **AI-Powered Writing**: Built-in AI Copilot for autocompletion and Command mode for generating, editing, and summarizing text.
 - [x] **Rich Text Editor**: Advanced editor with support for markdown, tables, and **Excalidraw** diagrams.
-- [x] **Multi-Workspace Support**: Organize documents by team, project, or client with isolated workspaces.
+- [] **Multi-Workspace Support**: Organize documents by team, project, or client with isolated workspaces. (Coming soon)
 - [x] **Custom Domains**: Connect your own domain (e.g., `docs.acme.com`) with automatic SSL.
 - [x] **Document Management**:
   - **Status Workflow**: Draft, Publish, and Archive states.
