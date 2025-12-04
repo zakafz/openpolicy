@@ -11,20 +11,18 @@
   <br />
   <a href="https://openpolicyhq.com"><strong>Explore the website</strong></a>
   <br />
-  <br />
   <a href="https://github.com/zakafz/openpolicy/issues">Report Bug</a>
   ·
   <a href="https://github.com/zakafz/openpolicy/issues">Request Feature</a>
 </p>
 
-<p align="center">
-  <a href="https://github.com/zakafz/openpolicy/stargazers">
-    <img src="https://img.shields.io/github/stars/zakafz/openpolicy?style=for-the-badge&color=blue" alt="GitHub Stars">
-  </a>
-  <a href="https://github.com/zakafz/openpolicy/blob/main/LICENSE">
-    <img src="https://img.shields.io/github/license/zakafz/openpolicy?style=for-the-badge&color=green" alt="License">
-  </a>
-</p>
+<div align="center">
+  
+  ![GitHub License](https://img.shields.io/github/license/zakafz/openpolicy?style=plastic)
+  ![GitHub Tag](https://img.shields.io/github/v/tag/zakafz/openpolicy?style=plastic&color=%234169E1)
+  ![GitHub branch status](https://img.shields.io/github/checks-status/zakafz/openpolicy/main?style=plastic)
+  
+</div>
 
 <br />
 
@@ -45,7 +43,7 @@ OpenPolicy is packed with features to help you manage your policies effectively.
 
 - [x] **AI-Powered Writing**: Built-in AI Copilot for autocompletion and Command mode for generating, editing, and summarizing text.
 - [x] **Rich Text Editor**: Advanced editor with support for markdown, tables, and **Excalidraw** diagrams.
-- [] **Multi-Workspace Support**: Organize documents by team, project, or client with isolated workspaces. (Coming soon)
+- [ ] **Multi-Workspace Support**: Organize documents by team, project, or client with isolated workspaces. (Coming soon)
 - [x] **Custom Domains**: Connect your own domain (e.g., `docs.acme.com`) with automatic SSL.
 - [x] **Document Management**:
   - **Status Workflow**: Draft, Publish, and Archive states.
