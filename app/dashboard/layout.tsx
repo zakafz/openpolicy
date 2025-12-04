@@ -13,7 +13,12 @@ export const metadata: Metadata = {
 
 export default async function Layout({ children }: any) {
   const supabase = await createClient();
-  const products = await api.products.list({ isArchived: false });
+  let products: any = { result: { items: [] } };
+  try {
+    products = await api.products.list({ isArchived: false });
+  } catch (e) {
+    console.error("Failed to fetch products:", e);
+  }
 
   const { data, error } = await supabase.auth.getUser();
   if (error || !data?.user) {
