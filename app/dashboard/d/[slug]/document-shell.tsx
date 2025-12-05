@@ -697,7 +697,9 @@ export default function DocumentShell() {
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogClose render={<Button variant="ghost" />}>
+                <AlertDialogClose
+                  render={<Button variant="ghost" className="mr-auto" />}
+                >
                   Cancel
                 </AlertDialogClose>
                 <Button
@@ -711,6 +713,7 @@ export default function DocumentShell() {
                   Discard
                 </Button>
                 <Button
+                  variant="blue"
                   onClick={async () => {
                     const success = await handleSave();
                     if (success) {
@@ -719,7 +722,7 @@ export default function DocumentShell() {
                   }}
                   disabled={isSaving}
                 >
-                  {isSaving ? "Saving..." : "Save"}
+                  {isSaving ? "Saving" : "Save"}
                 </Button>
               </AlertDialogFooter>
             </AlertDialogPopup>
@@ -835,37 +838,19 @@ export default function DocumentShell() {
           )}
 
           {isEditMode && doc.status !== "archived" && (
-            <>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => {
-                      toggleEditMode(false);
-                      window.location.reload();
-                    }}
-                    disabled={isSaving}
-                  >
-                    Exit
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Cancel editing</TooltipContent>
-              </Tooltip>
-
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    size="sm"
-                    onClick={handleSave}
-                    disabled={isSaving || !isDirty}
-                  >
-                    {isSaving ? "Saving..." : "Save"}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Save changes</TooltipContent>
-              </Tooltip>
-            </>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  size="sm"
+                  variant="blue"
+                  onClick={handleSave}
+                  disabled={isSaving || !isDirty}
+                >
+                  {isSaving ? "Saving" : "Save"}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Save changes</TooltipContent>
+            </Tooltip>
           )}
 
           {!isEditMode && (
@@ -875,6 +860,7 @@ export default function DocumentShell() {
                   <TooltipTrigger asChild>
                     <Button
                       size="sm"
+                      variant="blue"
                       onClick={async () => {
                         setLoading(true);
                         try {

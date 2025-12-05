@@ -138,11 +138,7 @@ export default async function proxy(request: NextRequest) {
           return supabaseResponse;
         }
 
-        if (
-          subdomain &&
-          rootDomains.includes(potentialRoot) &&
-          !pathname.startsWith(`/${subdomain}`)
-        ) {
+        if (subdomain && rootDomains.includes(potentialRoot)) {
           const target = new URL(
             `/${subdomain}${pathname}${request.nextUrl.search}`,
             request.url,
