@@ -49,15 +49,11 @@ test.describe("Document Management", () => {
 
     const renameButton = page.getByTestId("rename-submit-button");
     await expect(renameButton).toBeEnabled();
-    await page.waitForTimeout(500); // Wait for dialog animation/stability
-    await renameButton.click(); // Remove force: true to ensure it's actionable
+    await page.waitForTimeout(500);
+    await renameButton.click();
 
-    // Verify state change to confirm click was received
-    // This helps distinguish between "click missed" and "app stuck"
     await expect(renameButton).toHaveText("Renaming...", { timeout: 5000 });
 
-    // Wait for dialog to close (indicates operation complete)
-    // If it fails, check if an error message is visible
     try {
       await expect(page.getByTestId("rename-dialog")).not.toBeVisible({
         timeout: 15000,
@@ -74,17 +70,20 @@ test.describe("Document Management", () => {
       throw e;
     }
 
-    // Verify updated title first (core functionality)
     await expect(page.getByTestId("document-title")).toContainText(
       updatedTitle,
     );
 
     await expect(page.getByText("Success!")).toBeVisible({ timeout: 15000 });
 
-    await page.getByTestId("document-options-trigger").click();
-    await page.getByTestId("archive-document-button").click({ force: true });
+    const optionsTrigger = page.getByTestId("document-options-trigger");
+    await expect(optionsTrigger).toBeVisible();
+    await optionsTrigger.click({ force: true });
+    const archiveButton = page.getByTestId("archive-document-button");
+    await expect(archiveButton).toBeVisible();
+    await archiveButton.click();
     await expect(page.getByText("Success!")).toBeVisible();
-    await page.waitForTimeout(2000); // Wait for data propagation
+    await page.waitForTimeout(2000); // Wait data propagation
     await page.reload();
     await expect(page.getByTestId("document-status-badge")).toHaveText(
       /archived/i,
