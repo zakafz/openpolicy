@@ -1,4 +1,12 @@
-import { BookOpenCheck, Layout, Scale, Sparkles } from "lucide-react";
+import {
+  BookOpenCheck,
+  Brain,
+  Edit2,
+  Globe,
+  Layout,
+  Scale,
+  Sparkles,
+} from "lucide-react";
 import Image from "next/image";
 import { Card } from "@/components/ui/card";
 
@@ -8,6 +16,43 @@ export default function FeaturesSection() {
       <div className="py-8">
         <div className="mx-auto w-full">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <Card className="rounded-none p-6 shadow-none">
+              <div className="flex w-fit items-center justify-center border bg-accent p-2">
+                <Globe className="size-5 text-primary" />
+              </div>
+              <h3 className="mt-5 font-semibold text-foreground text-lg">
+                Custom domains
+              </h3>
+              <p className="mt-3 text-balance text-muted-foreground">
+                Connect your custom domain to your document repository. Takes
+                minutes to set up.
+              </p>
+            </Card>
+
+            <Card className="rounded-none p-6 shadow-none">
+              <div className="flex w-fit items-center justify-center border bg-accent p-2">
+                <Brain className="size-5 text-primary" />
+              </div>
+              <h3 className="mt-5 font-semibold text-foreground text-lg">
+                AI-powered editor
+              </h3>
+              <p className="mt-3 text-balance text-muted-foreground">
+                Use AI to create and edit your documents. Our editor with some
+                AI features is here to help you write better documents.
+              </p>
+            </Card>
+            <Card className="rounded-none p-6 shadow-none">
+              <div className="flex w-fit items-center justify-center border bg-accent p-2">
+                <Edit2 className="size-5 text-primary" />
+              </div>
+              <h3 className="mt-5 font-semibold text-foreground text-lg">
+                Customization
+              </h3>
+              <p className="mt-3 text-balance text-muted-foreground">
+                Customize your repository to fit your company. More
+                customization options are coming soon.
+              </p>
+            </Card>
             <Card className="col-span-full overflow-hidden rounded-none pt-6 pl-6 shadow-none">
               <div className="flex w-fit items-center justify-center border bg-accent p-2">
                 <Layout className="size-5 text-primary" />
