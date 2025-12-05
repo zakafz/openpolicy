@@ -40,7 +40,6 @@ test.describe("Document Management", () => {
 
     const renameDialog = page.getByTestId("rename-dialog");
     await expect(renameDialog).toBeVisible();
-    await expect(renameDialog).toBeVisible();
 
     const input = page.getByPlaceholder(uniqueTitle);
     await expect(input).toBeVisible();
