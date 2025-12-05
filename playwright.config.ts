@@ -32,7 +32,8 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: "pnpm dev",
+    // Keep this as `npm run dev` for now to avoid issues with github actions
+    command: "npm run dev",
     url: "http://localhost:3000",
     reuseExistingServer: !process.env.CI,
   },
