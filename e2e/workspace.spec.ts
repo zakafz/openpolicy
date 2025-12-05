@@ -13,8 +13,6 @@ test.describe("Workspace Management", () => {
 
     await page.keyboard.press("Escape");
 
-    const _sidebar = page.locator('[data-sidebar="sidebar"]');
-
     await page.getByTestId("sidebar-nav-workspace").click({ force: true });
 
     await expect(page).toHaveURL(/\/dashboard\/settings\/workspace/);
