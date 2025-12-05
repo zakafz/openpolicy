@@ -33,7 +33,6 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
         }
       }
     } catch (e) {
-      // eslint-disable-next-line no-console
       console.warn("WorkspaceProvider: failed to read selectedWorkspace", e);
     }
   }, []);
@@ -48,7 +47,6 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
         }
       }
     } catch (e) {
-      // eslint-disable-next-line no-console
       console.warn("WorkspaceProvider: failed to write selectedWorkspace", e);
     }
   }, [selectedWorkspaceId]);
@@ -82,7 +80,6 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
             }),
           );
         } catch (e) {
-          // eslint-disable-next-line no-console
           console.warn(
             "WorkspaceProvider: failed to dispatch workspace-changed event",
             e,
@@ -90,7 +87,6 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
         }
       }
     } catch (e) {
-      // eslint-disable-next-line no-console
       console.warn(
         "WorkspaceProvider: failed to dispatch workspace-changed event",
         e,
@@ -113,7 +109,6 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
               }),
             );
           } catch (e) {
-            // eslint-disable-next-line no-console
             console.warn(
               "WorkspaceProvider: failed to dispatch workspace-changed event",
               e,
@@ -129,7 +124,6 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
               }),
             );
           } catch (e) {
-            // eslint-disable-next-line no-console
             console.warn(
               "WorkspaceProvider: failed to dispatch workspace-changed event",
               e,
@@ -138,7 +132,6 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
         }
       }
     } catch (e) {
-      // eslint-disable-next-line no-console
       console.warn(
         "WorkspaceProvider: failed to persist selected workspace",
         e,

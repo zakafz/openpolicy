@@ -91,7 +91,6 @@ export default function DocumentsShell(props: {
       if (!id) return;
       setWorkspaceId(id);
     } catch {}
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [workspaceId]);
 
   useEffect(() => {

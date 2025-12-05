@@ -125,7 +125,6 @@ export default function DocumentShell() {
       const id = readSelectedWorkspaceId();
       if (id) setWorkspaceId(id);
     } catch {}
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [workspaceId]);
 
   useEffect(() => {
@@ -605,12 +604,18 @@ export default function DocumentShell() {
             open={renameDialogOpen}
             onOpenChange={setRenameDialogOpen}
           >
-            <AlertDialogTrigger className="ring-0!">
-              <h1 className="flex cursor-pointer items-center justify-center gap-1 truncate whitespace-nowrap rounded-lg bg-border/40 p-1 px-2 font-semibold text-sm hover:bg-border/60">
+            <AlertDialogTrigger
+              className="ring-0!"
+              data-testid="rename-trigger"
+            >
+              <h1
+                data-testid="document-title"
+                className="flex cursor-pointer items-center justify-center gap-1 truncate whitespace-nowrap rounded-lg bg-border/40 p-1 px-2 font-semibold text-sm hover:bg-border/60"
+              >
                 {doc.title} <Edit2 className="h-3 w-3" />
               </h1>
             </AlertDialogTrigger>
-            <AlertDialogPopup>
+            <AlertDialogPopup data-testid="rename-dialog">
               <AlertDialogHeader>
                 <AlertDialogTitle>Rename Document</AlertDialogTitle>
                 <AlertDialogDescription>
@@ -786,20 +791,39 @@ export default function DocumentShell() {
 
           {!isEditMode && (
             <Menu>
-              <MenuTrigger render={<Button size="icon-sm" variant="ghost" />}>
+              <MenuTrigger
+                render={
+                  <Button
+                    size="icon-sm"
+                    variant="ghost"
+                    data-testid="document-options-trigger"
+                  />
+                }
+              >
                 <MoreVertical className="size-4" />
               </MenuTrigger>
               <MenuPopup>
+                <MenuItem
+                  onClick={() => setRenameDialogOpen(true)}
+                  data-testid="rename-document-button"
+                >
+                  <Edit2 className="size-4" />
+                  Rename
+                </MenuItem>
                 {doc.status === "archived" ? (
                   <MenuItem
                     variant="destructive"
                     onClick={() => setDeleteDialogOpen(true)}
+                    data-testid="delete-document-button"
                   >
                     <Trash className="size-4" />
                     Delete
                   </MenuItem>
                 ) : (
-                  <MenuItem onClick={handleArchive}>
+                  <MenuItem
+                    onClick={handleArchive}
+                    data-testid="archive-document-button"
+                  >
                     <Archive className="size-4" />
                     Archive
                   </MenuItem>

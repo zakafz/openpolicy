@@ -230,7 +230,6 @@ export default function LayoutShell({
     };
 
     fetchAuthAndProfile();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname, router.push]);
 
   if (error) throw error;

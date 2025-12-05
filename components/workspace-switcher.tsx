@@ -68,7 +68,6 @@ export function WorkspaceSwitcher({
         // ignore
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     workspaces,
     selectedWorkspaceId,
@@ -89,6 +88,7 @@ export function WorkspaceSwitcher({
             <SidebarMenuButton
               size="lg"
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+              data-testid="workspace-switcher-trigger"
             >
               <div className="flex aspect-square size-8 items-center justify-center rounded-lg border text-sidebar-primary-foreground">
                 {workspace.logo ? (
