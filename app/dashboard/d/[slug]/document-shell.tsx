@@ -649,6 +649,7 @@ export default function DocumentShell() {
                 <Button
                   onClick={handleRename}
                   disabled={renamingInProgress || !newTitle.trim()}
+                  data-testid="rename-submit-button"
                 >
                   {renamingInProgress ? "Renaming..." : "Rename"}
                 </Button>
@@ -771,6 +772,7 @@ export default function DocumentShell() {
             }
             className="rounded-lg capitalize"
             size="lg"
+            data-testid="document-status-badge"
           >
             <span
               className={`size-1.5 rounded-full ${

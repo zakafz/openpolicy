@@ -11,7 +11,7 @@
     "typecheck": "tsc --noEmit",
     "prepare": "husky",
     "test": "vitest",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test --workers=1"
   },
   "lint-staged": {
     "*.{js,ts,jsx,tsx,json,css}": [

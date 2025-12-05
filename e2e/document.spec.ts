@@ -48,15 +48,34 @@ test.describe("Document Management", () => {
     await input.fill(updatedTitle);
     await expect(input).toHaveValue(updatedTitle);
 
-    const renameButton = page.getByRole("button", { name: "Rename" });
+    const renameButton = page.getByTestId("rename-submit-button");
     await expect(renameButton).toBeEnabled();
-    await page.waitForTimeout(500);
-    await renameButton.click({ force: true });
+    await page.waitForTimeout(500); // Wait for dialog animation/stability
+    await renameButton.click(); // Remove force: true to ensure it's actionable
 
-    await expect(page.getByTestId("rename-dialog")).not.toBeVisible({
-      timeout: 10000,
-    });
+    // Verify state change to confirm click was received
+    // This helps distinguish between "click missed" and "app stuck"
+    await expect(renameButton).toHaveText("Renaming...", { timeout: 5000 });
 
+    // Wait for dialog to close (indicates operation complete)
+    // If it fails, check if an error message is visible
+    try {
+      await expect(page.getByTestId("rename-dialog")).not.toBeVisible({
+        timeout: 15000,
+      });
+    } catch (e) {
+      const errorMsg = await page
+        .getByRole("alert")
+        .textContent()
+        .catch(() => null);
+      console.log(
+        "Rename dialog did not close. Error alert content:",
+        errorMsg,
+      );
+      throw e;
+    }
+
+    // Verify updated title first (core functionality)
     await expect(page.getByTestId("document-title")).toContainText(
       updatedTitle,
     );
@@ -65,6 +84,11 @@ test.describe("Document Management", () => {
 
     await page.getByTestId("document-options-trigger").click();
     await page.getByTestId("archive-document-button").click({ force: true });
-    await expect(page.getByText(/archived/i)).toBeVisible();
+    await expect(page.getByText("Success!")).toBeVisible();
+    await page.waitForTimeout(2000); // Wait for data propagation
+    await page.reload();
+    await expect(page.getByTestId("document-status-badge")).toHaveText(
+      /archived/i,
+    );
   });
 });
