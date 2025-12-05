@@ -91,6 +91,7 @@ export function NavMain({
                       <SidebarMenuSubItem key={subItem.title}>
                         <SidebarMenuSubButton
                           asChild
+                          data-testid={`sidebar-nav-${subItem.title.toLowerCase()}`}
                           className={
                             `${pathname}/` === subItem.url
                               ? "bg-sidebar-accent"

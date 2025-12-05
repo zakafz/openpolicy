@@ -518,6 +518,7 @@ export default function WorkspaceShell() {
               size={"sm"}
               className="ml-auto w-fit"
               disabled={!isGeneralDirty || savingMap.general || fetching}
+              data-testid="workspace-save-button"
             >
               {savingMap.general ? "Saving..." : "Save"}
             </Button>
@@ -532,6 +533,7 @@ export default function WorkspaceShell() {
                 onChange={(e) => setName(e.target.value)}
                 disabled={savingMap.general || fetching}
                 required
+                data-testid="workspace-name-input"
               />
               {fieldError && <FieldError>{fieldError}</FieldError>}
             </Field>

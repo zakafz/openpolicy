@@ -276,7 +276,7 @@ export async function POST(req: Request) {
       if (createErr || !workspace) {
         console.error("Failed to create workspace in DB:", createErr);
         return NextResponse.json(
-          { error: "Failed to create workspace in DB" },
+          { error: "Failed to create workspace in DB", detail: createErr },
           { status: 500 },
         );
       }

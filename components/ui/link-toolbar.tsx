@@ -172,20 +172,16 @@ function LinkOpenButton() {
   const editor = useEditorRef();
   const _selection = useEditorSelection();
 
-  const attributes = React.useMemo(
-    () => {
-      const entry = editor.api.node<TLinkElement>({
-        match: { type: editor.getType(KEYS.link) },
-      });
-      if (!entry) {
-        return {};
-      }
-      const [element] = entry;
-      return getLinkAttributes(editor, element);
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [editor],
-  );
+  const attributes = React.useMemo(() => {
+    const entry = editor.api.node<TLinkElement>({
+      match: { type: editor.getType(KEYS.link) },
+    });
+    if (!entry) {
+      return {};
+    }
+    const [element] = entry;
+    return getLinkAttributes(editor, element);
+  }, [editor]);
 
   return (
     <a

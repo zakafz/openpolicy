@@ -205,9 +205,13 @@ export default function NewDocumentShell({
         }
 
         if (res.ok && data) {
-          const docId = data?.id;
-          const docSlug = data?.slug ?? slug;
-          setSuccessUrl(`/dashboard/documents/${docId ?? docSlug}`);
+          const doc = data.document || data;
+          const docId = doc?.id;
+          const docSlug = doc?.slug ?? slug;
+
+          const targetUrl = `/dashboard/d/${docSlug || docId}`;
+
+          setSuccessUrl(`/dashboard/documents/${docSlug || docId}`);
           try {
             if (typeof window !== "undefined") {
               writeSelectedWorkspaceId(workspaceId);
@@ -231,7 +235,7 @@ export default function NewDocumentShell({
               e,
             );
           }
-          router.push(`/dashboard/d/${docId ?? docSlug}`);
+          router.push(targetUrl);
         } else {
           console.error("Create failed response:", data || text);
           if (res.status === 409) {
@@ -260,7 +264,6 @@ export default function NewDocumentShell({
     } else {
       setError(null);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [workspaceId]);
 
   const selectedType = documentTypes.find((t) => t.value === type);
