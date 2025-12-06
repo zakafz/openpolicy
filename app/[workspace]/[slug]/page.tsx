@@ -129,7 +129,7 @@ export default async function Page({ params }: Props) {
           </Badge>
         </FrameDescription>
       </FrameHeader>
-      <FramePanel className="px-10! pt-0! pb-10! md:pb-20!">
+      <FramePanel className="px-10! pt-0! pb-5! max-md:px-3! md:pb-20!">
         <DocumentEditor
           docId={doc.id}
           initialContent={parsedInitialContent}
