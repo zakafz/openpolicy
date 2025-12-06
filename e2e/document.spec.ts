@@ -15,6 +15,7 @@ test.describe("Document Management", () => {
     await page.getByLabel("Slug (URL)").fill(uniqueSlug);
 
     await page.getByRole("button", { name: "Change" }).click();
+    await expect(page.getByRole("dialog")).toBeVisible();
     await page.getByPlaceholder("Search templates...").fill("terms");
     await page.getByRole("button", { name: "Terms of Service" }).click();
     await page.getByRole("button", { name: "Use Template" }).click();
@@ -57,10 +58,15 @@ test.describe("Document Management", () => {
 
     const renameButton = page.getByTestId("rename-submit-button");
     await expect(renameButton).toBeEnabled();
-    await page.waitForTimeout(500);
-    await renameButton.click();
 
-    await expect(renameButton).toHaveText("Renaming...", { timeout: 5000 });
+    const renamePromise = page.waitForResponse(
+      (resp) =>
+        resp.url().includes("/api/documents") &&
+        resp.request().method() === "PUT" &&
+        resp.status() === 200,
+    );
+    await renameButton.click();
+    await renamePromise;
 
     try {
       await expect(page.getByTestId("rename-dialog")).not.toBeVisible({
@@ -89,9 +95,17 @@ test.describe("Document Management", () => {
     await optionsTrigger.click({ force: true });
     const archiveButton = page.getByTestId("archive-document-button");
     await expect(archiveButton).toBeVisible();
+
+    const archivePromise = page.waitForResponse(
+      (resp) =>
+        resp.url().includes("/api/documents") &&
+        resp.request().method() === "PUT" &&
+        resp.status() === 200,
+    );
     await archiveButton.click();
+    await archivePromise;
+
     await expect(page.getByText("Success!")).toBeVisible();
-    await page.waitForTimeout(2000); // Wait data propagation
     await page.reload();
     await expect(page.getByTestId("document-status-badge")).toHaveText(
       /archived/i,

@@ -13,9 +13,10 @@ test.describe("Workspace Management", () => {
 
     await page.keyboard.press("Escape");
 
-    await page.getByTestId("sidebar-nav-workspace").click({ force: true });
+    await page.getByTestId("sidebar-nav-workspace").click();
 
     await expect(page).toHaveURL(/\/dashboard\/settings\/workspace/);
+    await expect(page.getByTestId("workspace-name-input")).toBeVisible();
 
     const newName = `Updated Workspace Name ${Date.now()}`;
     const nameInput = page.getByTestId("workspace-name-input");
@@ -26,13 +27,19 @@ test.describe("Workspace Management", () => {
     await expect(nameInput).toHaveValue(newName);
 
     const saveButton = page.getByTestId("workspace-save-button");
-    await expect(saveButton).toBeEnabled({ timeout: 10000 });
+    await expect(saveButton).toBeEnabled();
+
+    const updatePromise = page.waitForResponse(
+      (resp) =>
+        resp.url().includes("/rest/v1/workspaces") &&
+        resp.request().method() === "PATCH",
+    );
+
     await saveButton.click();
+    await updatePromise;
 
     await expect(page.getByText("Success!")).toBeVisible();
 
     await expect(saveButton).toBeDisabled();
-
-    await expect(page.getByText("Success!", { exact: true })).toBeVisible();
   });
 });
