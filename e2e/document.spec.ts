@@ -8,6 +8,9 @@ test.describe("Document Management", () => {
 
     await page.goto("/dashboard/documents/all");
 
+    await expect(
+      page.getByRole("link", { name: "Create Document" }),
+    ).toHaveAttribute("href", /\/dashboard\/documents\/new\?workspaceId=.+/);
     await page.getByRole("link", { name: "Create Document" }).click();
     await expect(page).toHaveURL(/\/dashboard\/documents\/new/);
 
@@ -92,15 +95,15 @@ test.describe("Document Management", () => {
 
     const optionsTrigger = page.getByTestId("document-options-trigger");
     await expect(optionsTrigger).toBeVisible();
-    await optionsTrigger.click({ force: true });
+    await optionsTrigger.click();
     const archiveButton = page.getByTestId("archive-document-button");
     await expect(archiveButton).toBeVisible();
 
     const archivePromise = page.waitForResponse(
-      (resp) =>
-        resp.url().includes("/api/documents") &&
-        resp.request().method() === "PUT" &&
-        resp.status() === 200,
+      (response) =>
+        response.url().includes("/api/documents") &&
+        response.request().method() === "PUT" &&
+        response.status() === 200,
     );
     await archiveButton.click();
     await archivePromise;
