@@ -80,6 +80,7 @@ export default function RootLayout({
     <html lang="en" className="bg-background" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        suppressHydrationWarning
       >
         <ToastProvider timeout={2000}>
           <WorkspaceProvider>{children}</WorkspaceProvider>
