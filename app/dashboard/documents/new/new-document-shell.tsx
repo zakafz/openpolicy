@@ -50,7 +50,9 @@ export default function NewDocumentShell({
           first.children[0].text = titleText || "Document";
         }
       }
-    } catch {}
+    } catch (err) {
+      console.error("Error processing template:", err);
+    }
     return copy;
   }
 
