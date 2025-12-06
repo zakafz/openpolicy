@@ -31,7 +31,6 @@ interface MonitorsShellProps {
     performance: {
       avgResponseTime: number;
       dbQueryTime: number;
-      cacheHitRate: number;
     };
   };
 }
@@ -56,10 +55,6 @@ export default function MonitorsShell({
     {
       name: "DB Query Time",
       value: `${stats.performance.dbQueryTime.toFixed(0)}ms`,
-    },
-    {
-      name: "Cache Hit Rate",
-      value: `${stats.performance.cacheHitRate.toFixed(1)}%`,
     },
   ];
 

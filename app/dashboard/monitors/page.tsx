@@ -98,13 +98,11 @@ export default async function MonitorsPage() {
 
   const totalTime = performance.now() - startTime;
 
-  // Calculate real performance metrics
   const avgDbQueryTime =
     queryTimes.reduce((a, b) => a + b, 0) / queryTimes.length;
   const performanceMetrics = {
-    avgResponseTime: totalTime, // Total time for all queries
-    dbQueryTime: avgDbQueryTime, // Average individual query time
-    cacheHitRate: 0, // No caching implemented yet
+    avgResponseTime: totalTime,
+    dbQueryTime: avgDbQueryTime,
   };
 
   return (
@@ -129,7 +127,6 @@ export default async function MonitorsPage() {
           performance: {
             avgResponseTime: performanceMetrics.avgResponseTime,
             dbQueryTime: performanceMetrics.dbQueryTime,
-            cacheHitRate: performanceMetrics.cacheHitRate,
           },
         }}
       />
