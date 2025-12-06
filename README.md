@@ -2,7 +2,7 @@
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="https://openpolicyhq.com/icon-openpolicy-white.svg">
     <source media="(prefers-color-scheme: light)" srcset="https://openpolicyhq.com/icon-openpolicy.svg">
-    <img alt="Fallback image description" src="https://openpolicyhq.com/icon-openpolicy-white.svg"  width="140" height="140">
+    <img alt="OpenPolicy Logo" src="https://openpolicyhq.com/icon-openpolicy-white.svg"  width="140" height="140">
   </picture>
 </p>
 
