@@ -1,8 +1,9 @@
 "use client";
 
-import { Clock, LayersIcon } from "lucide-react";
+import { Clock, File } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { documentTemplates } from "@/components/document-templates";
 import { RecentDocumentsSkeleton } from "@/components/skeletons";
 import { Badge } from "@/components/ui/badge";
 import { Frame, FramePanel } from "@/components/ui/frame";
@@ -16,10 +17,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useWorkspace } from "@/context/workspace";
-import {
-  DOCUMENT_TYPE_ICON_MAP,
-  DOCUMENT_TYPE_LABEL_MAP,
-} from "@/lib/constants";
 import { fetchDocumentsForWorkspace } from "@/lib/documents";
 import { createClient } from "@/lib/supabase/client";
 import { fmtAbsolute, timeAgo } from "@/lib/utils";
@@ -121,12 +118,9 @@ export default function RecentDocumentsTable({
             </TableHeader>
             <TableBody>
               {docs.map((d) => {
-                const Icon =
-                  (d?.type && DOCUMENT_TYPE_ICON_MAP[String(d.type)]) ??
-                  LayersIcon;
-                const typeLabel =
-                  DOCUMENT_TYPE_LABEL_MAP[String(d.type)] ??
-                  String(d.type ?? "other");
+                const template = documentTemplates.find((t) => t.id === d.type);
+                const Icon = template?.icon ?? File;
+                const typeLabel = template?.label ?? String(d.type ?? "blank");
                 return (
                   <TableRow key={d.id}>
                     <TableCell className="font-medium">

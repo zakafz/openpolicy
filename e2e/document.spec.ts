@@ -13,6 +13,14 @@ test.describe("Document Management", () => {
 
     await page.getByLabel("Document Title").fill(uniqueTitle);
     await page.getByLabel("Slug (URL)").fill(uniqueSlug);
+
+    await page.getByRole("button", { name: "Change" }).click();
+    await page.getByPlaceholder("Search templates...").fill("terms");
+    await page.getByRole("button", { name: "Terms of Service" }).click();
+    await page.getByRole("button", { name: "Use Template" }).click();
+
+    await expect(page.getByText("Agreement to Terms")).toBeVisible();
+
     await expect(
       page.getByRole("button", { name: "Create Document" }),
     ).toBeEnabled();

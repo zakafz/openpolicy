@@ -2,6 +2,7 @@
 
 import {
   Cookie,
+  File,
   GlobeIcon,
   Handshake,
   LayersIcon,
@@ -39,7 +40,7 @@ const typeIconMap: Record<string, React.ComponentType<any>> = {
   shipping: Truck,
   "intellectual-property": NotebookPen,
   "data-protection": GlobeIcon,
-  other: LayersIcon,
+  blank: File,
 };
 
 const typeLabelMap: Record<string, string> = {
@@ -50,7 +51,7 @@ const typeLabelMap: Record<string, string> = {
   shipping: "Shipping Policy",
   "intellectual-property": "Intellectual Property",
   "data-protection": "Data Protection",
-  other: "Other",
+  blank: "Blank Document",
 };
 
 type Props = {
@@ -59,13 +60,13 @@ type Props = {
 };
 
 function normalizeTypeValue(val: any) {
-  if (val === undefined || val === null) return "other";
+  if (val === undefined || val === null) return "blank";
   const s = String(val).trim().toLowerCase();
-  return s || "other";
+  return s || "blank";
 }
 
 function extractType(row: any) {
-  if (!row) return "other";
+  if (!row) return "blank";
   const keys = ["type", "doc_type", "document_type", "documentType"];
   for (const k of keys) {
     const v = row[k];
@@ -82,7 +83,7 @@ function extractType(row: any) {
     // ignore
   }
 
-  return "other";
+  return "blank";
 }
 
 export default function DocumentsTable({ type, workspaceId }: Props) {
