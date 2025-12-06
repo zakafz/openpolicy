@@ -47,7 +47,7 @@ const data = {
     },
     {
       title: "Documents",
-      url: "/dashboard/documents?state=active/",
+      url: "/dashboard/documents/all/",
       icon: Folder,
       items: [
         {
@@ -124,7 +124,7 @@ export function AppSidebar(props: {
       return [
         {
           title: "Monitors",
-          url: "/dashboard/monitors",
+          url: "/dashboard/monitors/",
           icon: Monitor,
         },
         ...items,
