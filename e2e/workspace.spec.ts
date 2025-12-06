@@ -38,7 +38,14 @@ test.describe("Workspace Management", () => {
     await saveButton.click();
     await updatePromise;
 
-    await expect(page.getByText("Success!")).toBeVisible();
+    await expect(
+      page.locator('[data-slot="toast-title"]').filter({ hasText: "Success!" }),
+    ).toBeVisible();
+    await expect(
+      page
+        .locator('[data-slot="toast-description"]')
+        .filter({ hasText: "Workspace settings saved." }),
+    ).toBeVisible();
 
     await expect(saveButton).toBeDisabled();
   });

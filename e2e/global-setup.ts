@@ -108,6 +108,7 @@ async function globalSetup(config: FullConfig) {
   const browser = await chromium.launch();
   const page = await browser.newPage();
   await page.goto(baseURL!);
+  await page.waitForLoadState("networkidle");
 
   const projectRef = supabaseUrl.match(/https:\/\/(.+?)\.supabase/)?.[1];
   if (!projectRef) throw new Error("Could not extract project ref from URL");

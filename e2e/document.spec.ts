@@ -31,7 +31,15 @@ test.describe("Document Management", () => {
     await expect(
       page.getByRole("button", { name: "Create Document" }),
     ).toBeEnabled();
+
+    const createPromise = page.waitForResponse(
+      (resp) =>
+        resp.url().includes("/api/documents") &&
+        resp.request().method() === "POST" &&
+        resp.status() === 201,
+    );
     await page.getByRole("button", { name: "Create Document" }).click();
+    await createPromise;
 
     await expect(page).toHaveURL(/\/dashboard\/d\//, { timeout: 15000 });
 
@@ -65,12 +73,16 @@ test.describe("Document Management", () => {
     const renameButton = page.getByTestId("rename-submit-button");
     await expect(renameButton).toBeEnabled();
 
-    const renamePromise = page.waitForResponse(
-      (resp) =>
-        resp.url().includes("/api/documents") &&
-        resp.request().method() === "PUT" &&
-        resp.status() === 200,
-    );
+    const renamePromise = page.waitForResponse(async (resp) => {
+      if (
+        !resp.url().includes("/api/documents") ||
+        resp.request().method() !== "PUT" ||
+        resp.status() !== 200
+      )
+        return false;
+      const body = await resp.request().postDataJSON();
+      return body.title === updatedTitle;
+    });
     await renameButton.click();
     await renamePromise;
 
@@ -94,7 +106,14 @@ test.describe("Document Management", () => {
       updatedTitle,
     );
 
-    await expect(page.getByText("Success!")).toBeVisible({ timeout: 15000 });
+    await expect(
+      page.locator('[data-slot="toast-title"]').filter({ hasText: "Success!" }),
+    ).toBeVisible({ timeout: 15000 });
+    await expect(
+      page
+        .locator('[data-slot="toast-description"]')
+        .filter({ hasText: `Document renamed to "${updatedTitle}"` }),
+    ).toBeVisible();
 
     const optionsTrigger = page.getByTestId("document-options-trigger");
     await expect(optionsTrigger).toBeVisible();
@@ -111,7 +130,14 @@ test.describe("Document Management", () => {
     await archiveButton.click();
     await archivePromise;
 
-    await expect(page.getByText("Success!")).toBeVisible();
+    await expect(
+      page.locator('[data-slot="toast-title"]').filter({ hasText: "Archived" }),
+    ).toBeVisible();
+    await expect(
+      page
+        .locator('[data-slot="toast-description"]')
+        .filter({ hasText: "Document archived successfully" }),
+    ).toBeVisible();
     await page.reload();
     await expect(page.getByTestId("document-status-badge")).toHaveText(
       /archived/i,
