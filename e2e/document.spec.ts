@@ -11,8 +11,11 @@ test.describe("Document Management", () => {
     await expect(
       page.getByRole("link", { name: "Create Document" }),
     ).toHaveAttribute("href", /\/dashboard\/documents\/new\?workspaceId=.+/);
-    await page.getByRole("link", { name: "Create Document" }).click();
-    await expect(page).toHaveURL(/\/dashboard\/documents\/new/);
+
+    await Promise.all([
+      page.waitForURL(/\/dashboard\/documents\/new/),
+      page.getByRole("link", { name: "Create Document" }).click(),
+    ]);
 
     await page.getByLabel("Document Title").fill(uniqueTitle);
     await page.getByLabel("Slug (URL)").fill(uniqueSlug);
