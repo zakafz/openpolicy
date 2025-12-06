@@ -162,7 +162,7 @@ export async function createDocument(
       typeof payload.content !== "undefined" && payload.content !== null
         ? payload.content
         : "",
-    type: payload.type ?? "other",
+    type: payload.type ?? "blank",
     version: Number(payload.version) || 1,
     published: !!payload.published,
     workspace_id: payload.workspace_id,

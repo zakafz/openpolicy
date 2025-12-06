@@ -204,7 +204,7 @@ export default function DocumentsShell(props: {
                     <TableCell>{d.slug ?? "—"}</TableCell>
                     <TableCell>
                       {documentTemplates.find((t) => t.id === d.type)?.label ??
-                        String(d.type ?? "other")}
+                        String(d.type ?? "blank")}
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline" className="capitalize">
