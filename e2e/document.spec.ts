@@ -8,7 +8,7 @@ test.describe("Document Management", () => {
 
     await page.goto("/dashboard/documents/all");
 
-    await page.getByText("Create Document").click();
+    await page.getByRole("link", { name: "Create Document" }).click();
     await expect(page).toHaveURL(/\/dashboard\/documents\/new/);
 
     await page.getByLabel("Document Title").fill(uniqueTitle);
