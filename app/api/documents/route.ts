@@ -185,7 +185,7 @@ export async function POST(req: Request) {
       slug: finalSlug,
       content:
         typeof content !== "undefined" && content !== null ? content : "",
-      type: type ?? "other",
+      type: type ?? "blank",
       published: !!published,
       version: Number(version) || 1,
       workspace_id,

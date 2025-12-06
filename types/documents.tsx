@@ -6,4 +6,4 @@ export type DocumentType =
   | "shipping"
   | "intellectual-property"
   | "data-protection"
-  | "other";
+  | "blank";

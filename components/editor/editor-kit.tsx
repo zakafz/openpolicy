@@ -8,7 +8,7 @@ import { AlignKit } from "@/components/editor/plugins/align-kit";
 import { AutoformatKit } from "@/components/editor/plugins/autoformat-kit";
 import { BasicBlocksKit } from "@/components/editor/plugins/basic-blocks-kit";
 import { BasicMarksKit } from "@/components/editor/plugins/basic-marks-kit";
-import { BlockMenuKit } from "@/components/editor/plugins/block-menu-kit";
+import { createBlockMenuKit } from "@/components/editor/plugins/block-menu-kit";
 import { BlockPlaceholderKit } from "@/components/editor/plugins/block-placeholder-kit";
 import { CalloutKit } from "@/components/editor/plugins/callout-kit";
 import { CodeBlockKit } from "@/components/editor/plugins/code-block-kit";
@@ -79,7 +79,7 @@ export const createEditorKit = ({
   ...SlashKit,
   ...AutoformatKit,
   ...CursorOverlayKit,
-  ...BlockMenuKit,
+  ...createBlockMenuKit({ disableAI }),
   ...DndKit,
   ...EmojiKit,
   ...ExitBreakKit,

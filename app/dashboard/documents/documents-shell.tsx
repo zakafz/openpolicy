@@ -13,6 +13,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import PageTitle from "@/components/dashboard-page-title";
+import { documentTemplates } from "@/components/document-templates";
 import { DocumentsTableSkeleton } from "@/components/skeletons";
 import { SubscriptionAlert } from "@/components/subscription-alert";
 import {
@@ -45,10 +46,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import useWorkspaceLoader from "@/hooks/use-workspace-loader";
-import {
-  DOCUMENT_TYPE_ICON_MAP,
-  DOCUMENT_TYPE_LABEL_MAP,
-} from "@/lib/constants";
 import { fetchDocumentsForWorkspace } from "@/lib/documents";
 import { createClient } from "@/lib/supabase/client";
 import { timeAgo } from "@/lib/utils";
@@ -190,10 +187,10 @@ export default function DocumentsShell(props: {
                         className="flex items-center gap-2"
                       >
                         {(() => {
-                          const Icon =
-                            (d?.type &&
-                              DOCUMENT_TYPE_ICON_MAP[String(d.type)]) ??
-                            LayersIcon;
+                          const template = documentTemplates.find(
+                            (t) => t.id === d.type,
+                          );
+                          const Icon = template?.icon ?? LayersIcon;
                           return (
                             <Icon
                               className="h-4 w-4 opacity-80"
@@ -206,8 +203,8 @@ export default function DocumentsShell(props: {
                     </TableCell>
                     <TableCell>{d.slug ?? "—"}</TableCell>
                     <TableCell>
-                      {DOCUMENT_TYPE_LABEL_MAP[String(d.type)] ??
-                        String(d.type ?? "other")}
+                      {documentTemplates.find((t) => t.id === d.type)?.label ??
+                        String(d.type ?? "blank")}
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline" className="capitalize">

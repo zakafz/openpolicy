@@ -2,10 +2,10 @@
 
 import {
   Cookie,
+  File,
   Folder,
   GlobeIcon,
   Handshake,
-  LayersIcon,
   type LucideIcon,
   MoreHorizontal,
   NotebookPen,
@@ -41,7 +41,7 @@ export function NavDocuments() {
     | "shipping"
     | "intellectual-property"
     | "data-protection"
-    | "other",
+    | "blank",
     LucideIcon
   > = {
     privacy: Shield,
@@ -51,7 +51,7 @@ export function NavDocuments() {
     shipping: Truck,
     "intellectual-property": NotebookPen,
     "data-protection": GlobeIcon,
-    other: LayersIcon,
+    blank: File,
   };
 
   useEffect(() => {
@@ -138,7 +138,7 @@ export function NavDocuments() {
                 >
                   <div className="flex min-w-0 items-center gap-2">
                     {(() => {
-                      const key = String(d?.type ?? "other") as
+                      const key = String(d?.type ?? "blank") as
                         | "privacy"
                         | "terms"
                         | "cookie"
@@ -146,7 +146,7 @@ export function NavDocuments() {
                         | "shipping"
                         | "intellectual-property"
                         | "data-protection"
-                        | "other";
+                        | "blank";
                       const Icon = typeIconMap[key] ?? Folder;
                       return (
                         <Icon

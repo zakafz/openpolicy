@@ -80,6 +80,9 @@ export default function RootLayout({
     <html lang="en" className="bg-background" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        // removes the cz-shortcut-listen error that sometimes occurs randomly
+        // TODO: remove this once the issue is fixed
+        suppressHydrationWarning
       >
         <ToastProvider timeout={2000}>
           <WorkspaceProvider>{children}</WorkspaceProvider>

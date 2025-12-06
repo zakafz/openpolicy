@@ -8,11 +8,26 @@ test.describe("Document Management", () => {
 
     await page.goto("/dashboard/documents/all");
 
-    await page.getByText("Create Document").click();
-    await expect(page).toHaveURL(/\/dashboard\/documents\/new/);
+    await expect(
+      page.getByRole("link", { name: "Create Document" }),
+    ).toHaveAttribute("href", /\/dashboard\/documents\/new\?workspaceId=.+/);
+
+    await Promise.all([
+      page.waitForURL(/\/dashboard\/documents\/new/),
+      page.getByRole("link", { name: "Create Document" }).click(),
+    ]);
 
     await page.getByLabel("Document Title").fill(uniqueTitle);
     await page.getByLabel("Slug (URL)").fill(uniqueSlug);
+
+    await page.getByRole("button", { name: "Change" }).click();
+    await expect(page.getByRole("dialog")).toBeVisible();
+    await page.getByPlaceholder("Search templates...").fill("terms");
+    await page.getByRole("button", { name: "Terms of Service" }).click();
+    await page.getByRole("button", { name: "Use Template" }).click();
+
+    await expect(page.getByText("Agreement to Terms")).toBeVisible();
+
     await expect(
       page.getByRole("button", { name: "Create Document" }),
     ).toBeEnabled();
@@ -49,10 +64,15 @@ test.describe("Document Management", () => {
 
     const renameButton = page.getByTestId("rename-submit-button");
     await expect(renameButton).toBeEnabled();
-    await page.waitForTimeout(500);
-    await renameButton.click();
 
-    await expect(renameButton).toHaveText("Renaming...", { timeout: 5000 });
+    const renamePromise = page.waitForResponse(
+      (resp) =>
+        resp.url().includes("/api/documents") &&
+        resp.request().method() === "PUT" &&
+        resp.status() === 200,
+    );
+    await renameButton.click();
+    await renamePromise;
 
     try {
       await expect(page.getByTestId("rename-dialog")).not.toBeVisible({
@@ -78,12 +98,20 @@ test.describe("Document Management", () => {
 
     const optionsTrigger = page.getByTestId("document-options-trigger");
     await expect(optionsTrigger).toBeVisible();
-    await optionsTrigger.click({ force: true });
+    await optionsTrigger.click();
     const archiveButton = page.getByTestId("archive-document-button");
     await expect(archiveButton).toBeVisible();
+
+    const archivePromise = page.waitForResponse(
+      (response) =>
+        response.url().includes("/api/documents") &&
+        response.request().method() === "PUT" &&
+        response.status() === 200,
+    );
     await archiveButton.click();
+    await archivePromise;
+
     await expect(page.getByText("Success!")).toBeVisible();
-    await page.waitForTimeout(2000); // Wait data propagation
     await page.reload();
     await expect(page.getByTestId("document-status-badge")).toHaveText(
       /archived/i,

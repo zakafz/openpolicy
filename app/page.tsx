@@ -1,3 +1,4 @@
+import { ArrowUpRight } from "lucide-react";
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
@@ -63,27 +64,37 @@ export default function Home() {
       <Header />
 
       <Section className="p-4">
-        <div className="mx-auto flex max-w-[800px] flex-col items-center justify-center pt-32 pb-32">
-          <Announcement className="pointer-events-none mb-3">
-            <AnnouncementTag>Latest update</AnnouncementTag>
-            <AnnouncementTitle>OpenPolicy v0.1.0 is now live</AnnouncementTitle>
-          </Announcement>
-
+        <div className="mx-auto flex max-w-[900px] flex-col items-center justify-center pt-32 pb-32">
+          <a
+            href="https://more.openpolicyhq.com/changelog"
+            target="_blank"
+            rel="noopener"
+          >
+            <Announcement className="mb-3">
+              <AnnouncementTag className="font-mono">v0.1.0</AnnouncementTag>
+              <AnnouncementTitle>
+                OpenPolicy is now live! <ArrowUpRight className="size-4" />
+              </AnnouncementTitle>
+            </Announcement>
+          </a>
           <h1 className="mb-5 text-center font-medium text-5xl leading-15">
-            The Easiest Way to Host Your Policies
+            The Easiest Way to Host Your Documents
           </h1>
           <p className="mx-auto max-w-[600px] text-center text-lg text-muted-foreground">
             Stop messing with PDF uploads and complex CMSs. OpenPolicy lets you
             write, host, and manage your public legal documents in minutes.
           </p>
           <div className="mx-auto mt-5 flex gap-2">
+            <Link
+              target="_blank"
+              href="https://more.openpolicyhq.com/learn-more"
+            >
+              <Button size="lg" variant={"outline"}>
+                Check it out
+              </Button>
+            </Link>
             <Link href="/auth/login">
               <Button size="lg">Get Started</Button>
-            </Link>
-            <Link href="/about">
-              <Button size="lg" variant={"outline"}>
-                Learn More
-              </Button>
             </Link>
           </div>
         </div>
@@ -93,8 +104,8 @@ export default function Home() {
           Document management doesn't have to be complicated
         </h2>
         <p className="mt-2 mb-10 text-balance text-center text-muted-foreground text-sm">
-          Get your policies, public documents, and other legal documents live in
-          three simple steps.
+          Get your policies, public documents, and other types of documents live
+          in three simple steps.
         </p>
         <div className="grid grid-cols-1 divide-x divide-y border-t border-l sm:grid-cols-2 md:grid-cols-3">
           {features.map((feature) => (
