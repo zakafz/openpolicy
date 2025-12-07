@@ -127,7 +127,7 @@ export function DocumentTemplateDialog({
           <div className="relative flex flex-1 flex-col overflow-hidden bg-background max-md:hidden">
             <div className="flex-1 overflow-y-auto">
               <div className="pointer-events-none mx-auto select-none">
-                <div className="mx-auto h-full w-full max-w-4xl origin-top px-5 md:px-10">
+                <div className="mx-auto h-full w-full max-w-4xl origin-top px-5 pb-20 md:px-10">
                   <DocumentEditor
                     key={activeTemplate.id}
                     initialContent={activeTemplate.content}
