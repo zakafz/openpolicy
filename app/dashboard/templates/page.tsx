@@ -10,20 +10,14 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty";
 import { createClient } from "@/lib/supabase/server";
+import { sortTemplates } from "@/lib/templates";
 
 export default async function TemplatesPage() {
   const supabase = await createClient();
   const { data } = await supabase.from("document_templates").select("*");
 
   if (data && data.length > 0) {
-    const sortedData = [...data].sort((a, b) => {
-      if (a.position !== b.position) {
-        return (a.position || 0) - (b.position || 0);
-      }
-      if (a.id === "blank") return -1;
-      if (b.id === "blank") return 1;
-      return a.label.localeCompare(b.label);
-    });
+    const sortedData = sortTemplates(data);
 
     if (sortedData.length > 0) {
       redirect(`/dashboard/templates/${sortedData[0].id}`);

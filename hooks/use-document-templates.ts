@@ -5,8 +5,8 @@ import { useTemplatesContext } from "@/context/templates-context";
 import type { DocumentTemplate as DBDocumentTemplate } from "@/lib/templates";
 
 export interface UIDocumentTemplate extends Omit<DBDocumentTemplate, "icon"> {
-  icon: any;
-  rawIcon: any;
+  icon: LucideIcons.LucideIcon;
+  rawIcon: string;
 }
 
 export function useDocumentTemplates() {
@@ -18,7 +18,7 @@ export function useDocumentTemplates() {
 
   const templates: UIDocumentTemplate[] = useMemo(() => {
     return rawTemplates.map((t) => {
-      let IconComponent: any = File;
+      let IconComponent: LucideIcons.LucideIcon = File;
       if (typeof t.icon === "string") {
         let Found = (LucideIcons as any)[t.icon];
 

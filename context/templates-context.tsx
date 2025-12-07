@@ -6,9 +6,14 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useRef,
   useState,
 } from "react";
-import { type DocumentTemplate, fetchTemplates } from "@/lib/templates";
+import {
+  type DocumentTemplate,
+  fetchTemplates,
+  sortTemplates,
+} from "@/lib/templates";
 
 interface TemplatesContextType {
   templates: DocumentTemplate[];
@@ -25,27 +30,22 @@ export function TemplatesProvider({ children }: { children: ReactNode }) {
   const [templates, setTemplates] = useState<DocumentTemplate[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const hasLoaded = useRef(false);
+
   const refreshTemplates = useCallback(async () => {
-    if (templates.length === 0) setLoading(true);
+    if (!hasLoaded.current) setLoading(true);
 
     try {
       const data = await fetchTemplates();
-      // Sorting: position (asc), then by specific ID (blank), then label
-      const sortedData = [...data].sort((a, b) => {
-        if (a.position !== b.position) {
-          return (a.position || 0) - (b.position || 0);
-        }
-        if (a.id === "blank") return -1;
-        if (b.id === "blank") return 1;
-        return a.label.localeCompare(b.label);
-      });
+      const sortedData = sortTemplates(data);
       setTemplates(sortedData);
+      hasLoaded.current = true;
     } catch (error) {
       console.error("Failed to fetch templates", error);
     } finally {
       setLoading(false);
     }
-  }, [templates.length]);
+  }, []);
 
   const reorderTemplates = async (newOrder: DocumentTemplate[]) => {
     // Optimistic update
@@ -70,7 +70,7 @@ export function TemplatesProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     refreshTemplates();
-  }, [refreshTemplates]);
+  }, []);
 
   return (
     <TemplatesContext.Provider

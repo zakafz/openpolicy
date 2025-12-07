@@ -36,10 +36,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { toastManager } from "@/components/ui/toast";
 import { useTemplatesContext } from "@/context/templates-context";
 import {
+  createTemplate,
   type DocumentTemplate,
   deleteTemplate,
   fetchTemplate,
-  saveTemplate,
+  updateTemplate,
 } from "@/lib/templates";
 
 export default function TemplateEditorPage(props: {
@@ -139,7 +140,11 @@ export default function TemplateEditorPage(props: {
         content,
       };
 
-      await saveTemplate(newTemplate);
+      if (isNew) {
+        await createTemplate(newTemplate);
+      } else {
+        await updateTemplate(params.id, newTemplate);
+      }
       await refreshTemplates();
       toastManager.add({
         title: "Success",
@@ -152,9 +157,11 @@ export default function TemplateEditorPage(props: {
       }
     } catch (error: any) {
       console.error(error);
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to save template";
       toastManager.add({
         title: "Error",
-        description: error.message || "Failed to save template",
+        description: errorMessage,
         type: "error",
       });
     } finally {
@@ -202,7 +209,7 @@ export default function TemplateEditorPage(props: {
   }
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden overflow-y-scroll">
+    <div className="flex h-screen flex-col overflow-x-hidden overflow-y-scroll">
       <div className="flex h-14 min-h-14 items-center justify-between border-b bg-card px-4">
         <div className="flex items-center gap-1">
           <SidebarTrigger />

@@ -4,7 +4,7 @@ export interface DocumentTemplate {
   id: string;
   label: string;
   description: string;
-  icon: string | any;
+  icon: string;
   content: any[];
   position?: number;
 }
@@ -41,20 +41,38 @@ export async function fetchTemplate(id: string) {
   return data as DocumentTemplate;
 }
 
-export async function saveTemplate(template: DocumentTemplate) {
+export async function createTemplate(template: DocumentTemplate) {
   const supabase = createClient();
   const { icon: _icon, ...rest } = template;
 
+  const { error } = await supabase.from("document_templates").insert({
+    ...rest,
+    icon: typeof template.icon === "string" ? template.icon : "File",
+  });
+
+  if (error) {
+    console.error("Error creating template:", error);
+    throw error;
+  }
+}
+
+export async function updateTemplate(
+  id: string,
+  template: Partial<DocumentTemplate>,
+) {
+  const supabase = createClient();
+  const { id: _id, icon: _icon, ...rest } = template;
+
   const { error } = await supabase
     .from("document_templates")
-    .upsert({
+    .update({
       ...rest,
       icon: typeof template.icon === "string" ? template.icon : "File",
     })
-    .eq("id", template.id);
+    .eq("id", id);
 
   if (error) {
-    console.error("Error saving template:", error);
+    console.error("Error updating template:", error);
     throw error;
   }
 }
@@ -77,7 +95,7 @@ export async function updateTemplatePositions(
 ) {
   const supabase = createClient();
 
-  const { error: _error } = await supabase.from("document_templates").upsert(
+  const { error } = await supabase.from("document_templates").upsert(
     updates.map((u) => ({
       id: u.id,
       position: u.position,
@@ -85,10 +103,20 @@ export async function updateTemplatePositions(
     })),
     { onConflict: "id", ignoreDuplicates: false },
   );
-  for (const update of updates) {
-    await supabase
-      .from("document_templates")
-      .update({ position: update.position })
-      .eq("id", update.id);
+
+  if (error) {
+    console.error("Error updating template positions:", error);
+    throw error;
   }
+}
+
+export function sortTemplates(templates: DocumentTemplate[]) {
+  return [...templates].sort((a, b) => {
+    if (a.position !== b.position) {
+      return (a.position || 0) - (b.position || 0);
+    }
+    if (a.id === "blank") return -1;
+    if (b.id === "blank") return 1;
+    return a.label.localeCompare(b.label);
+  });
 }

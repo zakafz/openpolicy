@@ -36,6 +36,21 @@ export function NavMain({
   counts?: Record<string, number | string>;
 }) {
   const pathname = usePathname();
+
+  const isUrlActive = (url: string) => {
+    const normalize = (p: string) => (p.endsWith("/") ? p.slice(0, -1) : p);
+    const currentPath = normalize(pathname);
+    const targetPath = normalize(url);
+
+    if (targetPath === "/dashboard") {
+      return currentPath === targetPath;
+    }
+
+    return (
+      currentPath === targetPath || currentPath.startsWith(`${targetPath}/`)
+    );
+  };
+
   return (
     <SidebarGroup>
       <SidebarGroupLabel>Workspace</SidebarGroupLabel>
@@ -50,15 +65,7 @@ export function NavMain({
                 <SidebarMenuButton
                   asChild
                   tooltip={item.title}
-                  className={
-                    (item.url === "/dashboard/" &&
-                      `${pathname}/` === item.url) ||
-                    (item.url !== "/dashboard/" &&
-                      (`${pathname}/` === item.url ||
-                        pathname.startsWith(item.url)))
-                      ? "bg-sidebar-accent"
-                      : ""
-                  }
+                  className={isUrlActive(item.url) ? "bg-sidebar-accent" : ""}
                 >
                   <SafeLink href={item.url}>
                     {item.icon && <item.icon />}
@@ -81,11 +88,7 @@ export function NavMain({
                     <SidebarMenuButton
                       tooltip={item.title}
                       className={
-                        item.items?.some(
-                          (sub) =>
-                            `${pathname}/` === sub.url ||
-                            pathname.startsWith(sub.url),
-                        )
+                        item.items?.some((sub) => isUrlActive(sub.url))
                           ? "bg-sidebar-accent"
                           : ""
                       }
@@ -103,10 +106,7 @@ export function NavMain({
                           asChild
                           data-testid={`sidebar-nav-${subItem.title.toLowerCase()}`}
                           className={
-                            `${pathname}/` === subItem.url ||
-                            pathname.startsWith(subItem.url)
-                              ? "bg-sidebar-accent"
-                              : ""
+                            isUrlActive(subItem.url) ? "bg-sidebar-accent" : ""
                           }
                         >
                           <SafeLink

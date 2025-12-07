@@ -1,6 +1,7 @@
 "use client";
 
 import { GripVertical, Search } from "lucide-react";
+import type { DragControls } from "motion/react";
 import { Reorder, useDragControls } from "motion/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -132,8 +133,6 @@ export function TemplateSidebar() {
   );
 }
 
-import type { DragControls } from "motion/react";
-
 function DraggableTemplateItem({
   template,
   currentId,
@@ -184,6 +183,8 @@ function TemplateItem({
     >
       {isDraggable && dragControls && (
         <div
+          aria-label="Drag to reorder"
+          role="button"
           className="-translate-y-1/2 absolute top-1/2 right-2 z-20 flex cursor-grab items-center justify-center p-2 opacity-0 transition-opacity active:cursor-grabbing group-hover:opacity-100"
           onPointerDown={(e) => {
             e.preventDefault();
