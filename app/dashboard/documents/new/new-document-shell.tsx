@@ -3,11 +3,11 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { DocumentTemplateDialog } from "@/components/document-template-dialog";
-import { documentTemplates } from "@/components/document-templates";
 import { Button } from "@/components/ui/button";
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { FieldGroup } from "@/components/ui/field-shadcn";
 import { Input } from "@/components/ui/input";
+import { useDocumentTemplates } from "@/hooks/use-document-templates";
 import {
   readSelectedWorkspaceId,
   writeSelectedWorkspaceId,
@@ -23,6 +23,7 @@ export default function NewDocumentShell({
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
+  const { templates, loading: templatesLoading } = useDocumentTemplates();
 
   const [title, setTitle] = useState("");
   const [slug, setSlug] = useState("");
@@ -34,8 +35,8 @@ export default function NewDocumentShell({
 
   function getTemplateForType(t: DocumentType, titleText: string) {
     const template =
-      documentTemplates.find((dt) => dt.id === t) ||
-      documentTemplates.find((dt) => dt.id === "blank");
+      templates.find((dt) => dt.id === t) ||
+      templates.find((dt) => dt.id === "blank");
     const base = template?.content || [];
     const copy = JSON.parse(JSON.stringify(base));
     try {
@@ -199,8 +200,11 @@ export default function NewDocumentShell({
     }
   }, [workspaceId]);
 
-  const selectedTemplate =
-    documentTemplates.find((t) => t.id === type) || documentTemplates[0];
+  const selectedTemplate = templates.find((t) => t.id === type) || templates[0];
+
+  if (templatesLoading || !selectedTemplate) {
+    return <div className="p-8 text-center">Loading...</div>;
+  }
 
   return (
     <form
@@ -212,6 +216,7 @@ export default function NewDocumentShell({
         onOpenChange={setDialogOpen}
         onSelect={(t) => setType(t.id)}
         selectedTemplateId={type}
+        templates={templates}
       />
       <div className="flex flex-col items-center justify-center gap-6 rounded-t-xl border-b bg-accent/60 py-8">
         <div className="flex flex-col items-center space-y-1">

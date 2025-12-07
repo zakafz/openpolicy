@@ -4,7 +4,6 @@ import {
   Archive,
   Edit,
   ExternalLink,
-  LayersIcon,
   MoreVertical,
   RotateCcw,
   Trash,
@@ -13,7 +12,6 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import PageTitle from "@/components/dashboard-page-title";
-import { documentTemplates } from "@/components/document-templates";
 import { DocumentsTableSkeleton } from "@/components/skeletons";
 import { SubscriptionAlert } from "@/components/subscription-alert";
 import {
@@ -45,6 +43,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useDocumentTemplates } from "@/hooks/use-document-templates";
 import useWorkspaceLoader from "@/hooks/use-workspace-loader";
 import { fetchDocumentsForWorkspace } from "@/lib/documents";
 import { createClient } from "@/lib/supabase/client";
@@ -58,6 +57,11 @@ export default function DocumentsShell(props: {
   const searchParams = useSearchParams();
   const initialWorkspaceId = searchParams?.get("workspaceId") ?? null;
   const { workspace } = useWorkspaceLoader();
+  const {
+    getTemplateIcon,
+    getTemplateLabel,
+    loading: templatesLoading,
+  } = useDocumentTemplates();
 
   const [workspaceId, setWorkspaceId] = useState<string | null>(
     initialWorkspaceId,
@@ -144,7 +148,7 @@ export default function DocumentsShell(props: {
       />
       <Frame className="w-full max-w-full md:max-w-[calc(100vw-16rem-2rem)] md:group-has-data-[state=collapsed]/sidebar-wrapper:max-w-[calc(100vw-3rem-2rem)]">
         <FramePanel className="overflow-x-auto">
-          {loading ? (
+          {loading || templatesLoading ? (
             <DocumentsTableSkeleton />
           ) : error ? (
             <div className="p-8 text-center text-destructive text-sm">
@@ -187,10 +191,7 @@ export default function DocumentsShell(props: {
                         className="flex items-center gap-2"
                       >
                         {(() => {
-                          const template = documentTemplates.find(
-                            (t) => t.id === d.type,
-                          );
-                          const Icon = template?.icon ?? LayersIcon;
+                          const Icon = getTemplateIcon(d.type);
                           return (
                             <Icon
                               className="h-4 w-4 opacity-80"
@@ -202,10 +203,7 @@ export default function DocumentsShell(props: {
                       </Link>
                     </TableCell>
                     <TableCell>{d.slug ?? "—"}</TableCell>
-                    <TableCell>
-                      {documentTemplates.find((t) => t.id === d.type)?.label ??
-                        String(d.type ?? "blank")}
-                    </TableCell>
+                    <TableCell>{getTemplateLabel(d.type)}</TableCell>
                     <TableCell>
                       <Badge variant="outline" className="capitalize">
                         <span

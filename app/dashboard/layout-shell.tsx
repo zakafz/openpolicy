@@ -43,6 +43,7 @@ function LayoutContent({
   profile,
   ownerWorkspaces,
   isDocument,
+  isTemplate,
   breadcrumbTitle,
   firstWorkspaceId,
   pathname,
@@ -53,6 +54,7 @@ function LayoutContent({
   profile: UsersRow | null;
   ownerWorkspaces: any[] | null;
   isDocument: boolean;
+  isTemplate: boolean;
   breadcrumbTitle: string;
   firstWorkspaceId: string | null;
   pathname: string | null;
@@ -67,8 +69,13 @@ function LayoutContent({
         workspaces={ownerWorkspaces ?? []}
         isAdmin={isAdmin}
       />
-      <SidebarInset className="bg-card">
-        {!isDocument && (
+      <SidebarInset
+        className={cn(
+          "bg-card",
+          (isDocument || isTemplate) && "h-svh overflow-hidden",
+        )}
+      >
+        {!isDocument && !isTemplate && pathname !== "/dashboard/templates" && (
           <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-2 border-b bg-card transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
             <div className="flex items-center gap-2 px-4">
               <SidebarTrigger className="-ml-1" />
@@ -98,8 +105,10 @@ function LayoutContent({
         )}
         <div
           className={cn(
-            "flex h-full flex-1 flex-col gap-4 overflow-scroll",
-            isDocument ? "" : "px-4",
+            "flex h-full flex-1 flex-col",
+            isDocument || isTemplate
+              ? "overflow-hidden"
+              : "gap-4 overflow-scroll px-4",
           )}
         >
           {children}
@@ -147,6 +156,7 @@ export default function LayoutShell({
 
   const pathname = usePathname();
   const isDocument = pathname?.startsWith("/dashboard/d/") ?? false;
+  const isTemplate = pathname?.startsWith("/dashboard/templates/") ?? false;
   const router = useRouter();
 
   function getBreadcrumbTitle(path: string) {
@@ -244,6 +254,7 @@ export default function LayoutShell({
         profile={profile}
         ownerWorkspaces={ownerWorkspaces}
         isDocument={isDocument}
+        isTemplate={isTemplate}
         breadcrumbTitle={breadcrumbTitle}
         firstWorkspaceId={firstWorkspaceId}
         pathname={pathname}

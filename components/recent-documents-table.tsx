@@ -1,9 +1,8 @@
 "use client";
 
-import { Clock, File } from "lucide-react";
+import { Clock } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { documentTemplates } from "@/components/document-templates";
 import { RecentDocumentsSkeleton } from "@/components/skeletons";
 import { Badge } from "@/components/ui/badge";
 import { Frame, FramePanel } from "@/components/ui/frame";
@@ -17,6 +16,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useWorkspace } from "@/context/workspace";
+import { useDocumentTemplates } from "@/hooks/use-document-templates";
 import { fetchDocumentsForWorkspace } from "@/lib/documents";
 import { createClient } from "@/lib/supabase/client";
 import { fmtAbsolute, timeAgo } from "@/lib/utils";
@@ -35,6 +35,7 @@ export default function RecentDocumentsTable({
 }) {
   const { selectedWorkspaceId } = useWorkspace();
   const effectiveWorkspaceId = workspaceId ?? selectedWorkspaceId;
+  const { getTemplateIcon, getTemplateLabel } = useDocumentTemplates();
 
   const [docs, setDocs] = useState<any[] | null>(null);
   const [loading, setLoading] = useState(true);
@@ -118,9 +119,9 @@ export default function RecentDocumentsTable({
             </TableHeader>
             <TableBody>
               {docs.map((d) => {
-                const template = documentTemplates.find((t) => t.id === d.type);
-                const Icon = template?.icon ?? File;
-                const typeLabel = template?.label ?? String(d.type ?? "blank");
+                const Icon = getTemplateIcon(d.type);
+                const typeLabel = getTemplateLabel(d.type);
+
                 return (
                   <TableRow key={d.id}>
                     <TableCell className="font-medium">

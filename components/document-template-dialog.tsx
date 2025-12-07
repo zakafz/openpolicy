@@ -2,10 +2,6 @@
 
 import { Search } from "lucide-react";
 import { useMemo, useState } from "react";
-import {
-  type DocumentTemplate,
-  documentTemplates,
-} from "@/components/document-templates";
 import { DocumentEditor } from "@/components/editor/document-editor";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,13 +17,15 @@ import {
   InputGroupInput,
 } from "@/components/ui/input-group";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import type { UIDocumentTemplate } from "@/hooks/use-document-templates";
 import { cn } from "@/lib/utils";
 
 interface DocumentTemplateDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSelect: (template: DocumentTemplate) => void;
+  onSelect: (template: UIDocumentTemplate) => void;
   selectedTemplateId?: string;
+  templates: UIDocumentTemplate[];
 }
 
 export function DocumentTemplateDialog({
@@ -35,24 +33,24 @@ export function DocumentTemplateDialog({
   onOpenChange,
   onSelect,
   selectedTemplateId,
+  templates,
 }: DocumentTemplateDialogProps) {
   const [search, setSearch] = useState("");
   const [internalSelectedId, setInternalSelectedId] = useState<string>(
-    selectedTemplateId || documentTemplates[0]?.id || "privacy",
+    selectedTemplateId || templates[0]?.id || "privacy",
   );
 
   const filteredTemplates = useMemo(() => {
-    if (!search.trim()) return documentTemplates;
-    return documentTemplates.filter(
+    if (!search.trim()) return templates;
+    return templates.filter(
       (t) =>
         t.label.toLowerCase().includes(search.toLowerCase()) ||
         t.description.toLowerCase().includes(search.toLowerCase()),
     );
-  }, [search]);
+  }, [search, templates]);
 
   const activeTemplate =
-    documentTemplates.find((t) => t.id === internalSelectedId) ||
-    documentTemplates[0];
+    templates.find((t) => t.id === internalSelectedId) || templates[0];
 
   const handleConfirm = () => {
     onSelect(activeTemplate);
@@ -70,7 +68,6 @@ export function DocumentTemplateDialog({
         </DialogHeader>
 
         <div className="flex flex-1 overflow-hidden">
-          {/* Sidebar */}
           <div className="flex w-72 flex-col bg-sidebar max-md:w-full md:border-r">
             <div className="relative border-b">
               <InputGroup className="rounded-none! border-none shadow-none! ring-0!">
