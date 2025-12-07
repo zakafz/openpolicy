@@ -95,14 +95,9 @@ export async function updateTemplatePositions(
 ) {
   const supabase = createClient();
 
-  const { error } = await supabase.from("document_templates").upsert(
-    updates.map((u) => ({
-      id: u.id,
-      position: u.position,
-      updated_at: new Date().toISOString(),
-    })),
-    { onConflict: "id", ignoreDuplicates: false },
-  );
+  const { error } = await supabase.rpc("reorder_templates", {
+    items: updates,
+  });
 
   if (error) {
     console.error("Error updating template positions:", error);
