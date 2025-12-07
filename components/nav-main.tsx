@@ -51,7 +51,13 @@ export function NavMain({
                   asChild
                   tooltip={item.title}
                   className={
-                    `${pathname}/` === item.url ? "bg-sidebar-accent" : ""
+                    (item.url === "/dashboard/" &&
+                      `${pathname}/` === item.url) ||
+                    (item.url !== "/dashboard/" &&
+                      (`${pathname}/` === item.url ||
+                        pathname.startsWith(item.url)))
+                      ? "bg-sidebar-accent"
+                      : ""
                   }
                 >
                   <SafeLink href={item.url}>
@@ -75,7 +81,11 @@ export function NavMain({
                     <SidebarMenuButton
                       tooltip={item.title}
                       className={
-                        item.items?.some((sub) => `${pathname}/` === sub.url)
+                        item.items?.some(
+                          (sub) =>
+                            `${pathname}/` === sub.url ||
+                            pathname.startsWith(sub.url),
+                        )
                           ? "bg-sidebar-accent"
                           : ""
                       }
@@ -93,7 +103,8 @@ export function NavMain({
                           asChild
                           data-testid={`sidebar-nav-${subItem.title.toLowerCase()}`}
                           className={
-                            `${pathname}/` === subItem.url
+                            `${pathname}/` === subItem.url ||
+                            pathname.startsWith(subItem.url)
                               ? "bg-sidebar-accent"
                               : ""
                           }

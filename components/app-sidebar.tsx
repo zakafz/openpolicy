@@ -7,6 +7,7 @@ import {
   Cuboid,
   Eye,
   EyeClosed,
+  File,
   Folder,
   Globe,
   Handshake,
@@ -126,6 +127,11 @@ export function AppSidebar(props: {
           title: "Monitors",
           url: "/dashboard/monitors/",
           icon: Monitor,
+        },
+        {
+          title: "Templates",
+          url: "/dashboard/templates/",
+          icon: File,
         },
         ...items,
       ];
