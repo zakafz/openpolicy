@@ -13,9 +13,9 @@
   <br />
   <a href="https://openpolicyhq.com"><strong>Explore the website</strong></a>
   <br />
-  <a href="https://github.com/zakafz/openpolicy/issues">Report Bug</a>
+  <a href="https://github.com/zakafz/openpolicy/issues/new">Report Bug</a>
   ·
-  <a href="https://github.com/zakafz/openpolicy/issues">Request Feature</a>
+  <a href="https://github.com/zakafz/openpolicy/issues/new">Request Feature</a>
 </p>
 
 <div align="center">
