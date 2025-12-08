@@ -87,7 +87,7 @@ export default function Home() {
           <div className="mx-auto mt-5 flex gap-2">
             <Link
               target="_blank"
-              href="https://more.openpolicyhq.com/learn-more"
+              href="https://more.openpolicyhq.com/whats-openpolicy"
             >
               <Button size="lg" variant={"outline"}>
                 Check it out
