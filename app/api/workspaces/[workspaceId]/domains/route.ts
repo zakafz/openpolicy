@@ -40,6 +40,21 @@ export async function POST(
           { status: 409 },
         );
       }
+
+      // Add domain to Vercel project
+      try {
+        const { addDomainToVercel } = await import("@/lib/vercel");
+        await addDomainToVercel(domain);
+      } catch (e: any) {
+        console.error("Failed to add domain to Vercel:", e);
+        return NextResponse.json(
+          {
+            error: "Failed to configure domain provider",
+            details: e.message,
+          },
+          { status: 500 },
+        );
+      }
     }
 
     const { error: updateError } = await supabase

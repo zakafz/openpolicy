@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
 export function LogoutButton({ children }: React.PropsWithChildren) {
-  const router = useRouter();
+  const _router = useRouter();
 
   const logout = async () => {
     const supabase = createClient();
@@ -23,7 +23,8 @@ export function LogoutButton({ children }: React.PropsWithChildren) {
       console.warn("Failed to remove selectedWorkspace from localStorage", e);
     }
 
-    router.push("/auth/login");
+    // Force a hard reload to clear all memory state (TanStack Query, etc.)
+    window.location.href = "/auth/login";
   };
 
   return (
